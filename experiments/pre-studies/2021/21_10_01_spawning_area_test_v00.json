@@ -1,0 +1,51 @@
+{
+	"shared_params": {
+		"input_folder": "/scratch/local1/hzg/",
+		"output_file_base": "spawning_area_test",
+		"output_folder": "/scratch/local1/output/21_10_01_spawning_area_test_v00",
+		"debug": false,
+		"compact_mode": true,
+		"use_hindcast_read_lock": true,
+        "max_duration": 6000
+
+	},
+	"reader": {
+		"class_name": "oceantracker.readers.SchismNCDFreader.SCHSIMreaderNCDF",
+		"file_mask": "schout_100.nc",
+		"depth_average": false,
+		"field_map": {
+			"water_depth": "depth",
+			"salt": "salt"
+		},
+		"time_buffer_size": 24
+	},
+	"base_case_params": {
+		"run_params": {
+			"dispersion": false,
+			"write_tracks": true,
+			"particle_buffer_size": 2000
+		},
+		"dispersion": {
+			"A_H": 0.1,
+			"A_V": 0.001
+		},
+		"solver": {
+			"n_sub_steps": 90
+		},
+		"particle_release_groups": [
+			{
+				"class_name": "oceantracker.particle_release.polygonRelease.PolygonRelease",
+				"points": [
+					[593043,5919010],
+					[592988,5919053],
+					[592924,5918944],
+					[592981,5918899]
+				],
+				"pulse_size": 1000,
+				"z_min": -1,
+				"z_max":  1,
+				"release_interval": 0
+			}
+		]
+	}
+}

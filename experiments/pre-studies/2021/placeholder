@@ -1,0 +1,230 @@
+
+			"user_class_lists": {
+				"user_trajectory_modifiers": [
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.resuspension.AlwaysResuspend"
+					},
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.splitParticles.ParticleSplit",
+						"splitting_interval": 100,
+						"min_status_to_split": 10,
+						"fraction_to_split": 1e-3
+					},
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.cullParticlesConcentration.ParticleCull",
+						"cull_interval": 100,
+						"status_to_cull": 0,
+						"threshold_to_cull": 0.2,
+						"fraction_to_cull": 1.0,
+						"concentration_field": "salinity"
+					}
+				]
+			}
+		},
+		{
+			"user_class_lists": {
+				"user_trajectory_modifiers": [
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.resuspension.AlwaysResuspend"
+					},
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.splitParticles.ParticleSplit",
+						"splitting_interval": 100,
+						"min_status_to_split": 10,
+						"fraction_to_split": 1e-4
+					},
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.cullParticlesConcentration.ParticleCull",
+						"cull_interval": 100,
+						"status_to_cull": 0,
+						"threshold_to_cull": 0.2,
+						"fraction_to_cull": 1.0,
+						"concentration_field": "salinity"
+					}
+				]
+			}
+		},
+		{
+			"user_class_lists": {
+				"user_trajectory_modifiers": [
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.resuspension.AlwaysResuspend"
+					},
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.splitParticles.ParticleSplit",
+						"splitting_interval": 100,
+						"min_status_to_split": 10,
+						"fraction_to_split": 1e-5
+					},
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.cullParticlesConcentration.ParticleCull",
+						"cull_interval": 100,
+						"status_to_cull": 0,
+						"threshold_to_cull": 0.2,
+						"fraction_to_cull": 1.0,
+						"concentration_field": "salinity"
+					}
+				]
+			}
+		},
+		{
+			"user_class_lists": {
+				"user_trajectory_modifiers": [
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.resuspension.AlwaysResuspend"
+					},
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.splitParticles.ParticleSplit",
+						"splitting_interval": 100,
+						"min_status_to_split": 10,
+						"fraction_to_split": 1e-6
+					},
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.cullParticlesConcentration.ParticleCull",
+						"cull_interval": 100,
+						"status_to_cull": 0,
+						"threshold_to_cull": 0.2,
+						"fraction_to_cull": 1.0,
+						"concentration_field": "salinity"
+					}
+				]
+			}
+		},
+		{
+			"user_class_lists": {
+				"user_trajectory_modifiers": [
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.resuspension.AlwaysResuspend"
+					},
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.splitParticles.ParticleSplit",
+						"splitting_interval": 100,
+						"min_status_to_split": 10,
+						"fraction_to_split": 1e-7
+					},
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.cullParticlesConcentration.ParticleCull",
+						"cull_interval": 100,
+						"status_to_cull": 0,
+						"threshold_to_cull": 0.2,
+						"fraction_to_cull": 1.0,
+						"concentration_field": "salinity"
+					}
+				]
+			}
+		},
+		{
+			"user_class_lists": {
+				"user_trajectory_modifiers": [
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.resuspension.AlwaysResuspend"
+					},
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.splitParticles.ParticleSplit",
+						"splitting_interval": 100,
+						"min_status_to_split": 10,
+						"fraction_to_split": 1e-8
+					},
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.cullParticlesConcentration.ParticleCull",
+						"cull_interval": 100,
+						"status_to_cull": 0,
+						"threshold_to_cull": 0.2,
+						"fraction_to_cull": 1.0,
+						"concentration_field": "salinity"
+					}
+				]
+			}
+		},
+		{
+			"user_class_lists": {
+				"user_trajectory_modifiers": [
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.resuspension.AlwaysResuspend"
+					},
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.splitParticles.ParticleSplit",
+						"splitting_interval": 100,
+						"min_status_to_split": 10,
+						"fraction_to_split": 1e-9
+					},
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.cullParticlesConcentration.ParticleCull",
+						"cull_interval": 100,
+						"status_to_cull": 0,
+						"threshold_to_cull": 0.2,
+						"fraction_to_cull": 1.0,
+						"concentration_field": "salinity"
+					}
+				]
+			}
+		},
+		{
+			"user_class_lists": {
+				"user_trajectory_modifiers": [
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.resuspension.AlwaysResuspend"
+					},
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.splitParticles.ParticleSplit",
+						"splitting_interval": 100,
+						"min_status_to_split": 10,
+						"fraction_to_split": 1e-10
+					},
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.cullParticlesConcentration.ParticleCull",
+						"cull_interval": 100,
+						"status_to_cull": 0,
+						"threshold_to_cull": 0.2,
+						"fraction_to_cull": 1.0,
+						"concentration_field": "salinity"
+					}
+				]
+			}
+		},
+		{
+			"user_class_lists": {
+				"user_trajectory_modifiers": [
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.resuspension.AlwaysResuspend"
+					},
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.splitParticles.ParticleSplit",
+						"splitting_interval": 100,
+						"min_status_to_split": 10,
+						"fraction_to_split": 1e-11
+					},
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.cullParticlesConcentration.ParticleCull",
+						"cull_interval": 100,
+						"status_to_cull": 0,
+						"threshold_to_cull": 0.2,
+						"fraction_to_cull": 1.0,
+						"concentration_field": "salinity"
+					}
+				]
+			}
+		},
+		{
+			"user_class_lists": {
+				"user_trajectory_modifiers": [
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.resuspension.AlwaysResuspend"
+					},
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.splitParticles.ParticleSplit",
+						"splitting_interval": 100,
+						"min_status_to_split": 10,
+						"fraction_to_split": 1e-12
+					},
+					{
+						"class_name": "oceantracker.user_trajectory_modifiers.cullParticlesConcentration.ParticleCull",
+						"cull_interval": 100,
+						"status_to_cull": 0,
+						"threshold_to_cull": 0.2,
+						"fraction_to_cull": 1.0,
+						"concentration_field": "salinity"
+					}
+				]
+			}
+		}

@@ -4,3 +4,7 @@ venv
 /demos/output/
 /tests/nextVer/output/
 /docs/_build/doctrees/
+/output/*
+*.mp4
+*.png
+*.svg

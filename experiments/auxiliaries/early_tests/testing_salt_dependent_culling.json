@@ -1,0 +1,208 @@
+{
+	"shared_params": {
+		"input_folder": "/home/ls/data/estuar/hzg",
+		"output_file_base": "testing_salt_dependent_culling",
+		"output_folder": "/home/ls/data/estuar/output",
+		"debug": false,
+		"compact_mode": true,
+		"use_hindcast_read_lock": true,
+		"duration":  8640,
+		"write_track": true
+
+	},
+	"reader": {
+		"class_name": "oceantracker.readers.SchismNCDFreader.SCHSIMreaderNCDF",
+		"file_mask": "schout_100.nc",
+		"depth_average": false,
+		"duration":  8640,
+		"field_map": {
+			"water_depth": "depth",
+			"salt": "salt"
+		}
+	},
+	"base_case_params": {
+		"run_params": {
+			"duration":  8640,
+			"dispersion": false
+		},
+		"dispersion": {
+			"A_H": 0.1,
+			"A_V": 0.001
+		},
+		"solver": {
+			"n_sub_steps": 6
+		},
+		"particle_release_groups": [
+			{
+				"__comment": "Geestacht",
+				"class_name": "oceantracker.particle_release.polygonRelease.PolygonRelease",
+				"points": [
+					[592876,5918689,-1],
+					[592876,5918689,0],
+					[593089,5919082,-1],
+					[593089,5919082,0],
+					[592857,5919274,-1],
+					[592857,5919274,0],
+					[592583,5918826,-1],
+					[592583,5918826,0]
+				],
+				"pulse_size": 100,
+				"release_interval": 0
+			},
+			{
+				"__comment": "pre-city",
+				"class_name": "oceantracker.particle_release.polygonRelease.PolygonRelease",
+				"points": [
+					[573000,5923000,-10],
+					[573000,5923000,10],
+					[573000,5916000,-10],
+					[573000,5916000,10],
+					[584000,5916000,-10],
+					[584000,5916000,10],
+					[584000,5923000,-10],
+					[584000,5923000,10]
+				],
+				"pulse_size": 0,
+				"release_interval": 0
+			},
+			{
+				"__comment": "post-city",
+				"class_name": "oceantracker.particle_release.polygonRelease.PolygonRelease",
+				"points": [
+					[535000,5941000,-10],
+					[535000,5941000,10],
+					[557000,5941000,-10],
+					[557000,5941000,10],
+					[557000,5931000,-10],
+					[557000,5931000,10],
+					[535000,5931000,-10],
+					[535000,5931000,10]
+				],
+				"pulse_size": 0,
+				"release_interval": 0
+			},
+			{
+				"__comment": "glückstadt",
+				"class_name": "oceantracker.particle_release.polygonRelease.PolygonRelease",
+				"points": [
+					[519000,5965000,-10],
+					[519000,5965000,10],
+					[530000,5965000,-10],
+					[530000,5965000,10],
+					[530000,5955000,-10],
+					[530000,5955000,10],
+					[519000,5955000,-10],
+					[519000,5955000,10]
+				],
+				"pulse_size": 0,
+				"release_interval": 0
+			},
+			{
+				"__comment": "mouth",
+				"class_name": "oceantracker.particle_release.polygonRelease.PolygonRelease",
+				"points": [
+					[477691,5970000,-10],
+					[477690,5970000,10],
+					[484790,5964000,-10],
+					[484790,5964000,10],
+					[504000,5963000,-10],
+					[504000,5963000,10],
+					[503770,5974000,-10],
+					[503770,5974000,10],
+					[494850,5979000,-10],
+					[494850,5979000,10]
+				],
+				"pulse_size": 0,
+				"release_interval": 0
+			}
+		],
+		"user_class_lists": {
+			"user_trajectory_modifiers": [
+				{
+					"class_name": "oceantracker.user_trajectory_modifiers.resuspension.AlwaysResuspend"
+				},
+				{
+					"class_name": "oceantracker.user_trajectory_modifiers.cullParticlesConcentration.ParticleCull",
+					"cull_interval": 700,
+					"status_to_cull": 0,
+					"threshold_to_cull": 1,
+					"fraction_to_cull": 1
+				}
+			],
+			"user_onfly_particle_statistics": [
+				{
+					"class_name": "oceantracker.user_onfly_particle_statistics.PolygonStatistics.PolygonStats2D_timeBased",
+					"calculation_interval": 1800,
+					"particle_property_list": [
+						"status"
+					],
+					"polygon_list": [
+						{
+
+							"points": [
+								[592876,5918689],
+								[592876,5918689],
+								[593089,5919082],
+								[593089,5919082],
+								[592857,5919274],
+								[592857,5919274],
+								[592583,5918826],
+								[592583,5918826]
+							]
+						},
+						{
+							"points": [
+								[573000,5923000],
+								[573000,5923000],
+								[573000,5916000],
+								[573000,5916000],
+								[584000,5916000],
+								[584000,5916000],
+								[584000,5923000],
+								[584000,5923000]
+							]
+						},
+						{
+							"points": [
+								[535000,5941000],
+								[535000,5941000],
+								[557000,5941000],
+								[557000,5941000],
+								[557000,5931000],
+								[557000,5931000],
+								[535000,5931000],
+								[535000,5931000]
+							]
+						},
+						{
+							"points": [
+								[519000,5965000],
+								[519000,5965000],
+								[530000,5965000],
+								[530000,5965000],
+								[530000,5955000],
+								[530000,5955000],
+								[519000,5955000],
+								[519000,5955000]
+							]
+						},
+						{
+							"points": [
+								[477691,5970000],
+								[477690,5970000],
+								[484790,5964000],
+								[484790,5964000],
+								[504000,5963000],
+								[504000,5963000],
+								[503770,5974000],
+								[503770,5974000],
+								[494850,5979000],
+								[494850,5979000]
+							]
+						}
+					]
+				}
+			]
+		}
+	}
+}

@@ -149,7 +149,7 @@ class Solver(ParameterBaseClass):
         if RK_order==1:
             self.update_particle_velocity(t,v, is_moving) # put vel into permanent place
             self.euler_substep(x2, x1, v, dt, is_moving)
-            return is_moving.shape[0]
+            return is_moving
 
         self.update_particle_velocity(t,v_temp, is_moving)  # velocity in temp place
 
@@ -166,7 +166,7 @@ class Solver(ParameterBaseClass):
         if RK_order==2:
             self.update_particle_velocity(t2,v, is_moving)
             self.euler_substep(x2, x1, v, dt, is_moving)
-            return is_moving.shape[0]
+            return is_moving
 
         self.update_particle_velocity(t2, v_temp, is_moving)
 

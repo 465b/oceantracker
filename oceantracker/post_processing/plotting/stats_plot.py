@@ -1,9 +1,11 @@
+import multiprocessing
 import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from oceantracker.post_processing.read_output_files import load_output_files
 from oceantracker.post_processing.plotting import plot_tracks
+
 # %%
 def load_multicase_msb_stats(cases,replicate_set=0):
 
@@ -73,13 +75,13 @@ def plot_sa_total_polycount(cases,title='',poly_range=(0,13),savefig=True,output
             
             # get case keys for each migration method
             drifting = [key for key in vel_mods if 
-                (vel_mods[key][0]['class_name']=='oceantracker.particle_velocity.terminal_velocity.AddTerminalVelocity') 
+                (vel_mods[key][0]['class_name']=='oceantracker.velocity_modifiers.terminal_velocity.AddTerminalVelocity') 
                 and (vel_mods[key][0]['mean']==0)]
             monotonic  = [key for key in vel_mods if 
-                (vel_mods[key][0]['class_name']=='oceantracker.particle_velocity.terminal_velocity.AddTerminalVelocity')
+                (vel_mods[key][0]['class_name']=='oceantracker.velocity_modifiers.terminal_velocity.AddTerminalVelocity')
                 and (vel_mods[key][0]['mean']!=0)]
             diel  = [key for key in vel_mods if
-                (vel_mods[key][0]['class_name']=='oceantracker.particle_velocity.terminal_velocity.AddDielVelocity') 
+                (vel_mods[key][0]['class_name']=='oceantracker.velocity_modifiers.terminal_velocity.AddDielVelocity') 
                 and (vel_mods[key][0]['mean']!=0)]
             
         except IndexError:
@@ -115,8 +117,7 @@ def _draw_sa_figure(rep_subset, ii_rep_subset, migration_pattern, migration_name
     splitting_of_migration_pattern = [splitting[key] for key in migration_pattern]
     
     # reshape it accordingly
-    # plot_shape = (max(1,len(set(v_vel_of_migration_pattern))),max(1,len(set(splitting_of_migration_pattern))))
-    plot_shape = (6,4)
+    plot_shape = (max(1,len(set(v_vel_of_migration_pattern))),max(1,len(set(splitting_of_migration_pattern))))
     
     # draw figure
     fig,ax = plt.subplots(plot_shape[0],plot_shape[1],sharex=True,figsize=(24,12))
@@ -160,27 +161,29 @@ def _draw_sa_figure(rep_subset, ii_rep_subset, migration_pattern, migration_name
 
 # %%
 def animate_cases(cases):
-    
-    for case in cases:
-        case_info = load_output_files.read_case_info_file(case)
-        track = load_output_files.load_particle_track_vars(case)
-        # run_name = case_info['shared_params']['output_file_base']
-        case_name_long = case_info['output_files']['output_file_base']
-        case_name_short = case_name_long.split('_')[-1]
-        output_dir = case_info['output_files']['run_output_dir']
-        
-        try:
-            v_vel = case_info['full_params']['velocity_modifiers'][0]['mean']
-        except: 
-            v_vel = 0
-            
-        try: 
-            split = case_info['full_params']['trajectory_modifiers'][0]['probability_of_splitting']
-        except:
-            split = 0
+    with multiprocessing.Pool(processes=len(cases)) as pool:
+        pool.map(animate1case,cases)
 
-        filename = f'{os.path.join(output_dir,case_name_long)}.mp4'
-        plot_tracks.animate_particles(track,
-            movie_file=filename,fps=30,dpi=300,
-            title=f'{case_name_short} vel:{round(v_vel,3)} split:{round(split,6)}')
-        print(f'Saved particle animation to {filename}')
+def animate1case(case):
+    case_info = load_output_files.read_case_info_file(case)
+    track = load_output_files.load_particle_track_vars(case)
+    # run_name = case_info['shared_params']['output_file_base']
+    case_name_long = case_info['output_files']['output_file_base']
+    case_name_short = case_name_long.split('_')[-1]
+    output_dir = case_info['output_files']['run_output_dir']
+    
+    try:
+        v_vel = case_info['full_params']['velocity_modifiers'][0]['mean']
+    except: 
+        v_vel = 0
+        
+    try: 
+        split = case_info['full_params']['trajectory_modifiers'][0]['probability_of_splitting']
+    except:
+        split = 0
+
+    filename = f'{os.path.join(output_dir,case_name_long)}.mp4'
+    plot_tracks.animate_particles(track,
+        movie_file=filename,fps=30,dpi=300,
+        title=f'{case_name_short} vel:{round(v_vel,3)} split:{round(split,6)}')
+    print(f'Saved particle animation to {filename}')

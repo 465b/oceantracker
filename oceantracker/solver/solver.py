@@ -242,18 +242,36 @@ class Solver(ParameterBaseClass):
 
         # do any status only changes,
         # eg total water depth used for tidal stranding must be up to date
-        if 'total_water_depth' in part_prop :
-            self.tidal_stranding_from_total_water_depth(part_prop['total_water_depth'].data,
-                                                    si.particle_status_flags['frozen'],
-                                                    si.particle_status_flags['stranded_by_tide'],
-                                                    si.particle_status_flags['moving'],
-                                                    si.minimum_total_water_depth,
-                                                    sel,
-                                                    part_prop['status'].data)
+        # if 'total_water_depth' in part_prop :
+        #     self.tidal_stranding_from_total_water_depth(part_prop['total_water_depth'].data,
+        #                                             si.particle_status_flags['frozen'],
+        #                                             si.particle_status_flags['stranded_by_tide'],
+        #                                             si.particle_status_flags['moving'],
+        #                                             si.minimum_total_water_depth,
+        #                                             sel,
+        #                                             part_prop['status'].data)
+
+        # temp insert to test and include old stranding
+        if  si.grid['is_dry_cell'] is not None:
+            # un-strand those now stranded, later reset if still stranded
+            currently_stranded = part_prop['status'].find_subset_where(
+                sel, 'eq', si.particle_status_flags['stranded_by_tide'],
+                out = self.get_particle_subset_buffer())
+            part_prop['status'].set_values(si.particle_status_flags['moving'], currently_stranded)
+
+            # now move back and strand all currently in dry cells, block if cell dry at this or next hindcast time step
+            is_dry = self.is_in_dry_cell(
+                nb, si.grid['is_dry_cell'], part_prop['n_cell'].dataInBufferPtr(), 
+                sel, self.get_particle_subset_buffer())
+
+            if is_dry.shape[0] > 0:
+                part_prop['status'].set_values(si.particle_status_flags['stranded_by_tide'], is_dry)
+                self.return_to_last_position(nb, t2, is_dry)
+        
         self.code_timer.stop('post_step_bookeeping')
 
     @staticmethod
-    @njit
+    # @njit
     def tidal_stranding_from_total_water_depth(total_water_depth, status_frozen, status_stranded,status_moving, min_water_depth, sel, status):
         # look at all particles in buffer to check total water depth < min_water_depth
         for n in sel:
@@ -263,6 +281,32 @@ class Solver(ParameterBaseClass):
                 elif status[n] == status_stranded:
                     # unstrand if already stranded, if status is on bottom,  remains as is
                     status[n] = status_moving
+    
+    
+    @staticmethod
+    # @njit
+    def is_in_dry_cell(nb,dry_cell_buffer,n_cell, active, out):
+        # return a view of out with indices of those in dry cells
+        nfound =0
+        for n in active:
+            nc = n_cell[n]
+            # in dry cell if cell dry at this or next time step in buffer
+            # todo should this be time interpolation between time steps and dry if > 0.5
+            if dry_cell_buffer[nb, nc] ==1 or dry_cell_buffer[nb+1, nc] ==1:
+                out[nfound]= n
+                nfound += 1
+        return out[:nfound]
+
+    def return_to_last_position(self,nb,t2,sel):
+        si = self.shared_info
+        p_prop = si.classes['particle_properties']
+        # return to last good position
+        p_prop['x'].copy_prop('x_last_good', sel)
+
+        # ensure bc cords and cell are right for any returned particles
+        # particle
+        si.classes['field_group_manager'].setup_interp_time_step(nb, t2, p_prop['x'].dataInBufferPtr(), sel)
+
 
     def screen_output(self,n_steps, nt0, nb0,  nb,  ns, t1, t0_step,computation_started):
 

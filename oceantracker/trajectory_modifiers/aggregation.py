@@ -1,13 +1,13 @@
 import numpy as np
 import oceantracker.util.particle_operations as part_op
 from oceantracker.user_trajectory_modifiers._trajectory_modifers_base import \
-    TrajectoryModifiersBase
+    _BaseTrajectoryModifier
 from oceantracker.util.polygonUtil import InsidePolygon
 
 from numba import njit
 
 
-class gathering(TrajectoryModifiersBase):
+class gathering(_BaseTrajectoryModifier):
     # fallows particles to freeze if inside a polygon
     def __init__(self, param_dict={}):
         # set up info/attributes
@@ -132,7 +132,7 @@ class gathering(TrajectoryModifiersBase):
         return v_aggregation
 
 
-class merging(TrajectoryModifiersBase):
+class merging(_BaseTrajectoryModifier):
     # fallows particles to freeze if inside a polygon
     def __init__(self, param_dict={}):
         # set up info/attributes

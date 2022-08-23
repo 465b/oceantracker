@@ -271,7 +271,7 @@ class Solver(ParameterBaseClass):
         self.code_timer.stop('post_step_bookeeping')
 
     @staticmethod
-    # @njit
+    @njit
     def tidal_stranding_from_total_water_depth(total_water_depth, status_frozen, status_stranded,status_moving, min_water_depth, sel, status):
         # look at all particles in buffer to check total water depth < min_water_depth
         for n in sel:
@@ -284,7 +284,7 @@ class Solver(ParameterBaseClass):
     
     
     @staticmethod
-    # @njit
+    @njit
     def is_in_dry_cell(nb,dry_cell_buffer,n_cell, active, out):
         # return a view of out with indices of those in dry cells
         nfound =0

@@ -182,7 +182,7 @@ def animate1case(case):
     except:
         split = 0
 
-    filename = f'{os.path.join(output_dir,case_name_long)}.mp4'
+    filename = f'{os.path.join(output_dir,case_name_long)}.gif'
     plot_tracks.animate_particles(track,
         movie_file=filename,fps=30,dpi=300,
         title=f'{case_name_short} vel:{round(v_vel,3)} split:{round(split,6)}')

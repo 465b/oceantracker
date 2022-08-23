@@ -56,7 +56,7 @@ def animate_particles(track_data, axis_lims=None, colour_using_data= None, show_
     else:
         num_frames = min(int( track_data['time'].shape[0]*max_duration /abs(track_data['time'][-1]-track_data['time'][0]) ),track_data['time'].shape[0])
 
-    fig = plt.gcf()
+    fig = plt.figure()
 
     ax = plt.gca()
     plot_utilities.draw_base_map(track_data['grid'], ax=ax, axis_lims=axis_lims, show_grid=show_grid, title=title, credit=credit,

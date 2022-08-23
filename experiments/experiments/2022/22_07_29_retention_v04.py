@@ -1,3 +1,11 @@
+# --- CAREFULL!!! ---
+# THIS IS A CONFIG FILE
+# FOR A RUN
+# WHERE THE SOLVER.PY
+# WAS CHANGED TO MIMIC
+# THE OLD STRANDING MECHANISM
+#
+
 #%%
 from concurrent.futures import process
 from oceantracker import main
@@ -9,7 +17,7 @@ import numpy as np
 
 #%%
 #-----------------------------------------------
-run_name = '22_07_27_retention_v02'
+run_name = '22_07_27_retention_v04'
 #-----------------------------------------------
 
 input_dir = "/work/uh0296/u301513/hzg_data/"
@@ -503,6 +511,7 @@ params={
             "duration": max_time,
 			"particle_buffer_size": max_particle,
             "open_boundary_type": 0,
+            "block_dry_cells": True
 		},
         "solver": {
             "RK_order": 2,

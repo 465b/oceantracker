@@ -9,7 +9,7 @@ import numpy as np
 
 #%%
 #-----------------------------------------------
-run_name = '22_07_27_retention_v02'
+run_name = '22_07_27_retention_v03'
 #-----------------------------------------------
 
 input_dir = "/work/uh0296/u301513/hzg_data/"
@@ -503,6 +503,7 @@ params={
             "duration": max_time,
 			"particle_buffer_size": max_particle,
             "open_boundary_type": 0,
+            "block_dry_cells": False
 		},
         "solver": {
             "RK_order": 2,

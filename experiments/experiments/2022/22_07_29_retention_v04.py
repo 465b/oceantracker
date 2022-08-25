@@ -1,11 +1,3 @@
-# --- CAREFULL!!! ---
-# THIS IS A CONFIG FILE
-# FOR A RUN
-# WHERE THE SOLVER.PY
-# WAS CHANGED TO MIMIC
-# THE OLD STRANDING MECHANISM
-#
-
 #%%
 from concurrent.futures import process
 from oceantracker import main
@@ -37,7 +29,7 @@ fraction_to_cull = 0.01
 sa_resolution = 11
 replicates = 1
 
-output_step_multiplier = 10 # hours between track recorded
+output_step_multiplier = 12 # hours between track recorded
 
 sinking_parameters = np.linspace(-1e-2,+1e-2,sa_resolution)
 # pop'ing the zero verticle velocity parameters because all =0 cases are the same

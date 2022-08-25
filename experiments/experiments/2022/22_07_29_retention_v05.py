@@ -681,4 +681,4 @@ cases = load_output_files.get_case_info_files_from_dir(path_to_dir)
 stats_plot.plot_sa_total_polycount(cases,output_path=path_to_dir)
 
 #%% draw animations
-# stats_plot.animate_cases(cases)
+stats_plot.animate_cases(cases)

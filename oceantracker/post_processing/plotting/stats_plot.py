@@ -143,7 +143,7 @@ def _draw_sa_figure(rep_subset, ii_rep_subset, migration_pattern, migration_name
             # set title  
             velo = v_vel[case['name']]
             ratio = splitting[case['name']]
-            ax[kk][jj].set_title(f'run: {case["name"]} velo: {round(velo,3)} ratio: {round(ratio,5)}')
+            ax[kk][jj].set_title(f'{case["name"]} {round(velo,3)} {round(ratio,5)}')
 
             #for label in ax.xaxis.get_ticklabels():
             #        label.set_rotation(45)
@@ -161,7 +161,7 @@ def _draw_sa_figure(rep_subset, ii_rep_subset, migration_pattern, migration_name
 
 # %%
 def animate_cases(cases):
-    with multiprocessing.Pool(processes=len(cases)) as pool:
+    with multiprocessing.Pool(processes=32) as pool:
         pool.map(animate1case,cases)
 
 def animate1case(case):

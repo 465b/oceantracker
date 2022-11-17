@@ -65,13 +65,17 @@ def plot_transect_map(transect_class, nt=0, min_status = 0,
 
 
 def plot_projected_horizontal_tracks(transect,nt=0,plot_file_name=None,axis_lims=None):
+
+
     plt.figure(figsize=(20,5))
+
 
     x = transect.track_data['x']
     plt.scatter(x[nt,:,0],x[nt,:,1])
+    plt.xlim((0,transect.transect[-1]['length'] + transect.transect[-1]['distance_downstream']))
     plt.xlabel('distance downstream [m]')
     plt.ylabel('distance off-center [m]')
-    plt.savefig('transect_projected.png',dpi=300)
+    plt.title(f'horizontal tracks at timestep {nt}')
     
     if plot_file_name is not None:
         plt.savefig(plot_file_name,dpi=300)
@@ -90,7 +94,9 @@ def plot_projected_verticle_tracks(transect,nt=0,plot_file_name=None,axis_lims=N
     plt.figure()
     plt.scatter(x[:,0],x[:,2])
     plt.scatter(x[:,0],-depth,marker='_')
+    plt.xlim((0,transect.transect[-1]['length'] + transect.transect[-1]['distance_downstream']))
 
+    plt.title(f'verticle tracks at timestep {nt}')
     plt.xlabel('distance downstream [m]')
     plt.ylabel('depth [m]')
     

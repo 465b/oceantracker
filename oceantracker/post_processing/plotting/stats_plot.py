@@ -161,7 +161,7 @@ def _draw_sa_figure(rep_subset, ii_rep_subset, migration_pattern, migration_name
 
 # %%
 def animate_cases(cases):
-    with multiprocessing.Pool(processes=32) as pool:
+    with multiprocessing.Pool(processes=16) as pool:
         pool.map(animate1case,cases)
 
 def animate1case(case):

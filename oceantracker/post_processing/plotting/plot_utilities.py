@@ -114,12 +114,12 @@ def plot_release_points_and_polygons(d, release_group=None, ax = plt.gca(), colo
         else:
             ax.plot(p[:, 0], p[:, 1], '.', color=color, markersize=10,zorder=14)
 
-def draw_polygon_list(polylist, ax=plt.gca(), color =[.2, .8, .2]):
+def draw_polygon_list(polylist, ax=plt.gca(), color =[.2, .8, .2],label=None):
     if polylist is not None:
         for p in  polylist:
             xy= np.asarray(p['points'])
             xy= np.vstack((xy,xy[0,:])) # ensure its closed
-            ax.plot(xy[:, 0], xy[:, 1], '-', color=color, linewidth=1, zorder=4)
+            ax.plot(xy[:, 0], xy[:, 1], '-', color=color, linewidth=1, zorder=4,label=label)
 
 def _sort_colour_limits(data, vmin, vmax, log_scale, masking = True):
 

@@ -1,5 +1,0 @@
-#path_to_grid = '/scratch/local1/output/21_11_01_sa_verticle_spawning_v03/21_11_01_sa_verticle_spawning_v03_grid.nc'
-path_to_grid = '/scratch/local1/output/22_04_22_light_dryness_frictionresusp_tests_v01/22_04_22_light_dryness_frictionresusp_tests_v01_runInfo.json'
-from oceantracker.user_post_processing.particlePlot import plot_grid_interactive
-
-plot_grid_interactive(path_to_grid)

@@ -32,6 +32,17 @@ def get_case_info_file_from_run_file(runInfo_fileName_or_runInfoDict, ncase = 0,
 
     return path.normpath(case_info_file_name)
 
+def get_run_info_files_from_dir(dir_name):
+    mask = path.join(dir_name,'*_runInfo.json')
+    run_info_file_name = glob(mask)
+
+    if len(run_info_file_name)==0: raise IOError('No case info files in dir '  + dir_name + ', matching mask *_caseInfo.json')
+       
+    run_info = json_util.read_JSON(run_info_file_name[0])
+
+    return run_info
+
+
 def get_case_info_files_from_dir(dir_name, case = None):
     # get all case_info files in given folder, optionally only return given case file (first case is case = 1)
     # folder is cleaned out before start of run so any unfinished caseInfo.json files will  be missing

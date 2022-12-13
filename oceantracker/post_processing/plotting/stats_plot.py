@@ -1,5 +1,6 @@
 import multiprocessing
 import os
+import sys
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
@@ -55,6 +56,7 @@ class retention_data:
         case_infos = load_output_files.get_case_info_files_from_dir(run_dir_path)
        
         for ii,case in enumerate(case_infos):
+            print(f"Current file: {ii}/{len(case_infos)}\nCurrent size of data: {round(sys.getsizeof(data)/1e9,2)}GB", end="\r")
             case_info = load_output_files.read_case_info_file(case)
 
             # name of the current case
@@ -124,15 +126,21 @@ class retention_data:
         # reshaping the dataframe into cases and repetitions 
         multi_index = np.empty((2,metadata["n_total_cases"]),dtype=int)
 
-        for ii in range(metadata["n_rep"]):
-            current_rep = 'R'+str(ii+1).zfill(2) 
-            rep_subset = np.where([current_rep in item for item in data["name"]])[0]
-            case = [int(item.split('R')[0][1:]) for item in data["name"][rep_subset]]
-            
-            multi_index[0,rep_subset] = case
-            multi_index[1,rep_subset] = ii+1
+        if metadata["n_rep"] == 1:
+            case = [int(item.split('C')[1]) for item in data["name"]]
+            multi_index[0,:] = case
+            multi_index[1,:] = 1
 
-        index = pd.MultiIndex.from_tuples(list(zip(*multi_index)),names=['#case','#rep'])
+        else:            
+            for ii in range(metadata["n_rep"]):
+                current_rep = 'R'+str(ii+1).zfill(2) 
+                rep_subset = np.where([current_rep in item for item in data["name"]])[0]
+                case = [int(item.split('R')[0][1:]) for item in data["name"][rep_subset]]
+                
+                multi_index[0,rep_subset] = case
+                multi_index[1,rep_subset] = ii+1
+
+        index = pd.MultiIndex.from_tuples(list(zip(*multi_index)),names=['case','rep'])
         data = data.set_index(index)
 
         # removing unneccessary repreats
@@ -174,8 +182,8 @@ class retention_data:
             ax = self._draw_avg_dbf_box_plot(ax)
 
             if fig_path is not None:
-                filename = ''
-                filename = os.path.join(fig_path,filename+'dbf_avg.png')
+                filename = filename = os.path.split(fig_path)[-1]
+                filename = os.path.join(fig_path,filename+'_dbf_avg.png')
                 plt.savefig(filename)
                 print(f'Saved depth below free surface averaged figure to {filename}')
             
@@ -183,8 +191,8 @@ class retention_data:
             ax = self._draw_avg_dt_box_plot(ax)
 
             if fig_path is not None:
-                filename = ''
-                filename = os.path.join(fig_path,filename+'dt_avg.png')
+                filename = filename = os.path.split(fig_path)[-1]
+                filename = os.path.join(fig_path,filename+'_dt_avg.png')
                 plt.savefig(filename)
                 print(f'Saved distance traveled averaged figure to {filename}')
 
@@ -192,8 +200,8 @@ class retention_data:
             ax = self._draw_avg_rs_box_plot(ax)
 
             if fig_path is not None:
-                filename = ''
-                filename = os.path.join(fig_path,filename+'dt_avg.png')
+                filename = filename = os.path.split(fig_path)[-1]
+                filename = os.path.join(fig_path,filename+'_rs_avg.png')
                 plt.savefig(filename)
                 print(f'Saved distance traveled averaged figure to {filename}')
 
@@ -275,7 +283,6 @@ class retention_data:
         # filter particle counts for the surviving particles
         total = [np.sum(case[:,0,:],axis=1) for case in df['n_particle_total']]
         threshold = np.average([case[0] for case in total])
-        print(threshold)
 
         surviving = [case[-1] for case in total]
         if len(surviving) > plot_shape[0]*plot_shape[1]:

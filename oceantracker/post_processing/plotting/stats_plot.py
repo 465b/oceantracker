@@ -11,12 +11,14 @@ from oceantracker.post_processing.plotting import plot_tracks
 from oceantracker.post_processing.read_output_files import load_output_files
 from oceantracker.util import json_util
 
+sns.set_context("talk")
+
 
 # %%
 
 class retention_data:
 
-    def __init__(self,run_dir_path):
+    def __init__(self,run_dir_path,drop_dublicates=True,compress_verticle_modes=True):
         # keep it try'y
         run_case_info = load_output_files.get_run_info_files_from_dir(run_dir_path)
         
@@ -151,15 +153,42 @@ class retention_data:
             metadata['n_total_cases'] = int(data.shape[0])
             metadata['n_indiv_cases'] = int(data.shape[0]/metadata['n_rep'])
         
-        metadata["vert_mode"] = set(data["vert_mode"])
-        metadata["vert_vel"] = set(data["vert_vel"])
+        metadata["vert_mode"] = sorted(list(set(data["vert_mode"])))
+        metadata["vert_vel"] = sorted(list(set(data["vert_vel"])))
         metadata["vert_vel"].remove(0)
-        metadata['split_frac'] = set(data['split_frac'])
+        metadata['split_frac'] = sorted(list(set(data['split_frac'])),reverse=True)
+
+        if drop_dublicates == True:
+            # tmp add rep to columns for dublication selection 
+            # (otherwise the reps are labeled as well)
+
+            data['rep'] = data.index.get_level_values(1)
+            data = data.drop_duplicates(subset=['rep','vert_mode','vert_vel','split_frac'])
+            data = data.drop(labels=["rep"],axis=1)
+
+
+        if compress_verticle_modes == True:
+            drift = data[data["vert_mode"] == "drift"]
+
+            data = data.drop(drift.index)
+
+            for vert_mode in set(data["vert_mode"]):
+                tmp = drift.copy()
+                tmp["vert_mode"] = vert_mode
+                data = pd.concat([data,tmp])
+
+            data = data.sort_values(by=["vert_mode","vert_vel","split_frac"],
+                                    ascending=[True,True,False])
+
+            metadata["n_total_cases"] = len(data)
+            metadata["n_indiv_cases"] = int(len(data)/metadata["n_rep"])
+            metadata["vert_mode"] = sorted(list(set(data["vert_mode"])))
+            metadata["vert_vel"] = sorted(set(data["vert_vel"]))
 
         self.metadata = metadata
         self.data = data
 
-
+            
     def plot_retention_sa_polycount_overview(self,title='',poly_range=(0,13),mode=None,fig_path=None):
 
         for ii in range(self.metadata['n_rep']):
@@ -215,14 +244,6 @@ class retention_data:
         else:
             plot_shape = (max(1,len(set(self.metadata['vert_vel']))) ,max(1,len(self.metadata['split_frac'])))
 
-    def _draw_indiv_dbf_box_plot(self,ax,case):
-        ax.set_title('Plankton depth below surface')
-        ax.boxplot(self.data.iloc[case]['depth_below_free_surface_short_living'],positions=[1],labels=['short\nliving'])
-        ax.boxplot(self.data.iloc[case]['depth_below_free_surface_long_living'],positions=[2],labels=['long\nliving'])
-        ax.set_ylabel('depth (m)')
-
-        return ax
-
 
     def _draw_avg_dbf_box_plot(self,ax):
 
@@ -230,8 +251,8 @@ class retention_data:
         long = np.concatenate([item for item in self.data['depth_below_free_surface_long_living']])
 
         ax.set_title('Plankton depth below surface')
-        ax.boxplot(short,positions=[1],labels=['short\nliving'])
-        ax.boxplot(long,positions=[2],labels=['long\nliving'])
+        ax.boxplot(short,positions=[1],labels=['short\nliving'],whis=(0,100))
+        ax.boxplot(long,positions=[2],labels=['long\nliving'],whis=(0,100))
         ax.set_ylabel('depth (m)')
 
         return ax
@@ -243,10 +264,14 @@ class retention_data:
         long = np.concatenate([item for item in self.data['distance_traveled_long_living']])
 
         ax.set_title('Plankton distance traveled')
-        ax.boxplot(short,positions=[1],labels=['short\nliving'])
-        ax.boxplot(long,positions=[2],labels=['long\nliving'])
-        ax.set_ylabel('depth (m)')
         ax.set_yscale('log')
+        ax.boxplot(short,positions=[1],labels=['short\nliving'],whis=(0,100))
+        ax.boxplot(long,positions=[2],labels=['long\nliving'],whis=(0,100))
+        ax.set_ylabel('depth (m)')
+        try:
+            ax.set_ylim(0.9*min(np.min(short),np.min(long))),1.1*max(np.max(short),np.max(long))
+        except ValueError:
+            pass
 
         return ax
 
@@ -257,8 +282,8 @@ class retention_data:
         long = np.concatenate([[item] for item in self.data['ratio_stranded_long_living']])
 
         ax.set_title('Ratio of plankton stranded')
-        ax.boxplot(short,positions=[1],labels=['short\nliving'])
-        ax.boxplot(long,positions=[2],labels=['long\nliving'])
+        ax.boxplot(short,positions=[1],labels=['short\nliving'],whis=(0,100))
+        ax.boxplot(long,positions=[2],labels=['long\nliving'],whis=(0,100))
         ax.set_ylabel('ratio of plankton stranded')
 
         return ax
@@ -292,6 +317,9 @@ class retention_data:
 
         # draw figure
         fig,ax = plt.subplots(1,1,figsize=(24,12))
+
+        plt.title(f'Retention success - migration mode: {migration_mode}, replicate: {ii_replicate}')
+
         if migration_mode == 'drift':
             sns.heatmap(surviving, 
                 cmap='RdYlGn',
@@ -299,12 +327,16 @@ class retention_data:
                 xticklabels=['{:,.1e}'.format(item) for item in  self.metadata['split_frac']],
                 yticklabels=[0])
         else:
-            sns.heatmap(surviving, 
+            sns.heatmap(surviving,
                 cmap='RdYlGn',
                 center=threshold,
                 xticklabels=['{:,.1e}'.format(item) for item in  self.metadata['split_frac']],
                 yticklabels=[round(item,4) for item in self.metadata["vert_vel"]]
                 )
+
+        plt.xlabel('growth rate as a splitting fraction')
+        plt.ylabel('vertical velocity (m/s)')
+
         
         if fig_path is not None: 
             filename = os.path.join(fig_path,os.path.split(fig_path)[-1])

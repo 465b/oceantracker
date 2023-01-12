@@ -18,6 +18,7 @@ import glob
 from copy import copy
 import time
 from oceantracker.post_processing.read_output_files import load_output_files
+from oceantracker.post_processing.plotting import plot_utilities, plot_tracks
 
 
 def plot_sample(runCaseInfo, num_to_plot=10 ** 3):
@@ -54,19 +55,20 @@ def plot_sample(runCaseInfo, num_to_plot=10 ** 3):
     for r in r0:  # use r0 from main code
         plt.gcf().gca().add_artist(plt.Circle((0, 0), radius=r, color='black', fill=False, linestyle='--', linewidth=1))
 
-    particle_plot.draw_base_map(grid)
+    plot_utilities.draw_base_map(grid)
     plt.axis([-16000, 16000, -16000, 16000])
 
     ax=plt.subplot(2, 2, 2)
     mag = np.sqrt(x[:, :, 0]**2 + x [:, :, 1]**2)
-    mag0 = np.sqrt(x0[ :, 0]**2 + x0[ :, 1  ]**2)
+    mag0 = np.sqrt(x0[:, 0]**2 + x0[ :, 1]**2)
     plt.plot(t, mag - mag0)
     plt.text(0.1, .1, 'deviation from circle, m', transform=ax.transAxes)
 
 # particle speed from change in positions is harsher test
     ax=plt.subplot(2, 2, 3)
     #v=nc.variables['particle_velocity'][:,sel,:]
-    v=np.diff(x,axis=0)/(data['time'][1]-data['time'][0])
+    dt = (data['time'][-1]-data['time'][0])/data['time'].shape[0]
+    v=np.diff(x,axis=0)/dt
     vmag = np.sqrt(v[:, :, 0] ** 2 + v[:, :, 1] ** 2)
     plt.plot(t[1:], vmag, linewidth=.5)
     plt.xlabel('days')
@@ -86,9 +88,6 @@ def plot_sample(runCaseInfo, num_to_plot=10 ** 3):
         plt.text(0.1, .1, 'Particle z', transform=ax.transAxes)
 
     plt.show()
-    a=1
-
-
 
 def plot_gridded_stats(log,seq_num, annotate_polygon=True, nfig=1):
     p = log['full_params']['particle_statistics'][seq_num]
@@ -202,7 +201,6 @@ def time_check_plot(runCaseInfo):
 
 def base_param(is3D=False, isBackwards = False):
 
-
     # for speed comparions with Scipy make sure AH>0 otherwise its last particle recycling trick helps it
 
     r0 = np.array([2000., 4000., 8000, 10000])  # no bad starts
@@ -213,19 +211,20 @@ def base_param(is3D=False, isBackwards = False):
 
 
     base_case={ 'run_params' :{'write_tracks': True,
-                               'duration':10.*24*3600,
+                               'duration':6.*24*3600,
 
                                 },
 
-            'solver' : { 'RK_order': 4, 'n_sub_steps': 6 }, # 5min steps to mact OT v01 paper
+            'solver' : { 'RK_order': 4, 'n_sub_steps': 9 }, # 5min steps to mact OT v01 paper
             'particle_group_manager' : {},
             'particle_release_groups': [
                                         {'points': p0, 'pulse_size': 1, 'release_interval': 3600,'userRelease_groupID':5,
-                                                                             'maximum_age' : 7*24*3600, 'user_release_group_name': 'A group',
+                                          'maximum_age' : 7*24*3600, 'user_release_group_name': 'A group','z_range' :[-1,0],
                                          },
                                        {'class_name': 'oceantracker.particle_release_groups.polygon_release.PolygonRelease',
                                        'points': poly0, 'pulse_size': 1, 'release_interval': 3600,'userRelease_groupID':200,
                                       'maximum_age' : 4*24*3600, 'user_release_group_name': 'B group',
+                                        'z_range' :[-1,0],
                                             }
                                         ],
             'dispersion': {'A_H': 0.},
@@ -241,16 +240,16 @@ def base_param(is3D=False, isBackwards = False):
     input_dir =path.normpath(path.join(path.split(__file__)[0],'testData'))
 
     params={  'shared_params': { 'debug': True,
-                'root_output_dir': outputdir,
+                                'root_output_dir': outputdir,
                                   'output_file_base': 'test_particle',
-                                  'backtracking': isBackwards
+                                  'backtracking': isBackwards,
                                   },
-              'reader': {'file_mask' : 'circFlow2D*.nc', 'input_dir': input_dir,
-                        'field_variables': {'water_depth': 'depth', 'tide': 'tide',
-                                            'water_velocity' : [{'file_var' :'u','components': [0]},{'file_var' :'v','components': [1]}] },
+              'reader': {'class_name':	"oceantracker.reader.generic_unstructured_reader.GenericUnstructuredReader",
+                  'file_mask' : 'circFlow2D*.nc', 'input_dir': input_dir,
+                        'field_variables': {'water_velocity' : ['u','v'] },
                         'dimension_map': {'node': 'node', 'time': 'time'},
-                        'grid_variables': {'time': 'time', 'x': [{'file_var' :'x','components': [0]},{'file_var' :'y','components': [1]}],
-                                      'triangles': 'simplex',
+                        'grid_variables': {'time': 'time', 'x': ['x','y'],'water_depth': 'depth',
+                                      'triangles': 'simplex','tide': 'tide',
                                        },
                          'time_buffer_size': 200,
                          'isodate_of_hindcast_time_zero': '2000-01-01'},
@@ -261,42 +260,31 @@ def base_param(is3D=False, isBackwards = False):
     if is3D:
         # tweak for circle flow 3D
         r=params['reader']
-        r['water_velocity_map'].update({ 'w':'w'})
-        r['grid_map'].update({'zlevel': 'zlevel'})
+        r['field_variables'].update({ 'water_velocity' : ['u','v', 'w']})
+        r['grid_variables'].update({'zlevel': 'zlevel'})
         r['dimension_map'].update({'z': 'zlevel'})
         r['file_mask'] = params['reader']['file_mask'].replace('2D', '3D')
         base_case['solver']['screen_output_step_count'] = 1
         base_case['dispersion'].update({'A_H': 0.,'A_V': 0.})
-        base_case['velocity_modifiers'].append(
-            {'class_name': 'oceantracker.velocity_modifiers.terminal_velocity.AddTerminalVelocity', 'mean': 0*0.001})
+        #base_case['velocity_modifiers'].append({'class_name': 'oceantracker.velocity_modifiers.terminal_velocity.TerminalVelocity', 'mean': 0*0.001})
 
     return params
 
 
-def run_test(case_params={},  is3D=False,isBackwards= False):
+def run_test(working_params):
 
-    # get and update shared_params
-    working_params=base_param(is3D, isBackwards)
-
-    basic_util.deep_dict_update(working_params['base_case_params'],case_params)
-
-    runInfoFile= run(working_params)
-
-    runCaseInfo = load_output_files.load_Run_and_CaseInfo(runInfoFile, ncase=0)
-
-    return runCaseInfo
+    runInfoFile, errflag= run(working_params)
+    caseInfoFile= load_output_files.get_case_info_file_from_run_file(runInfoFile)
+    return caseInfoFile
 
 if __name__ == '__main__':
 
     # windows/linux  data source
 
     parser = argparse.ArgumentParser()
-
+    parser.add_argument('-test', nargs='?', const=0, type=int, default=1)
     parser.add_argument('--size', nargs='?', const=0, type=int, default=0)
-    parser.add_argument('--test', nargs='?', const=None, type=int, default=None,)
-
-
-
+    parser.add_argument('-dev', action='store_true')
     args = parser.parse_args()
     args.parallel= False
 
@@ -308,33 +296,39 @@ if __name__ == '__main__':
 
     t0 = time.time()
 
-
     for ntest in testList:
+        # tests or development choices of classes
 
-        if ntest==0:
-            # zero dispersion test
+        if ntest==1:
+            # zero dispersion test 2d/3D
+            for is3D in [False, True]:
+                for isBackwards in[True, False ]:
+                    params = base_param(is3D=is3D, isBackwards=isBackwards)
+                    params['shared_params']['max_duration']= 14 * 24 * 3600.
+                    params['base_case_params']['dispersion'].update( {'A_H': 0.,'A_V':0.0})
+                    if args.dev:
+                        params['base_case_params'].update({'interpolator': {'class_name': 'oceantracker.interpolator.dev.vertical_walk_at_particle_location_interp_triangle_native_grid.InterpTriangularNativeGrid_Slayer_and_LSCgrid'}})
+                        # params['base_case_params']['dispersion'].update({'A_V':0., 'A_H':0.})
+                        # params['base_case_params']['particle_release_groups'][0]['pulse_size']=1
 
-            runCaseInfo = run_test(case_params={'duration':2*24*3600,'dispersion': {'A_H': 0.}
-                                       #'particle_buffer_size': 3000,
-                                       #'compact_mode': True
-                                       })
-
-            plot_sample(runCaseInfo)
-            time_check_plot(runCaseInfo)
-        elif ntest == 1:
-            runCaseInfo = run_test(isBackwards=True,case_params={'duration': 2 * 24 * 3600, 'dispersion': {'A_H': 0.}
-                                                # 'particle_buffer_size': 3000,
-                                                # 'compact_mode': True
-                                                })
-            plot_sample(runCaseInfo)
-            time_check_plot(runCaseInfo)
+                    runInfoFile = run_test(params)
+                    plot_sample(runInfoFile)
+                    time_check_plot(runInfoFile)
 
         elif ntest ==2:
             # large dispersion wall bc test
-                runCaseInfo = run_test(case_params={ 'duration': 5.*24*3600, 'dispersion': {'A_H': 50.},
-                                             'particle_group_manager': {'pulse_size': 2, 'release_interval': 300}})
+            for dry_cells in [False, True]:
+                for is3D in [False]:
+                    for isBackwards in [False, True]:
+                        params = base_param(is3D=is3D, isBackwards=isBackwards)
+                        params['reader']['max_duration'] = 1 * 24 * 3600.
+                        params['base_case_params']['dispersion'].update({'A_H': 50.})
+                        params['base_case_params']['particle_release_groups'][0].update({'pulse_size': 10 ** 1})
 
-                plot_sample(runCaseInfo)
+                        runInfoFile = run_test(params)
+                        trackdata= load_output_files.load_particle_track_vars(runInfoFile)
+                        plot_tracks.plot_tracks(trackdata)
+
 
 
         elif ntest==3:
@@ -346,33 +340,22 @@ if __name__ == '__main__':
                                                 'reader' : {'grid_map' : {'dry_cells' : dc},'dry_water_depth': 4.}
                                                          }
 
-            runCaseInfo = run_test(args,params)
-            plot_tracks.animate_particles(runCaseInfo)
+            runInfoFile = run_test(args, params)
+            plot_tracks.animate_particles(runInfoFile)
 
 
         elif ntest == 4:
             # plotting dev
-            runCaseInfo = run_test( {'duration': 5. * 24 * 3600,'dispersion': {'A_H': 0., 'A_V': 0.},
+            runInfoFile = run_test({'duration': 5. * 24 * 3600, 'dispersion': {'A_H': 0., 'A_V': 0.},
                                         'particle_group_manager': {'pulse_size': 10 ** 1, 'release_interval': 1 * 3600},
                                         'trajectory_modifiers':[{'class_name': 'oceantracker.trajectory_modifiers.resuspension.BasicResuspension'}],
-                                        }, is3D=True)
+                                    }, is3D=True)
 
-            plot_sample(runCaseInfo)
+            plot_sample(runInfoFile)
 
 
-        elif ntest == 1000:
-            # large dispersion wall bc test
-            ot = run_test(args,params={'dispersion': {'A_H': 0.}, 'solver': {'duration': 30.}} )
 
-        elif ntest == 2000:
-            # speed test external fine grid
-            args.doplot= False
-            args.size  = 3
-            args.file=1
-            ot = run_test(args,params={'dispersion': {'A_H': 1.0}, 'solver': {'duration': 1.},
-                                       'particle_group_manager':{'pulse_size': 25000, 'release_interval': 0},
-                                       'tracks_writer':{'class_name': 'oceantracker.tracks_writer.writerBase.BaseWriter','output_step_count': 100000} # a non-writer
-                                       })
+
 
         elif ntest== 9999:
             # latest dev block

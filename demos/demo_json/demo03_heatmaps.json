@@ -6,7 +6,7 @@
     },
     "reader": {
         "class_name": "oceantracker.reader.generic_unstructured_reader.GenericUnstructuredReader",
-        "input_dir": "E:/H_Local_drive/ParticleTracking/oceantracker03/demos\\demo_hindcast",
+        "input_dir": "E:\\OneDrive - Cawthron\\H_Local_drive\\ParticleTracking\\oceantracker\\demos\\demo_hindcast",
         "file_mask": "demoHindcast2D*.nc",
         "search_sub_dirs": true,
         "dimension_map": {
@@ -44,7 +44,8 @@
         "tracks_writer": {
             "turn_on_write_particle_properties_list": [
                 "n_cell"
-            ]
+            ],
+            "write_dry_cell_index": true
         },
         "solver": {
             "n_sub_steps": 2
@@ -97,7 +98,10 @@
             },
             {
                 "class_name": "oceantracker.particle_statistics.polygon_statistics.PolygonStats2D_timeBased",
-                "count_status_equal_to": "moving",
+                "count_status_in_range": [
+                    "moving",
+                    "moving"
+                ],
                 "calculation_interval": 1800,
                 "particle_property_list": [
                     "water_depth"

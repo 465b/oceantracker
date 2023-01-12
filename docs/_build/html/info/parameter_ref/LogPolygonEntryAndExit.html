@@ -123,13 +123,6 @@
 <blockquote>
 <div><ul>
 <li><dl>
-<dt><code class="docutils literal notranslate"><span class="pre">case_output_file_tag</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><ul class="simple">
-<li><p>default: <code class="docutils literal notranslate"><span class="pre">inside_polygon_events</span></code></p></li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl>
 <dt><code class="docutils literal notranslate"><span class="pre">chunk_size</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'int'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><ul class="simple">
 <li><p>default: <code class="docutils literal notranslate"><span class="pre">5000</span></code></p></li>
 <li><p>min: <code class="docutils literal notranslate"><span class="pre">1</span></code></p></li>
@@ -146,14 +139,7 @@
 </dl>
 </li>
 <li><dl>
-<dt><code class="docutils literal notranslate"><span class="pre">description</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><ul class="simple">
-<li><p>default: <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl>
-<dt><code class="docutils literal notranslate"><span class="pre">name</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><p>Description: - The internal name, which is used to reference the instance of this class within the code, eg. the name “water_velocity” would refers to a particle property or field used within the code</p>
+<dt><code class="docutils literal notranslate"><span class="pre">name</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">random_walk_varyingAz</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><p>Description: - The internal name, which is used to reference the instance of this class within the code, eg. the name “water_velocity” would refers to a particle property or field used within the code</p>
 <ul class="simple">
 <li><p>default: <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
 </ul>
@@ -162,8 +148,8 @@
 </li>
 <li><dl class="simple">
 <dt><code class="docutils literal notranslate"><span class="pre">particle_prop_to_write_list</span></code>:  <em>&lt;optional&gt;</em></dt><dd><ul class="simple">
-<li><p>a list containing type:  <code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code></p></li>
-<li><p>default list item: <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
+<li><p>a list containing type:  <code class="docutils literal notranslate"><span class="pre">[&lt;class</span> <span class="pre">'str'&gt;]</span></code></p></li>
+<li><p>default list : <code class="docutils literal notranslate"><span class="pre">['ID',</span> <span class="pre">'x',</span> <span class="pre">'IDpulse',</span> <span class="pre">'IDrelease_group',</span> <span class="pre">'user_release_groupID',</span> <span class="pre">'status',</span> <span class="pre">'age']</span></code></p></li>
 <li><p>can_be_empty_list: <code class="docutils literal notranslate"><span class="pre">True</span></code></p></li>
 </ul>
 </dd>
@@ -175,6 +161,13 @@
 <p>polygon_list: still working on display  of lists of dict, eg nested polygon list</p>
 <blockquote>
 <div><ul>
+<li><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">role_output_file_tag</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><ul class="simple">
+<li><p>default: <code class="docutils literal notranslate"><span class="pre">inside_polygon_events</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</li>
 <li><dl>
 <dt><code class="docutils literal notranslate"><span class="pre">user_note</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><ul class="simple">
 <li><p>default: <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>

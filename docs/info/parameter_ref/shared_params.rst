@@ -43,7 +43,7 @@ Parameters:
 		- min: ``0.0``
 
 	* ``numba_function_cache_size`` :   ``<class 'int'>``   *<optional>*
-		- default: ``512``
+		- default: ``1024``
 		- min: ``128``
 
 	* ``output_file_base`` :   ``<class 'str'>``   *<optional>*
@@ -62,7 +62,7 @@ Parameters:
 		- min: ``1``
 
 	* ``root_output_dir`` :   ``<class 'str'>``   *<optional>*
-		Description: - base dir for all ouput files
+		Description: - base dir for all output files
 
 		- default: ``default_root_output_dir``
 

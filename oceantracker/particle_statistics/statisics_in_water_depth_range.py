@@ -16,28 +16,25 @@ class WaterDepthRangeStats(ParameterBaseClass):
         self.add_default_params({'min_depth': PVC(-1.0e09, float), 'max_water_depth': PVC(1.0e09, float)})
 
     def check_requirements(self):
-        msg_list = self.check_class_required_fields_properties_grid_vars_and_3D(required_props=['water_depth'])
+        msg_list = self.check_class_required_fields_prop_etc(required_props_list=['water_depth'])
         return msg_list
 
-#todo add min status to sel and as param
     def select_particles_to_count(self, out):
         # count particles in less than given water depth with status large enough
         part_prop= self.shared_info.classes['particle_properties']
 
-        if self.params['count_status_equal_to'] is None:
-            sel= self.select_depth_rangeGT(part_prop['status'].dataInBufferPtr(), self.params['count_status_greater_than'],
+
+        sel= self.select_depth_rangeGT(part_prop['status'].dataInBufferPtr(), self.params['count_status_in_range'],
                                      part_prop['water_depth'].dataInBufferPtr(), self.params['min_depth'], self.params['max_water_depth'], out)
-        else:
-            sel = self.select_depth_range_statusEQ(part_prop['status'].dataInBufferPtr(), self.params['count_status_equal_to'],
-                                            part_prop['water_depth'].dataInBufferPtr(), self.params['min_depth'], self.params['max_water_depth'], out)
         return sel
 
     @staticmethod
     @njit
-    def select_depth_range_statusGT(status,min_status, depth,min_depth,max_depth, out):
+    def select_depth_range_statusGT(status,count_status_in_range, depth,min_depth,max_depth, out):
         nfound = 0
         for n in range(status.shape[0]):
-           if status[n] > min_status and min_depth < depth[n] < max_depth:
+           if (count_status_in_range[0] <= status[n] > count_status_in_range[1]) and \
+                   (min_depth < depth[n] < max_depth):
                 out[nfound] = n
                 nfound += 1
 
@@ -59,25 +56,25 @@ class GriddedStats2D_timeBasedDepthRange(WaterDepthRangeStats, gridded_statistic
         # set up info/attributes
         super().__init__()
         # set up info/attributes
-        self.add_default_params({'case_output_file_tag' : PVC('stats_gridded_time_depth_range', str)})
+        self.add_default_params({'role_output_file_tag' : PVC('stats_gridded_time_depth_range', str)})
 
 class GriddedStats2D_ageBasedDepthRange(WaterDepthRangeStats, gridded_statistics.GriddedStats2D_agedBased):
     def __init__(self):
         # set up info/attributes
         super().__init__()
         # set up info/attributes
-        self.add_default_params({'case_output_file_tag' : PVC('stats_gridded_age_depth_range', str)})
+        self.add_default_params({'role_output_file_tag' : PVC('stats_gridded_age_depth_range', str)})
 
 class PolygonStats2D_timeBasedDepthRange(WaterDepthRangeStats, polygon_statistics.PolygonStats2D_timeBased):
     def __init__(self):
         # set up info/attributes
         super().__init__()
         # set up info/attributes
-        self.add_default_params({'case_output_file_tag' : PVC('stats_polygon_time_depth_range',str)})
+        self.add_default_params({'role_output_file_tag' : PVC('stats_polygon_time_depth_range',str)})
 
 class PolygonStats2D_ageBasedDepthRange(WaterDepthRangeStats, polygon_statistics.PolygonStats2D_ageBased):
     def __init__(self):
         # set up info/attributes
         super().__init__()
         # set up info/attributes
-        self.add_default_params({'case_output_file_tag' : PVC('stats_polygon_age_depth_range', str)})
+        self.add_default_params({'role_output_file_tag' : PVC('stats_polygon_age_depth_range', str)})

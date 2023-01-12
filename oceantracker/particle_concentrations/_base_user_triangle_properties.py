@@ -13,9 +13,9 @@ class _BaseTriangleProperties(ParameterBaseClass):
         super().__init__()
         # set up info/attributes
         self.add_default_params({'class_name' : PVC(None, str,is_required=True),
-                                 'particle_properties_to_track': PLC(None,str,  make_list_unique=True),
+                                 'particle_properties_to_track': PLC([],[str],  make_list_unique=True),
                                  'write': PVC(True, bool),
-                                 'case_output_file_tag': PVC(None, str),
+                                 'role_output_file_tag': PVC(None, str),
                                  'count_status_equal_to': PVC(None, str, possible_values=particle_info['status_flags'].keys()),
                                  'release_group_to_track': PVC(None, int, min=0),
                                  'only_update_concentrations_on_write': PVC(False, bool),
@@ -32,18 +32,20 @@ class _BaseTriangleProperties(ParameterBaseClass):
     def set_up_output_file(self):
         # set up output file
         si = self.shared_info
-        tag = '' if self.params['case_output_file_tag'] is None else '_' + self.params['case_output_file_tag']
-        self.info['output_file'] = si.output_file_base + '_concentrations_%03.0f' % (self.instanceID + 1) + tag + '.nc'
+        grid = si.classes['reader'].grid
+
+        tag = '' if self.params['role_output_file_tag'] is None else '_' + self.params['role_output_file_tag']
+        self.info['output_file'] = si.output_file_base + '_concentrations_%03.0f' % (self.info['instanceID']  + 1) + tag + '.nc'
 
         si.case_log.write_progress_marker('opening concentrations output to : ' + self.info['output_file'])
 
         self.nc = NetCDFhandler(path.join(si.run_output_dir, self.info['output_file']), 'w')
         nc = self.nc
         nc.write_global_attribute('created', str(datetime.now().isoformat()))
-        nc.add_a_Dimension('time', None)
-        nc.add_a_Dimension('face', si.grid['triangles'].shape[0])
+        nc.add_dimension('time_dim', None)
+        nc.add_dimension('triangle_dim', grid['triangles'].shape[0])
 
-        nc.create_a_variable('time', ['time'])
+        nc.create_a_variable('time', ['time_dim'])
         self.time_steps_written = 0
         # need to add other variables in children
         self.info['time_last_stats_recorded'] = si.time_of_nominal_first_occurrence

@@ -2,11 +2,12 @@
     "shared_params": {
         "output_file_base": "demo01_plot_tracks",
         "add_date_to_run_output_dir": false,
+        "backtracking": true,
         "root_output_dir": "output"
     },
     "reader": {
         "class_name": "oceantracker.reader.generic_unstructured_reader.GenericUnstructuredReader",
-        "input_dir": "E:/H_Local_drive/ParticleTracking/oceantracker03/demos\\demo_hindcast",
+        "input_dir": "E:\\OneDrive - Cawthron\\H_Local_drive\\ParticleTracking\\oceantracker\\demos\\demo_hindcast",
         "file_mask": "demoHindcast2D*.nc",
         "search_sub_dirs": true,
         "dimension_map": {
@@ -40,9 +41,8 @@
             "A_H": 0.1
         },
         "tracks_writer": {
-            "turn_on_write_particle_properties_list": [
-                "n_cell"
-            ]
+            "class_name": "oceantracker.tracks_writer.track_writer_retangular.RectangularTrackWriter",
+            "time_steps_per_per_file": 200
         },
         "solver": {
             "n_sub_steps": 2

@@ -146,13 +146,6 @@
 </dl>
 </li>
 <li><dl>
-<dt><code class="docutils literal notranslate"><span class="pre">description</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><ul class="simple">
-<li><p>default: <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl>
 <dt><code class="docutils literal notranslate"><span class="pre">dimension_map</span></code>: nested parameter dictionary</dt><dd><ul>
 <li><dl>
 <dt><code class="docutils literal notranslate"><span class="pre">node</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><ul class="simple">
@@ -196,6 +189,13 @@
 <li><dl>
 <dt><code class="docutils literal notranslate"><span class="pre">field_variables</span></code>: nested parameter dictionary</dt><dd><ul>
 <li><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">salinity</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><ul class="simple">
+<li><p>default: <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl>
 <dt><code class="docutils literal notranslate"><span class="pre">tide</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><ul class="simple">
 <li><p>default: <code class="docutils literal notranslate"><span class="pre">elev</span></code></p></li>
 </ul>
@@ -210,13 +210,6 @@
 </dl>
 </li>
 <li><dl>
-<dt><code class="docutils literal notranslate"><span class="pre">water_salinity</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><ul class="simple">
-<li><p>default: <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl>
 <dt><code class="docutils literal notranslate"><span class="pre">water_temperature</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><ul class="simple">
 <li><p>default: <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
 </ul>
@@ -225,8 +218,8 @@
 </li>
 <li><dl class="simple">
 <dt><code class="docutils literal notranslate"><span class="pre">water_velocity</span></code>:  <em>&lt;optional&gt;</em></dt><dd><ul class="simple">
-<li><p>a list containing type:  <code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code></p></li>
-<li><p>default list item: <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
+<li><p>a list containing type:  <code class="docutils literal notranslate"><span class="pre">[&lt;class</span> <span class="pre">'str'&gt;]</span></code></p></li>
+<li><p>default list : <code class="docutils literal notranslate"><span class="pre">['hvel']</span></code></p></li>
 <li><p>can_be_empty_list: <code class="docutils literal notranslate"><span class="pre">True</span></code></p></li>
 <li><p>fixed_len: <code class="docutils literal notranslate"><span class="pre">2</span></code></p></li>
 </ul>
@@ -239,8 +232,8 @@
 </li>
 <li><dl class="simple">
 <dt><code class="docutils literal notranslate"><span class="pre">field_variables_to_depth_average</span></code>:  <em>&lt;optional&gt;</em></dt><dd><ul class="simple">
-<li><p>a list containing type:  <code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code></p></li>
-<li><p>default list item: <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
+<li><p>a list containing type:  <code class="docutils literal notranslate"><span class="pre">[&lt;class</span> <span class="pre">'str'&gt;]</span></code></p></li>
+<li><p>default list : <code class="docutils literal notranslate"><span class="pre">[]</span></code></p></li>
 <li><p>can_be_empty_list: <code class="docutils literal notranslate"><span class="pre">True</span></code></p></li>
 </ul>
 </dd>
@@ -264,6 +257,14 @@
 </dl>
 </li>
 <li><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">is_dry_cell</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><p>Description: - Time variable flag of when cell is dry, 1= is dry cell</p>
+<ul class="simple">
+<li><p>default: <code class="docutils literal notranslate"><span class="pre">wetdry_elem</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl>
 <dt><code class="docutils literal notranslate"><span class="pre">time</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><ul class="simple">
 <li><p>default: <code class="docutils literal notranslate"><span class="pre">time</span></code></p></li>
 </ul>
@@ -279,8 +280,8 @@
 </li>
 <li><dl class="simple">
 <dt><code class="docutils literal notranslate"><span class="pre">x</span></code>:  <em>&lt;optional&gt;</em></dt><dd><ul class="simple">
-<li><p>a list containing type:  <code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code></p></li>
-<li><p>default list item: <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
+<li><p>a list containing type:  <code class="docutils literal notranslate"><span class="pre">[&lt;class</span> <span class="pre">'str'&gt;]</span></code></p></li>
+<li><p>default list : <code class="docutils literal notranslate"><span class="pre">['SCHISM_hgrid_node_x',</span> <span class="pre">'SCHISM_hgrid_node_y']</span></code></p></li>
 <li><p>can_be_empty_list: <code class="docutils literal notranslate"><span class="pre">True</span></code></p></li>
 <li><p>fixed_len: <code class="docutils literal notranslate"><span class="pre">2</span></code></p></li>
 </ul>
@@ -337,9 +338,18 @@
 </dl>
 </li>
 <li><dl>
-<dt><code class="docutils literal notranslate"><span class="pre">name</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><p>Description: - The internal name, which is used to reference the instance of this class within the code, eg. the name “water_velocity” would refers to a particle property or field used within the code</p>
+<dt><code class="docutils literal notranslate"><span class="pre">name</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">random_walk_varyingAz</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><p>Description: - The internal name, which is used to reference the instance of this class within the code, eg. the name “water_velocity” would refers to a particle property or field used within the code</p>
 <ul class="simple">
 <li><p>default: <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">one_based_indices</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'bool'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><p>Description: - schism indcies are 1 based , not zero, eg. triangulation nodes start at 1 not zero as in python</p>
+<ul class="simple">
+<li><p>default: <code class="docutils literal notranslate"><span class="pre">True</span></code></p></li>
+<li><p>possible_values: <code class="docutils literal notranslate"><span class="pre">[True,</span> <span class="pre">False]</span></code></p></li>
 </ul>
 </dd>
 </dl>
@@ -371,13 +381,6 @@
 </li>
 <li><dl>
 <dt><code class="docutils literal notranslate"><span class="pre">user_note</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><ul class="simple">
-<li><p>default: <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl>
-<dt><code class="docutils literal notranslate"><span class="pre">water_velocity_depth_average</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><ul class="simple">
 <li><p>default: <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
 </ul>
 </dd>

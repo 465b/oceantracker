@@ -8,3 +8,6 @@ venv
 *.mp4
 *.png
 *.svg
+/profiling/output/
+/oceantracker.egg-info/
+/colborators/tests/output/

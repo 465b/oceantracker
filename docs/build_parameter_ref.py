@@ -46,20 +46,20 @@ class RSTfileBuilder(object):
 
     def collapsable_code(self,file_name):
         a=1
-    '''
+        '''
+            ..raw:: html
+        
+            < details >
+            < summary > code < / summary >
+        
+        ..literalinclude::../../../ demos / minimal_example.py
+        :language: python
+        :caption:
+        
         ..raw:: html
-    
-        < details >
-        < summary > code < / summary >
-    
-    ..literalinclude::../../../ demos / minimal_example.py
-    :language: python
-    :caption:
-    
-    ..raw:: html
-    
-    < / details >
-    '''
+        
+        < / details >
+        '''
 
     def write(self):
         file_name = path.join(root_param_ref_dir, self.file_name)
@@ -78,7 +78,6 @@ class RSTfileBuilder(object):
                     for b in o:
                         f.write(indent +'\t' +b +'\n')
                     f.write(indent + '\n')
-                    a=1
 
     def add_new_toc_to_page(self, toc_name, indent=0, maxdepth=2, sort_body=False):
         self.lines.append({'type':'directive','direct_type': 'toctree','body': [],'sort_body': sort_body, 'indent':indent,'params': {'maxdepth': maxdepth}})
@@ -114,6 +113,7 @@ class RSTfileBuilder(object):
             if type(item) == PVC:
                 self.add_lines('* ``' + key + '`` :   ``' + str(item.info['type']) + '`` '
                                + ('  *<optional>*' if not item.info['is_required'] else '**<isrequired>**') , indent=indent+1)
+
                 if item.info['doc_str'] is not None:
                     self.add_lines('Description: - ' + str(item.info['doc_str'].strip()), indent=indent+2)
                     self.add_lines()
@@ -132,18 +132,18 @@ class RSTfileBuilder(object):
                     self.add_lines('Description: - ' + str(item.info['doc_str'].strip()), indent=indent + 2)
                     self.add_lines()
 
-                if  type(item.info['list_type']) == dict or type(item.info['default_list']) == dict or type(item.info['default_value']) == dict:
+                if  type(item.info['acceptable_types']) == dict or type(item.info['default_list']) == dict or type(item.info['default_value']) == dict:
                     self.add_lines()
                     self.add_lines(key + ': still working on display  of lists of dict, eg nested polygon list ', indent=indent+0)
                     self.add_lines()
                     continue
 
-                self.add_lines('- a list containing type:  ``' + str(item.info['list_type']) + '``', indent=indent+2)
-                self.add_lines('- default list item: ``'
-                               + str(item.info['default_value'].get_defaults() if item.info['default_value'] is not None else None) + '``', indent=indent+2)
+                self.add_lines('- a list containing type:  ``' + str(item.info['acceptable_types']) + '``', indent=indent+2)
+                self.add_lines('- default list : ``'
+                               + str(item.info['default_list']) + '``', indent=indent+2)
 
                 for k, v in item.info.items():
-                    if k not in ['default_list','list_type', 'default_value', 'is_required', 'doc_str'] and v is not None:
+                    if k not in ['default_list','acceptable_types', 'default_value', 'is_required', 'doc_str'] and v is not None:
                         self.add_lines('- ' + k + ': ``' + str(v) + '``', indent=indent+2)
 
                 self.add_lines()
@@ -169,13 +169,15 @@ def make_sub_pages(class_type):
 
     toc.add_lines('**Module:** ' + package_util.package_relative_file_name(mod.__name__).strip())
     toc.add_lines()
-    toc.add_new_toc_to_page(class_type, maxdepth=1,sort_body=True)
 
+    toc.add_new_toc_to_page(class_type, maxdepth=1,sort_body=True)
+    instance = None
     for f in glob(path.join( package_dir,class_type,'*.py')):
 
         mod_str= path.splitext(f)[0].split(package_util.get_root_package_dir() +'\\')[-1].replace('\\','.')
         mod = importlib.import_module(mod_str)
         package_util.get_package_name()
+
         for name, c in  inspect.getmembers(mod):
             if not inspect.isclass(c) : continue
             #print(name)
@@ -187,7 +189,8 @@ def make_sub_pages(class_type):
 
 
             p = RSTfileBuilder(name, name)
-            p.add_lines('**Description:** ' + instance.docs['description'])
+
+            p.add_lines('**Description:** ' + (instance.docs['description'] if instance.docs['description'] is not None else '' ) )
             p.add_lines()
             p.add_lines('**Class:** ' + c.__module__ + '.' + c.__name__)
             p.add_lines()
@@ -220,6 +223,10 @@ def make_sub_pages(class_type):
             p.write()
             toc.add_toc_link(class_type,p)
 
+    # add role from last instance, as it derives from base class
+    if instance is not None:
+        toc.add_lines('**Role:** ' + (instance.docs['role'] if instance.docs['role'] is not None else ''))
+        toc.add_lines()
     toc.write()
     return toc
 

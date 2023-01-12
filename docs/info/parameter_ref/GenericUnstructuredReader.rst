@@ -29,9 +29,6 @@ Parameters:
 		- default: ``False``
 		- possible_values: ``[True, False]``
 
-	* ``description`` :   ``<class 'str'>``   *<optional>*
-		- default: ``None``
-
 	* ``dimension_map``: nested parameter dictionary
 		* ``node`` :   ``<class 'str'>``   *<optional>*
 			- default: ``node``
@@ -49,27 +46,27 @@ Parameters:
 			- default: ``None``
 
 	* ``field_variables``: nested parameter dictionary
+		* ``salinity`` :   ``<class 'str'>``   *<optional>*
+			- default: ``None``
+
 		* ``tide`` :   ``<class 'str'>``   *<optional>*
 			- default: ``None``
 
 		* ``water_depth`` :   ``<class 'str'>``   *<optional>*
 			- default: ``None``
 
-		* ``water_salinity`` :   ``<class 'str'>``   *<optional>*
-			- default: ``None``
-
 		* ``water_temperature`` :   ``<class 'str'>``   *<optional>*
 			- default: ``None``
 
 		* ``water_velocity``:  *<optional>*
-			- a list containing type:  ``<class 'str'>``
-			- default list item: ``None``
+			- a list containing type:  ``[<class 'str'>, None]``
+			- default list : ``['u', 'v', None]``
 			- can_be_empty_list: ``True``
 			- fixed_len: ``3``
 
 	* ``field_variables_to_depth_average``:  *<optional>*
-		- a list containing type:  ``<class 'str'>``
-		- default list item: ``None``
+		- a list containing type:  ``[<class 'str'>]``
+		- default list : ``[]``
 		- can_be_empty_list: ``True``
 
 	* ``file_mask`` :   ``<class 'str'>`` **<isrequired>**
@@ -81,6 +78,11 @@ Parameters:
 		* ``bottom_cell_index`` :   ``<class 'str'>``   *<optional>*
 			- default: ``None``
 
+		* ``is_dry_cell`` :   ``<class 'numpy.int8'>``   *<optional>*
+			Description: - Time variable flag of when cell is dry, 1= is dry cell
+
+			- default: ``None``
+
 		* ``time`` :   ``<class 'str'>`` **<isrequired>**
 			- default: ``time``
 
@@ -88,8 +90,8 @@ Parameters:
 			- default: ``None``
 
 		* ``x``:  *<optional>*
-			- a list containing type:  ``<class 'str'>``
-			- default list item: ``None``
+			- a list containing type:  ``[<class 'str'>]``
+			- default list : ``['x', 'y']``
 			- can_be_empty_list: ``True``
 			- fixed_len: ``2``
 
@@ -112,10 +114,16 @@ Parameters:
 		- default: ``0.25``
 		- min: ``0.0``
 
-	* ``name`` :   ``<class 'str'>``   *<optional>*
+	* ``name`` :   ``random_walk_varyingAz``   *<optional>*
 		Description: - The internal name, which is used to reference the instance of this class within the code, eg. the name "water_velocity" would refers to a particle property or field used within the code
 
 		- default: ``None``
+
+	* ``one_based_indices`` :   ``<class 'bool'>``   *<optional>*
+		Description: - indcies in hindcast start at 1, not zero, eg. triangulation nodes start at 1 not zero as in python
+
+		- default: ``False``
+		- possible_values: ``[True, False]``
 
 	* ``search_sub_dirs`` :   ``<class 'bool'>``   *<optional>*
 		- default: ``False``

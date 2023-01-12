@@ -51,14 +51,14 @@ base_case_params:
     release_interval: 3600
   run_params: {}
   solver:
-    n_sub_steps: 6
+    n_sub_steps: 30
 reader:
   class_name: oceantracker.reader.schism_reader.SCHSIMreaderNCDF
   depth_average: true
   field_variables:
     water_temperature: temp
   file_mask: demoHindcastSchism3D.nc
-  input_dir: E:/H_Local_drive/ParticleTracking/oceantracker03/demos\demo_hindcast
+  input_dir: E:\OneDrive - Cawthron\H_Local_drive\ParticleTracking\oceantracker\demos\demo_hindcast
 shared_params:
   debug: true
   output_file_base: demo57_SCHISM_3D_lateralBoundaryTest

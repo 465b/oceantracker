@@ -21,7 +21,7 @@ Fast particle tracking in unstructured grids
    </video>
   </center>
 
-OceanTracker is a fast extendable code for particle tracking in unstructured grids [1]_.
+OceanTracker is a fast extendable code for offline particle tracking in unstructured grids [1]_.
 
 OceanTracker's speed enables millions of particles to be simulated in unstructured grids. This
 significantly increases the range of particle behaviours that can be modeled and the quality of statistics
@@ -32,7 +32,6 @@ OceanTracker code is highly flexible and extendable by the user, whether run by 
 or by an expert adding their specialised code for novel particle behaviours or statistics, to the computational pipe line.
 
 Code is on `github <https://github.com/oceantracker/oceantracker/>`_ , released under the MIT licence.
-
 
 ====================
 Features

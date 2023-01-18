@@ -78,10 +78,10 @@ class retention_data:
             try:
                 data.iloc[ii]["vert_mode"] = case_info['full_params']['velocity_modifiers'][0]['class_name']
             except KeyError:
-                data.iloc[ii]["vert_mode"] = ['oceantracker.velocity_modifiers.terminal_velocity.AddTerminalVelocity']
+                data.iloc[ii]["vert_mode"] = ['oceantracker.velocity_modifiers.terminal_velocity.TerminalVelocity']
 
-            diel = 'oceantracker.velocity_modifiers.terminal_velocity.AddDielVelocity'
-            mono = 'oceantracker.velocity_modifiers.terminal_velocity.AddTerminalVelocity'
+            diel = 'oceantracker.velocity_modifiers.terminal_velocity.DielVelocity'
+            mono = 'oceantracker.velocity_modifiers.terminal_velocity.TerminalVelocity'
 
             if (data.iloc[ii]["vert_mode"] == diel) and (data.iloc[ii]["vert_vel"] != 0):
                 data.iloc[ii]["vert_mode"] = 'diel'

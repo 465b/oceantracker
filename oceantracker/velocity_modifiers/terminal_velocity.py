@@ -60,7 +60,7 @@ class TerminalVelocity(VelocityModiferBase):
             v[n, 2] += w[n]*model_dir
 
 
-class AddDielVelocity(AddTerminalVelocity):
+class DielVelocity(TerminalVelocity):
     """
     Adds verticle velocities to the particles following a rectangular 
     wave pattern.

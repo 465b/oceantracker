@@ -96,7 +96,7 @@ class NetCDFhandler(object):
     def write_part_of_first_dim_of_variable(self,name,data, sel):
         # write data as part of first dim of named variable with give indicies, only if numpy array list in sel indices is not empty
         if sel.shape[0] > 0:
-            self.file_handle.variables[name][sel, ...] = data[sel, ...]
+            self.file_handle.variables[name][sel, ...] = data[:]
 
     def write_global_attribute(self, name,value) :
         setattr(self.file_handle, name, self._sanitize_attribute(value))
@@ -115,7 +115,7 @@ class NetCDFhandler(object):
     def are_all_vars(self, name_list):        return all(self.are_vars(name_list))
 
     # dimensions
-    def get_dims(self): return self.file_handle.dimensions
+    def get_dims(self): return list(self.file_handle.dimensions.keys())
     def get_dim_size(self,dim_name):  return self.file_handle.dimensions[dim_name].size
 
     def is_dim(self,dim_name):return dim_name in self.file_handle.dimensions

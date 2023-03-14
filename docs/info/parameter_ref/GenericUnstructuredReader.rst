@@ -21,6 +21,11 @@ Parameters:
 
 		- default: ``None``
 
+	* ``coordinate_projection`` :   ``<class 'str'>``   *<optional>*
+		Description: - string map project for meters grid for use by pyproj module, eg  "proj=utm +zone=16 +datum=NAD83"
+
+		- default: ``None``
+
 	* ``cords_in_lat_long`` :   ``<class 'bool'>``   *<optional>*
 		- default: ``False``
 		- possible_values: ``[True, False]``
@@ -46,6 +51,9 @@ Parameters:
 			- default: ``None``
 
 	* ``field_variables``: nested parameter dictionary
+		* ``bottom_stress`` :   ``<class 'str'>``   *<optional>*
+			- default: ``None``
+
 		* ``salinity`` :   ``<class 'str'>``   *<optional>*
 			- default: ``None``
 
@@ -58,11 +66,14 @@ Parameters:
 		* ``water_temperature`` :   ``<class 'str'>``   *<optional>*
 			- default: ``None``
 
-		* ``water_velocity``:  *<optional>*
+		* ``water_velocity``:**<isrequired>**
 			- a list containing type:  ``[<class 'str'>, None]``
 			- default list : ``['u', 'v', None]``
 			- can_be_empty_list: ``True``
 			- fixed_len: ``3``
+
+		* ``wind_stress`` :   ``<class 'str'>``   *<optional>*
+			- default: ``None``
 
 	* ``field_variables_to_depth_average``:  *<optional>*
 		- a list containing type:  ``[<class 'str'>]``
@@ -71,6 +82,11 @@ Parameters:
 
 	* ``file_mask`` :   ``<class 'str'>`` **<isrequired>**
 		Description: - Mask for file names, eg "scout*.nc", is joined with "input_dir" to give full file names
+
+		- default: ``None``
+
+	* ``grid_file`` :   ``<class 'str'>``   *<optional>*
+		Description: - File name with hydrodynamic grid data, as path relative to input_dir, default is get grid from first hindasct file
 
 		- default: ``None``
 
@@ -114,7 +130,7 @@ Parameters:
 		- default: ``0.25``
 		- min: ``0.0``
 
-	* ``name`` :   ``random_walk_varyingAz``   *<optional>*
+	* ``name`` :   ``<class 'str'>``   *<optional>*
 		Description: - The internal name, which is used to reference the instance of this class within the code, eg. the name "water_velocity" would refers to a particle property or field used within the code
 
 		- default: ``None``
@@ -124,6 +140,16 @@ Parameters:
 
 		- default: ``False``
 		- possible_values: ``[True, False]``
+
+	* ``required_file_dimensions``:  *<optional>*
+		- a list containing type:  ``[<class 'str'>]``
+		- default list : ``[]``
+		- can_be_empty_list: ``True``
+
+	* ``required_file_variables``:  *<optional>*
+		- a list containing type:  ``[<class 'str'>]``
+		- default list : ``[]``
+		- can_be_empty_list: ``True``
 
 	* ``search_sub_dirs`` :   ``<class 'bool'>``   *<optional>*
 		- default: ``False``
@@ -140,4 +166,8 @@ Parameters:
 
 	* ``user_note`` :   ``<class 'str'>``   *<optional>*
 		- default: ``None``
+
+	* ``water_density`` :   ``<class 'int'>``   *<optional>*
+		- default: ``48``
+		- min: ``2``
 

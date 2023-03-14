@@ -21,6 +21,11 @@ Parameters:
 
 		- default: ``None``
 
+	* ``coordinate_projection`` :   ``<class 'str'>``   *<optional>*
+		Description: - string map project for meters grid for use by pyproj module, eg  "proj=utm +zone=16 +datum=NAD83"
+
+		- default: ``None``
+
 	* ``cords_in_lat_long`` :   ``<class 'bool'>``   *<optional>*
 		- default: ``False``
 		- possible_values: ``[True, False]``
@@ -30,22 +35,10 @@ Parameters:
 		- possible_values: ``[True, False]``
 
 	* ``dimension_map``: nested parameter dictionary
-		* ``node`` :   ``<class 'str'>``   *<optional>*
-			- default: ``nSCHISM_hgrid_node``
-
-		* ``time`` :   ``<class 'str'>``   *<optional>*
-			- default: ``time``
-
-		* ``vector2Ddim`` :   ``<class 'str'>``   *<optional>*
-			- default: ``two``
-
-		* ``vector3Ddim`` :   ``<class 'str'>``   *<optional>*
+	* ``field_variables``: nested parameter dictionary
+		* ``bottom_stress`` :   ``<class 'str'>``   *<optional>*
 			- default: ``None``
 
-		* ``z`` :   ``<class 'str'>``   *<optional>*
-			- default: ``nSCHISM_vgrid_layers``
-
-	* ``field_variables``: nested parameter dictionary
 		* ``salinity`` :   ``<class 'str'>``   *<optional>*
 			- default: ``None``
 
@@ -64,6 +57,9 @@ Parameters:
 			- can_be_empty_list: ``True``
 			- fixed_len: ``2``
 
+		* ``wind_stress`` :   ``<class 'str'>``   *<optional>*
+			- default: ``None``
+
 	* ``field_variables_to_depth_average``:  *<optional>*
 		- a list containing type:  ``[<class 'str'>]``
 		- default list : ``[]``
@@ -74,30 +70,12 @@ Parameters:
 
 		- default: ``None``
 
+	* ``grid_file`` :   ``<class 'str'>``   *<optional>*
+		Description: - File name with hydrodynamic grid data, as path relative to input_dir, default is get grid from first hindasct file
+
+		- default: ``None``
+
 	* ``grid_variables``: nested parameter dictionary
-		* ``bottom_cell_index`` :   ``<class 'str'>``   *<optional>*
-			- default: ``node_bottom_index``
-
-		* ``is_dry_cell`` :   ``<class 'str'>``   *<optional>*
-			Description: - Time variable flag of when cell is dry, 1= is dry cell
-
-			- default: ``wetdry_elem``
-
-		* ``time`` :   ``<class 'str'>``   *<optional>*
-			- default: ``time``
-
-		* ``triangles`` :   ``<class 'str'>``   *<optional>*
-			- default: ``SCHISM_hgrid_face_nodes``
-
-		* ``x``:  *<optional>*
-			- a list containing type:  ``[<class 'str'>]``
-			- default list : ``['SCHISM_hgrid_node_x', 'SCHISM_hgrid_node_y']``
-			- can_be_empty_list: ``True``
-			- fixed_len: ``2``
-
-		* ``zlevel`` :   ``<class 'str'>``   *<optional>*
-			- default: ``zcor``
-
 	* ``hgrid_file_name`` :   ``<class 'str'>``   *<optional>*
 		- default: ``None``
 
@@ -117,16 +95,21 @@ Parameters:
 		- default: ``0.25``
 		- min: ``0.0``
 
-	* ``name`` :   ``random_walk_varyingAz``   *<optional>*
+	* ``name`` :   ``<class 'str'>``   *<optional>*
 		Description: - The internal name, which is used to reference the instance of this class within the code, eg. the name "water_velocity" would refers to a particle property or field used within the code
 
 		- default: ``None``
 
-	* ``one_based_indices`` :   ``<class 'bool'>``   *<optional>*
-		Description: - schism indcies are 1 based , not zero, eg. triangulation nodes start at 1 not zero as in python
+	* ``one_based_indices``: nested parameter dictionary
+	* ``required_file_dimensions``:  *<optional>*
+		- a list containing type:  ``[<class 'str'>]``
+		- default list : ``[]``
+		- can_be_empty_list: ``True``
 
-		- default: ``True``
-		- possible_values: ``[True, False]``
+	* ``required_file_variables``:  *<optional>*
+		- a list containing type:  ``[<class 'str'>]``
+		- default list : ``[]``
+		- can_be_empty_list: ``True``
 
 	* ``search_sub_dirs`` :   ``<class 'bool'>``   *<optional>*
 		- default: ``False``
@@ -143,4 +126,8 @@ Parameters:
 
 	* ``user_note`` :   ``<class 'str'>``   *<optional>*
 		- default: ``None``
+
+	* ``water_density`` :   ``<class 'int'>``   *<optional>*
+		- default: ``48``
+		- min: ``2``
 

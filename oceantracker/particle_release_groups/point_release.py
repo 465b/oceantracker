@@ -18,7 +18,7 @@ class PointRelease(ParameterBaseClass):
                                  'pulse_size' :     PVC(1, int, min=1, doc_str= 'Number of particles released in a single pulse, this number is released every release_interval.'),
                                  'release_interval':PVC(0., float, min =0., doc_str= 'Time interval between released pulses. To release at only one time use release_interval=0.'),
                                  'release_start_date': PVC(None, 'iso8601date'),
-                                 # to do add ability to release on set dates/times 'release_dates': PLC([], 'iso8601date'),
+                                   # to do add ability to release on set dates/times 'release_dates': PLC([], 'iso8601date'),
                                  'release_duration': PVC(1.0e32, float,min=0,
                                                     doc_str='Time in seconds particles are released for after they start being released, ie releases stop this time after first release.' ),
                                  'maximum_age': PVC(1.0e32,float,min=1.,
@@ -29,7 +29,9 @@ class PointRelease(ParameterBaseClass):
                                               doc_str='Allow releases in cells which are currently dry, ie. either permanently dry or temporarily dry due to the tide.'),
                                  'z_range': PLC([],[float, int], min_length=2, doc_str='z range = [zmin, zmax] to randomly release in 3D, overrides any given release z value'),
                                   #Todo implement release group particle with different parameters, eg { 'oxygen' : {'decay_rate: 0.01, 'initial_value': 5.}
-                                 'user_particle_property_parameters':{}, #  dictionary of items with keys of particle_properties,
+                                'max_cycles_to_find_release_points': PVC(50, int, min=50, doc_str='Maximum number of cycles to search for acceptable release points, ie. inside domain, polygon etc '),
+
+                                'user_particle_property_parameters':{}, #  dictionary of items with keys of particle_properties,
                                                                             # each a dictionary of parameters for that property
                                                                             # eg { 'oxygen' : {'decay_rate: 0.01, 'initial_value': 5.}}
                                  })
@@ -75,9 +77,9 @@ class PointRelease(ParameterBaseClass):
 
         # now check if start in range
         if not hindcast_start <= release_info['first_release_time'] <= hindcast_end:
-            si.case_log.write_msg('Release group= ' + str(n+1) + ', name= ' + self.params['name'] + ',  parameter release_start_time is ' +
-                               time_util.seconds_to_iso8601str(release_info['first_release_time']) + '  is outside hindcast range ' + time_util.seconds_to_iso8601str(hindcast_start)
-                               + ' to ' + time_util.seconds_to_iso8601str(hindcast_end), warning=True)
+            si.msg_logger.msg('Release group= ' + str(n + 1) + ', name= ' + self.params['name'] + ',  parameter release_start_time is ' +
+                                    time_util.seconds_to_iso8601str(release_info['first_release_time']) + '  is outside hindcast range ' + time_util.seconds_to_iso8601str(hindcast_start)
+                                    + ' to ' + time_util.seconds_to_iso8601str(hindcast_end), warning=True)
 
         # todo allow a list of release dates for the group, eg elif params['release_dates']:
         if params['release_interval'] == 0.:
@@ -155,12 +157,13 @@ class PointRelease(ParameterBaseClass):
                 x0          = np.concatenate((x0, x), axis =0)
                 n_cell_guess= np.concatenate((n_cell_guess, n_cell))
 
-            # allow 50 cycles to find points
+            # allow max_cycles_to_find_release_points cycles to find points
             count += 1
-            if count > 50: break
+            if count > self.params["max_cycles_to_find_release_points"]: break
 
         if n_found < n_required:
-            self.write_msg('Release, only found ' + str(n_found) + ' of ' + str(n_required) + ' required points inside domain after 50 cycles',warning=True)
+            si.msg_logger.msg('Release, only found ' + str(n_found) + ' of ' + str(n_required) + ' required points inside domain after 50 cycles',warning=True,
+                           hint=f'Maybe, release points outside the domain?, or hydro-model grid and release points use different coordinate systems?? or increase parameter  max_cycles_to_find_release_points, current value = {self.params["max_cycles_to_find_release_points"]:3}' )
             n_required = n_found #
 
         # trim initial location and cell  to required number
@@ -175,7 +178,7 @@ class PointRelease(ParameterBaseClass):
 
         info['number_released'] += n  # count number released in this group
 
-        if si.hindcast_is3D and (len(self.params['z_range']) > 0 or x0.shape[1] < 3):
+        if si.hydro_model_is3D and (len(self.params['z_range']) > 0 or x0.shape[1] < 3):
 
             if len(self.params['z_range']) == 0:  self.params['z_range']= [-1.0E30,1.0E30]
 
@@ -246,9 +249,9 @@ class PointRelease(ParameterBaseClass):
         x = x[sel, :]
         n_cell = n_cell[sel]
 
-        # add keep only those in wet cells, crudely this is those not in dry cell at this and the next time step
+        # add keep only those in wet cells at this time
         if not self.params['allow_release_in_dry_cells']:
-            sel =grid_time_buffers['dry_cell_index'][n_cell] < 128
+            sel =grid_time_buffers['dry_cell_index'][n_cell] < 128 # those wet
             x = x[sel, :]
             n_cell = n_cell[sel]
 

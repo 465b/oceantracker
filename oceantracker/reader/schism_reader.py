@@ -7,9 +7,11 @@ from oceantracker.util.parameter_checking import ParamDictValueChecker as PVC, P
 from oceantracker.util.ncdf_util import NetCDFhandler
 from oceantracker.util import time_util
 from oceantracker.fields.reader_field import ReaderField
-from oceantracker.util.triangle_utilities_code import split_quad_cells
-from oceantracker.util.triangle_utilities_code import append_split_cell_data
+from oceantracker.reader.util.reader_util import split_quad_cells, append_split_cell_data
 
+
+#todo add optional standard feilds by list of internal names, using a stanard feild maping maping
+#todo a way to map al stanard feilds but supress reading them unless requested?
 class SCHSIMreaderNCDF(GenericUnstructuredReader):
     # loads a standard SCHISM netcdf output file with nodal data
     # variable names can be tweaked via maps in shared_params, if non-standard names used
@@ -49,36 +51,48 @@ class SCHSIMreaderNCDF(GenericUnstructuredReader):
 
     def read_dry_cell_data(self,nc,file_index, is_dry_cell_buffer, buffer_index):
         # calculate dry cell flags, if any cell node is dry
+        #todo enforce read as boolean
         grid = self.grid
         # get dry cells for each triangle allowing for splitting of quad cells
         data_added_to_buffer = nc.read_a_variable('wetdry_elem', file_index)
         is_dry_cell_buffer[buffer_index, :] = append_split_cell_data(grid, data_added_to_buffer, axis=1)
 
-    def additional_setup_and_hindcast_file_checks(self, nc, msg_list):
+    def additional_setup_and_hindcast_file_checks(self, nc, msg_logger):
         # sort out which velocity etc are there and adjust field variables
         params = self.params
         fv= params['field_variables']
 
-        if not nc.is_var('hvel') or params['depth_average']:
-            # run in depth averaged mode if only a 2D schsim run
+        if not nc.is_var('hvel'):
+            # run in depth averaged mode if only a 2D Schisim run
             params['depth_average']= True
+            msg_logger.msg(' 3D Schism velocity variable "hvel" not in hydo-model trying to run in depth average mode using "dahv" variable', note=True)
             fv['water_velocity'] = ['dahv'] # one vector component
 
-        if 'water_velocity' in self.params['field_variables_to_depth_average'] and nc.is_var('dahv'):
-            # used depth average vel in fil instead of doing depth average
-            self.params['field_variables_to_depth_average'].remove('water_velocity')
-            fv['water_velocity_depth_average'] = ['dahv']
+        if params['depth_average']:
+            #sort out which velo to use
+            if  nc.is_var('dahv'):
+                fv['water_velocity'] = ['dahv']
+                if 'water_velocity' in self.params['field_variables_to_depth_average']:
+                    # make sure wre are not also depth averaging  3D velocity when running depth averaged
+                    self.params['field_variables_to_depth_average'].remove('water_velocity')
+        else:
+            # 3D run
+            fv['water_velocity'] = ['hvel']
+            # include vertical velocity if in file
+            if nc.is_var('vertical_velocity'):
+                fv['water_velocity'].append('vertical_velocity')
+            else:
+                msg_logger.msg('No "vertical_velocity" variable in Schism hydro-model files, assuming vertical_velocity=0', note=True)
 
         if  nc.is_var('minimum_depth'):
             # use schism min depth times 1.2 to allow for diff due to interp cell tide to nodes in schisms output
             params['minimum_total_water_depth']= 1.2*float(nc.read_a_variable('minimum_depth'))
 
-        return msg_list
+
 
     def make_non_time_varying_grid(self,nc, grid):
         grid =super().make_non_time_varying_grid(nc, grid)
         return grid
-
 
     def read_time(self, nc, file_index=None):
         if file_index is None:
@@ -100,7 +114,7 @@ class SCHSIMreaderNCDF(GenericUnstructuredReader):
         grid = self.grid
         if nc.is_var('node_bottom_index'):
             data = nc.read_a_variable('node_bottom_index')
-            data -= 1
+            data -= 1 # make zero based index
             grid['vertical_grid_type'] = 'LSC'
         else:
             # Slayer grid, bottom cell index = zero
@@ -109,10 +123,10 @@ class SCHSIMreaderNCDF(GenericUnstructuredReader):
 
         return data.astype(np.int32)
 
-    def read_nodal_x_float64(self, nc):
+    def read_nodal_x_as_float64(self, nc):
         x = np.stack((nc.read_a_variable('SCHISM_hgrid_node_x'), nc.read_a_variable('SCHISM_hgrid_node_y')), axis=1).astype(np.float64)
         if self.params['cords_in_lat_long']:
-            x  = self.convert_lat_long_to_meters_grid(x)
+            x  = self.convert_lon_lat_to_meters_grid(x)
         return x
 
     def read_triangles_as_int32(self, nc):
@@ -130,11 +144,9 @@ class SCHSIMreaderNCDF(GenericUnstructuredReader):
         
         return data.astype(np.int32), quad_cells_to_split
 
-    def read_open_boundary_data(self, grid):
-        # todo rewrite to read boundary dat and create int matrix , for open boundary and land boundary nodes and cells. flaged ass 1/2
-        # and make this part of the read grid method
-
-        # read hgrid file for open boundary data
+    def read_open_boundary_data_as_boolean(self, grid):
+        # make boolen of whether node is an open boundary node
+        # read schisim  hgrid file for open boundary data
         is_open_boundary_node = np.full((grid['x'].shape[0],),False)
 
         if self.params['hgrid_file_name'] is  None:

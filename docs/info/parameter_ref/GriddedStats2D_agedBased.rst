@@ -54,7 +54,7 @@ Parameters:
 		- fixed_len: ``2``
 
 	* ``grid_span``:  *<optional>*
-		- a list containing type:  ``[<class 'float'>]``
+		- a list containing type:  ``[<class 'float'>, <class 'int'>]``
 		- default list : ``[]``
 		- can_be_empty_list: ``True``
 		- fixed_len: ``2``
@@ -65,7 +65,7 @@ Parameters:
 	* ``min_age_to_bin`` :   ``<class 'float'>``   *<optional>*
 		- default: ``0.0``
 
-	* ``name`` :   ``random_walk_varyingAz``   *<optional>*
+	* ``name`` :   ``<class 'str'>``   *<optional>*
 		Description: - The internal name, which is used to reference the instance of this class within the code, eg. the name "water_velocity" would refers to a particle property or field used within the code
 
 		- default: ``None``

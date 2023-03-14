@@ -27,6 +27,12 @@ Parameters:
 
 		- default: ``None``
 
+	* ``max_cycles_to_find_release_points`` :   ``<class 'int'>``   *<optional>*
+		Description: - Maximum number of cycles to search for acceptable release points, ie. inside domain, polygon etc
+
+		- default: ``50``
+		- min: ``50``
+
 	* ``max_water_depth`` :   ``<class 'float'>``   *<optional>*
 		- default: ``1e+37``
 
@@ -39,7 +45,7 @@ Parameters:
 	* ``min_water_depth`` :   ``<class 'float'>``   *<optional>*
 		- default: ``-1e+37``
 
-	* ``name`` :   ``random_walk_varyingAz``   *<optional>*
+	* ``name`` :   ``<class 'str'>``   *<optional>*
 		Description: - The internal name, which is used to reference the instance of this class within the code, eg. the name "water_velocity" would refers to a particle property or field used within the code
 
 		- default: ``None``

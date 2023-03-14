@@ -91,6 +91,12 @@ def deep_dict_update(d, d_updates):
     return d
 
 
+def is_substring_in_list(sub_str,str_list):
+    out= False
+    for s in str_list:
+        if sub_str in s: out = True
+    return out
+
 
 def get_computer_info():
     # can fail on some hardware??
@@ -100,7 +106,8 @@ def get_computer_info():
            'processor': platform.processor(),
             'CPUs_hardware':cpu_count(logical=False),
            'CPUs_logical': cpu_count(logical=True),
-           'Freq_Mhz':  (cpu_freq().max/1000.)
+           'Freq_Mhz':  (cpu_freq().max/1000.),
+           'python':[]
            }
     except Exception as e:
         s= ' Failed to get computer info, error=' + str(e)

@@ -2,7 +2,7 @@
 VerticalGradient
 #################
 
-**Description:** Calculated vertical gradient of "name_of_field" param, as  "name_of_field_vertical_grad"
+**Description:** Calculated a vertical gradient field with name  "name_of_field" param, as a field named "name_of_field_vertical_grad"
 
 **Class:** oceantracker.fields.field_vertical_gradient.VerticalGradient
 
@@ -33,7 +33,7 @@ Parameters:
 		- default: ``None``
 
 	* ``name_of_field`` :   ``<class 'str'>`` **<isrequired>**
-		- default: ````
+		- default: ``None``
 
 	* ``num_components`` :   ``<class 'int'>``   *<optional>*
 		- default: ``None``

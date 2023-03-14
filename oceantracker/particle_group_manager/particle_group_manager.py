@@ -28,7 +28,7 @@ class ParticleGroupManager(ParameterBaseClass):
         # is data 3D
         self.particles_in_buffer = 0
         self.particles_released = 0
-        nDim = 3 if si.hindcast_is3D else  2
+        nDim = 3 if si.hydro_model_is3D else  2
 
         #  time dependent core  properties
         self.add_time_varying_info(name = 'time', description='time in seconds, since 1/1/1970') #time has only one value at each time step
@@ -100,8 +100,8 @@ class ParticleGroupManager(ParameterBaseClass):
             bad = part_prop['status'].find_subset_where(new_buffer_indices, 'lt', si.particle_status_flags['frozen'], out=self.get_particle_index_buffer())
 
         if bad.shape[0] > 0:
-            self.write_msg(str(bad.shape[0]) + ' initial locations are outside grid domain, or NaN, or outside due to random selection of locations outside domain',warning=True)
-            self.write_msg(' Status of bad initial locations' + str(part_prop['status'].get_values(bad)),warning=True)
+            si.msg_logger.msg(str(bad.shape[0]) + ' initial locations are outside grid domain, or NaN, or outside due to random selection of locations outside domain',warning=True)
+            si.msg_logger.msgg(' Status of bad initial locations' + str(part_prop['status'].get_values(bad)),warning=True)
 
 
 
@@ -119,7 +119,7 @@ class ParticleGroupManager(ParameterBaseClass):
 
         if smax >= si.particle_buffer_size:
             self.screen_msg += '; Out of particle buffer'
-            self.write_msg('Ran out of particle buffer- no more releases, increase parameter "particle_buffer_size", size=' \
+            si.msg_logger.msg('Ran out of particle buffer- no more releases, increase parameter "particle_buffer_size", size=' \
                                + str(si.particle_buffer_size) +' at ' + time_util.seconds_to_iso8601str(t), warning=True)
             return  np.full((0,),0)# return if no more space
 
@@ -168,7 +168,7 @@ class ParticleGroupManager(ParameterBaseClass):
         params = kwargs
         params['class_name'] = 'oceantracker.particle_properties._base_properties.TimeVaryingInfo'
         si = self.shared_info
-        i, msg_list = make_class_instance_from_params(params)
+        i = make_class_instance_from_params(params,si.msg_logger)
         si.add_class_instance_to_interator_lists('time_varying_info', 'manual_update', i)
         i.initialize()
 
@@ -186,7 +186,7 @@ class ParticleGroupManager(ParameterBaseClass):
 
         # set default class
         if 'class_name' not in prop_params: prop_params['class_name'] = 'oceantracker.particle_properties._base_properties.ParticleProperty'
-        i, msg_list = make_class_instance_from_params(prop_params)
+        i = make_class_instance_from_params(prop_params,si.msg_logger)
         si.add_class_instance_to_interator_lists('particle_properties', prop_type, i,
                                                  crumbs='Adding "particle_properties" name= "' + str(prop_params['name']) + '" of type=' +   prop_type)
         i.initialize()
@@ -221,7 +221,7 @@ class ParticleGroupManager(ParameterBaseClass):
         for key,item in si.class_interators_using_name['particle_properties']['from_fields'].items():
             si.classes['field_group_manager'].interp_named_field_at_particle_locations(key, active)
 
-        # user/custom particle prop are updated after reader based prop. , as reader prop.  may be need for update
+        # user/custom particle prop are updated after reader based prop. , as reader prop.  may be need for their update
         for p in si.class_interators_using_name['particle_properties']['user'].values():
                 p.update(active)
 
@@ -263,8 +263,8 @@ class ParticleGroupManager(ParameterBaseClass):
         if nDead > 0 and self.particles_in_buffer > 0.25*si.particle_buffer_size:
             if  nDead >= 0.15*num_active  or self.particles_in_buffer > 0.9*si.particle_buffer_size:
                 # if too many dead then delete from memory
-                si.case_log.write_msg('removing dead '+ str(nDead)
-                                      +' particles from memory, as more than 15% are dead or buffer 90% full', tabs=3)
+                si.msg_logger.msg('removing dead ' + str(nDead)
+                                        +' particles from memory, as more than 15% are dead or buffer 90% full', tabs=3)
 
                 # only  retain alive particles in buffer
                 for pp in part_prop.values():

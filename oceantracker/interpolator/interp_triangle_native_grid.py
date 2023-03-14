@@ -20,7 +20,7 @@ class  InterpTriangularNativeGrid_Slayer_and_LSCgrid(_BaseInterp):
     def __init__(self):
         # set up info/attributes
         super().__init__()
-        self.add_default_params({'bc_walk_tol': PVC(1.0e-6, float,min = 0.), 'max_search_steps': PVC(100,int, min =1)})
+        self.add_default_params({'bc_walk_tol': PVC(1.0e-5, float,min = 0.), 'max_search_steps': PVC(100,int, min =1)})
         self.grid = {}
 
     def initialize(self):
@@ -31,9 +31,8 @@ class  InterpTriangularNativeGrid_Slayer_and_LSCgrid(_BaseInterp):
         grid = si.classes['reader'].grid
         grid_time_buffers = si.classes['reader'].grid_time_buffers
 
-        # make barcentric transform matrix for the grid
-        grid['bc_transform'] = triangle_interpolator_util.get_BC_transform_matrix(grid['x'].data, grid['triangles'].data)
-
+        # make barcentric transform matrix for the grid,  typee to match numba signature
+        grid['bc_transform'] = triangle_interpolator_util.get_BC_transform_matrix(grid['x'].data, grid['triangles'].data).astype(np.float64)
         # build kd tree for initial triangle find of particle initial locations
         xy_centriod = np.mean(grid['x'][grid['triangles']], axis=1)
         self.KDtree = cKDTree(xy_centriod)
@@ -44,13 +43,13 @@ class  InterpTriangularNativeGrid_Slayer_and_LSCgrid(_BaseInterp):
         p = si.classes['particle_group_manager']
         p.create_particle_property('manual_update',dict(name='n_cell',  write=False, dtype=np.int32,
                                    initial_value=0))  # start with cell number guess of zero
-        p.create_particle_property('manual_update',dict(name='bc_cords',  write=False, initial_value=0., vector_dim=3))
+        p.create_particle_property('manual_update',dict(name='bc_cords',  write=False, initial_value=0., vector_dim=3,dtype=np.float64))
 
         # BC walk stats
         info = self.info
         self.walk_stats = np.zeros((2,),dtype=triangle_interpolator_util.walk_stats)
 
-        if si.hindcast_is3D:
+        if si.hydro_model_is3D:
             # space to record vertical cell for each particles' triangle at two timer steps  for each node in cell containing particle
             # used to do 3D time dependent interpolation
             p.create_particle_property('manual_update',dict(name='nz_cell',  write=False, dtype=np.int32, initial_value=grid_time_buffers['zlevel'].shape[2]-2)) # todo  create  initial serach for vertical cell
@@ -69,7 +68,7 @@ class  InterpTriangularNativeGrid_Slayer_and_LSCgrid(_BaseInterp):
         self.locate_BCwalk(xq, nb,step_dt_fraction, active)  # best method!
         self.code_timer.stop('find_cells_and_weights')
 
-        if si.hindcast_is3D:
+        if si.hydro_model_is3D:
             self.code_timer.start('find_depth_cell')
             # insert depth cells and fractions
             self.get_depth_cell(xq, nb, step_dt_fraction, active)
@@ -88,7 +87,6 @@ class  InterpTriangularNativeGrid_Slayer_and_LSCgrid(_BaseInterp):
                                                 xq,
                                                 part_prop['x_last_good'].data,
                                                 part_prop['status'].data,
-
                                                 part_prop['bc_cords'].data,
                                                 grid['bc_transform'],
                                                 grid['adjacency'],
@@ -102,13 +100,12 @@ class  InterpTriangularNativeGrid_Slayer_and_LSCgrid(_BaseInterp):
 
         if sel.shape[0] > 0:
             self.code_timer.start('kd-tree_retrys')
-            new_cell, status, bc = self.initial_cell_guess(xq[sel,:2])
+            new_cell  = self.initial_cell_guess(xq[sel,:])
             part_prop['n_cell'].set_values(new_cell, sel)
             triangle_interpolator_util.BCwalk_with_move_backs_numba2D(
                                         xq,
                                         part_prop['x_last_good'].data,
                                         part_prop['status'].data,
-
                                         part_prop['bc_cords'].data,
                                         grid['bc_transform'],
                                         grid['adjacency'],
@@ -121,10 +118,9 @@ class  InterpTriangularNativeGrid_Slayer_and_LSCgrid(_BaseInterp):
 
             sel = part_prop['status'].find_subset_where(sel, 'eq', si.particle_status_flags['cell_search_failed'], out=self.get_particle_subset_buffer())
             if sel.shape[0] > 0:
-                self.write_msg('Some BC walks too long after kd retry- killed ' + str(sel.shape[0]) + ' particles',warning=True)
-                self.info['failed_searches'] += sel.shape[0]
+                si.msg_logger.msg('Some BC walks too long after kd retry- killed ' + str(sel.shape[0]) + ' particles',warning=True)
                 # make notes for log file enabling follow up
-                self.write_msg('failed BCwalks_after_KDtree_retry, particles' + str(sel.tolist()) + ' xq =' + str(xq[sel, :].tolist()),warning=True)
+                si.msg_logger.msg('failed BCwalks_after_KDtree_retry, particles' + str(sel.tolist()) + ' xq =' + str(xq[sel, :].tolist()),warning=True)
                 # kill particles
                 part_prop['status'].set_values(si.particle_status_flags['dead'], sel)
             self.code_timer.stop('kd-tree_retrys')
@@ -138,7 +134,7 @@ class  InterpTriangularNativeGrid_Slayer_and_LSCgrid(_BaseInterp):
 
         dist, n_cell = self.KDtree.query(xq[:, :2])
 
-        n_cell = n_cell.astype(np.int32)  # KD tre gives in64need for compartibilty of types
+        n_cell = n_cell.astype(np.int32)  # KD tre gives in64need for compatibility of types
 
         n_cell[np.any(~np.isfinite(xq), axis=1)] = -1 # stops walking for non-finite initial cords
 
@@ -153,7 +149,7 @@ class  InterpTriangularNativeGrid_Slayer_and_LSCgrid(_BaseInterp):
             grid['bc_transform'],
             grid['adjacency'],
             grid_time_buffers['dry_cell_index'],
-            False,  # dont block dry cells, just block at domain boundary
+            False, # dont block dry cells, just block at domain boundary  #todo this should only be for particle releases as could return a dry cell?
             self.params['bc_walk_tol'],
             self.params['max_search_steps'],
             False, # no open boundary, as must start inside
@@ -192,7 +188,9 @@ class  InterpTriangularNativeGrid_Slayer_and_LSCgrid(_BaseInterp):
                                                        step_dt_fraction,
                                                        grid['triangles'],
                                                        n_cell,
-                                                       nz_cell,nz_nodes, z_fraction,
+                                                       nz_cell,
+                                                       nz_nodes,
+                                                       z_fraction,
                                                     z_fraction_bottom_layer, is_in_bottom_layer,
                                                        bc_cords,  si.z0,   active)
                 else:
@@ -352,7 +350,7 @@ class  InterpTriangularNativeGrid_Slayer_and_LSCgrid(_BaseInterp):
         info['bc_walk']['average_number_of_triangles_walked'] =  info['bc_walk']['total_steps'] /  max(info['bc_walk']['particles_located'], 1)
 
         # there are vertical walk stats
-        if si.hindcast_is3D:
+        if si.hydro_model_is3D:
             info['vertical_walk'] = {}
             for name in self.walk_stats[1].dtype.names:
                 info['vertical_walk'][name] = self.walk_stats[1][name]

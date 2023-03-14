@@ -34,12 +34,12 @@ class Solver(ParameterBaseClass):
 
     def check_requirements(self):
 
-        msg_list = self.check_class_required_fields_prop_etc(
+        self.check_class_required_fields_prop_etc(
             required_fields_list=['water_velocity'],
             required_props_list=['x','status', 'x_last_good', 'particle_velocity', 'v_temp'],
             required_grid_var_list=[])
 
-        return msg_list
+
 
     def initialize_run(self):
         si = self.shared_info
@@ -108,7 +108,7 @@ class Solver(ParameterBaseClass):
                 t2 = t1 + si.model_substep_timestep * si.model_direction
 
 
-                # at this point interp is not set up for current positions this is done in pre_step_bookeeping, and after last step
+                # at this point interp is not set up for current positions, this is done in pre_step_bookeeping, and after last step
 
                 # print screen data
                 if (info['n_time_steps_completed']  + ns) % self.params['screen_output_step_count'] == 0:
@@ -155,7 +155,7 @@ class Solver(ParameterBaseClass):
         fgm.setup_interp_time_step(nb, t, part_prop['x'].data, alive)
 
         # update particle properties
-        pgm .update_PartProp(t, alive)
+        pgm.update_PartProp(t, alive)
 
         # update writable class lists and stats at current time step now props are up to date
         self._update_stats(t)
@@ -259,7 +259,7 @@ class Solver(ParameterBaseClass):
         #s += ' Finishes: ' + (datetime.now() + timePerStep*n_steps/(1.-fraction_done)).strftime('%y-%m-%d %H:%M')
         s +=  ' Step-%4.0f ms' % (timePerStep * 1000.)
 
-        si.case_log.write_msg(s)
+        si.msg_logger.msg(s)
 
 
     def _update_stats(self,t):

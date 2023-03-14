@@ -1,7 +1,6 @@
 import numpy as np
 from oceantracker.util.parameter_base_class import ParameterBaseClass, make_class_instance_from_params
 from oceantracker.util.parameter_checking import ParamDictValueChecker as PVC, ParameterListChecker as PLC
-from oceantracker.util.message_and_error_logging import append_message, GracefulExitError
 from oceantracker.util import time_util
 from os import path, walk
 from glob import glob
@@ -9,7 +8,7 @@ from oceantracker.util.ncdf_util import NetCDFhandler
 from time import perf_counter
 from oceantracker.fields.util import fields_util
 from oceantracker.util.basic_util import nopass
-from oceantracker.util.triangle_utilities_code import append_split_cell_data
+from oceantracker.reader.util.reader_util import append_split_cell_data
 from oceantracker.util import  cord_transforms
 from oceantracker.reader.util import shared_reader_memory_util
 from oceantracker.fields.util.fields_util import depth_aver_SlayerLSC_in4D
@@ -29,6 +28,8 @@ class _BaseReader(ParameterBaseClass):
                                  'time_zone': PVC(None, int, min=-12, max=23),
                                  'cords_in_lat_long': PVC(False, bool),
                                  'time_buffer_size': PVC(48, int, min=2),
+                                 'required_file_variables' :PLC([], [str]),
+                                 'required_file_dimensions': PLC([], [str]),
                                  'water_density': PVC(48, int, min=2),
                                  'depth_average': PVC(False, bool),  # turns 3D hindcast into a 2D one
                                  'field_variables_to_depth_average': PLC([], [str]),  # list of field_variables that are depth averaged on the fly
@@ -38,7 +39,6 @@ class _BaseReader(ParameterBaseClass):
                                                     'zlevel': PVC(None, str),
                                                     'bottom_cell_index': PVC(None, str),
                                                     'is_dry_cell': PVC(None, np.int8, doc_str='Time variable flag of when cell is dry, 1= is dry cell')},
-
                                  'field_variables': {'water_velocity': PLC(['u', 'v', None], [str, None], fixed_len=3,is_required=True),
                                                      'water_depth': PVC(None, str),
                                                      'tide': PVC(None, str),
@@ -48,7 +48,7 @@ class _BaseReader(ParameterBaseClass):
                                                      'bottom_stress': PVC(None, str),
                                                      },
 
-                                 'dimension_map': {'time': PVC('time', str), 'node': PVC('node', str), 'z': PVC(None, str),
+                                 'dimension_map': {'time': PVC('time', str, is_required=True), 'node': PVC('node', str), 'z': PVC(None, str),
                                                    'vector2Ddim': PVC(None, str), 'vector3Ddim': PVC(None, str)},
                                  'isodate_of_hindcast_time_zero': PVC('1970-01-01', 'iso8601date'),
                                  'search_sub_dirs': PVC(False, bool),
@@ -62,14 +62,14 @@ class _BaseReader(ParameterBaseClass):
         self.shared_memory= {'grid' :{}, 'fields':{},'control':{}}
 
     #required read methods non time dependent variables
-    def read_nodal_x_float64(self, nc): nopass('reader method: read_x is required')
+    def read_nodal_x_as_float64(self, nc): nopass('reader method: read_x is required')
     def read_bottom_cell_index_as_int32(self, nc):nopass('reader method: read_bottom_cell_index_as_int32 is required for 3D hindcasts')
 
     # required methods time dependent variables, also require a set up method
     def read_zlevel_as_float32(self, nc, file_index, zlevel_buffer, buffer_index): nopass('reader method: read_zlevel_as_float32 is required for 3D hindcasts')
 
     # checks on first hindcast file
-    def additional_setup_and_hindcast_file_checks(self, nc, msg_list): pass
+    def additional_setup_and_hindcast_file_checks(self, nc,msg_logger): pass
 
     def make_non_time_varying_grid(self,nc, grid): nopass('setup_grid required')
 
@@ -91,9 +91,7 @@ class _BaseReader(ParameterBaseClass):
 
     def get_number_of_z_levels(self,nc): return nc.get_dim_size(self.params['dimension_map']['z'])
 
-    def is_hindcast3D(self, nc):
-        zdim=self.params['dimension_map']['z']
-        return  zdim is not None and zdim in nc.get_var_dims(self.params['water_velocity'][0])
+    def is_hindcast3D(self, nc): nopass('must define method to test if hindcast is 3D')
 
     # working methods
 
@@ -176,7 +174,7 @@ class _BaseReader(ParameterBaseClass):
 
         # setup reader fields from their named components in field_variables param ( water depth ad tide done earlier from grid variables)
         for name, item in reader_build_info['field_builder'].items():
-            i, msg_list = make_class_instance_from_params(item['field_params'])
+            i = make_class_instance_from_params(item['field_params'], si.msg_logger)
             i.info['variable_info']= item['variable_info']
             si.add_class_instance_to_interator_lists('fields', 'from_reader_field', i, crumbs='Adding Reader Field "' + name + '"')
             i.initialize()  # require variable_info to initialise
@@ -198,7 +196,7 @@ class _BaseReader(ParameterBaseClass):
                      'name': name + '_depth_average','num_components': min(2, i.params['num_components']),
                      'is_time_varying': i.params['is_time_varying'],
                     'is3D': False}
-                i2, msg_list = make_class_instance_from_params(p,msg_list=msg_list)
+                i2 = make_class_instance_from_params(p,si.msg_logger)
                 si.add_class_instance_to_interator_lists('fields', 'depth_averaged_from_reader_field', i2,
                                                          crumbs='Adding Reader Depth Averaged Field "' + name + '"')
                 i2.initialize()
@@ -210,13 +208,14 @@ class _BaseReader(ParameterBaseClass):
 
         self.code_timer.stop('build_hindcast_reader')
 
-    def _basic_file_checks(self, nc, msg_list):
+    def _basic_file_checks(self, nc, msg_logger):
         # check named variables are in first file
-
         # check dim
         for name, d in self.params['dimension_map'].items():
             if d is not None and not nc.is_dim(d):
-                append_message(msg_list, 'Cannot find dimension_map dimension "' + name + ' ", file dimension given is "' + d + '"', exception=GracefulExitError)
+                msg_logger.msg('Cannot find dimension_map dimension "' + name + ' ", file dimension given is "' + d + '"',
+                               hint='Dimensions in hydro-model file = ' + str(nc.get_dims()),
+                               fatal_error=True)
 
         # check variables are there
         for vm in ['grid_variables', 'field_variables']:
@@ -224,12 +223,23 @@ class _BaseReader(ParameterBaseClass):
                 if type(d)== list:
                     for vf in d:
                         if vf is not None and not nc.is_var(vf):
-                            append_message(msg_list,' For  "' + vm + '" for param   "' + name + ' ",  cannot find variable in file  "' + vf + '"', exception=GracefulExitError)
+                            msg_logger.msg(' For  "' + vm + '" for param   "' + name + ' ",  cannot find variable in file  "' + vf + '"', fatal_error=True)
 
                 elif d is not None and not nc.is_var(d) :
-                    append_message(msg_list,'For "' + vm + '" for param,  "' + name + ' ", cannot find variable in file "' + str(d) + '"', exception=GracefulExitError)
+                    msg_logger.msg('For "' + vm + '" for param,  "' + name + ' ", cannot find variable in file "' + str(d) + '"', fatal_error=True)
 
-        return msg_list
+
+        # check if all required dims and non-feilds variables present
+        for v in self.params[ 'required_file_variables']:
+            if not nc.is_var(v):
+                msg_logger.msg('Cannot find required variable in hydro model output file "' + v + '"', fatal_error=True)
+
+        for v in self.params[ 'required_file_dimensions']:
+            if not nc.is_dim(v):
+                msg_logger.msg( 'Cannot find required dimension in hydro model outptut file "' + v + '"', fatal_error=True)
+
+
+
 
     def get_field_variable_info(self, nc, name,var_list):
         # get info from list of component eg ['temp'], ['u','v']
@@ -312,7 +322,7 @@ class _BaseReader(ParameterBaseClass):
             s += f' Steps in file {fi["n_time_steps"][-1]:4} nt available {nt_available[0]:03} :{nt_available[-1]:03},'
             s += f' file offsets {file_index[0]:4} : {file_index[-1]:4}  nt required {nt_required[0]:4}:{nt_required[-1]:4}, number required: {nt_required.shape[0]:4}'
 
-            si.case_log.write_progress_marker(s)
+            si.msg_logger.write_progress_marker(s)
 
             grid_time_buffers['nt_hindcast'][buffer_index] = nt_available  # add a grid variable with buffer time steps
 
@@ -346,7 +356,7 @@ class _BaseReader(ParameterBaseClass):
             s += f' buffer offsets {buffer_index[0]:03}:{buffer_index[-1]:03}'
             s += f' Read:{num_read:4}  time: {int(1000. * (perf_counter() - t0_file)):3} ms'
 
-            si.case_log.write_progress_marker(s)
+            si.msg_logger.write_progress_marker(s)
             b0 += num_read
             n_file += int(si.model_direction)
             nt_required = nt_required[num_read:]
@@ -357,7 +367,7 @@ class _BaseReader(ParameterBaseClass):
         buffer_info['first_nt_hindcast_in_buffer'] = grid_time_buffers['nt_hindcast'][0]  # global index of buffer zero
         buffer_info['last_nt_hindcast_in_buffer']  = grid_time_buffers['nt_hindcast'][total_read-1]
 
-        si.case_log.write_progress_marker(f'Total time to fill buffer  {(perf_counter() - t0):4.1f} sec',tabs=1)
+        si.msg_logger.write_progress_marker(f'Total time to fill buffer  {(perf_counter() - t0):4.1f} sec', tabs=1)
         self.code_timer.stop('reading_to_fill_time_buffer')
 
     def assemble_field_components(self,nc, field, buffer_index=None, file_index=None):
@@ -435,7 +445,7 @@ class _BaseReader(ParameterBaseClass):
             is_dry_cell_buffer[buffer_index, :] = append_split_cell_data(grid, data_added_to_buffer, axis=1)
             #grid['is_dry_cell'][buffer_index, :] =  np.concatenate((data_added_to_buffer, data_added_to_buffer[:, grid['quad_cell_to_split_index']]), axis=1)
 
-    def read_open_boundary_data(self, grid):
+    def read_open_boundary_data_as_boolean(self, grid):
         is_open_boundary_node = np.full((grid['x'].shape[0],), False)
         return is_open_boundary_node
 
@@ -500,7 +510,8 @@ class _BaseReader(ParameterBaseClass):
                 self.shared_memory['grid'][key] = shared_memory.SharedMemArray(sm_map=item)
                 self.grid[key] = self.shared_memory['grid'][key].data  # grid variables is shared version
         return reader_build_info
-    def convert_lat_long_to_meters_grid(self,x):
+
+    def convert_lon_lat_to_meters_grid(self, x):
 
         if self.params['coordinate_projection'] is None:
             x_out, self.cord_transformer= cord_transforms.WGS84_to_UTM( x, out=None)

@@ -3,7 +3,6 @@ from copy import copy, deepcopy
 from oceantracker.util import triangle_utilities_code
 from oceantracker.util.parameter_base_class import ParameterBaseClass
 from oceantracker.util.parameter_checking import ParamDictValueChecker as PVC, ParameterListChecker as PLC
-from oceantracker.util.message_and_error_logging import append_message, GracefulExitError, FatalError
 from oceantracker.util import time_util
 from oceantracker.util import shared_memory_util
 from oceantracker.fields.util import fields_util
@@ -16,7 +15,7 @@ class GenericUnstructuredReader(_BaseReader):
 
     def __init__(self):
         super().__init__()  # required in children to get parent defaults and merge with give params
-        self.add_default_params({ 'dimension_map': {'node': PVC('node', str)},
+        self.add_default_params({ 'dimension_map': {'node': PVC('node', str,is_required=True)},
                                 'grid_variables': {'triangles': PVC(None, str, is_required=True)}})
 
         self.buffer_info ={'n_filled' : None}
@@ -25,7 +24,7 @@ class GenericUnstructuredReader(_BaseReader):
     def make_non_time_varying_grid(self,nc, grid):
         # set up grid variables which don't vary in time and are shared by all case runners and main
         # add to reader build info
-        grid['x'] = self.read_nodal_x_float64(nc)
+        grid['x'] = self.read_nodal_x_as_float64(nc).astype(np.float64)
         grid['triangles'], grid['quad_cells_to_split'] = self.read_triangles_as_int32(nc)
         grid['quad_cell_to_split'] = np.flatnonzero(grid['quad_cells_to_split']) # make as list of indcies for calculations
 
@@ -37,7 +36,7 @@ class GenericUnstructuredReader(_BaseReader):
 
         # adjust node type and adjacent for open boundaries
         # todo define node and adjacent type values in dict, for single definition and case info output?
-        is_open_boundary_node = self.read_open_boundary_data(grid)
+        is_open_boundary_node = self.read_open_boundary_data_as_boolean(grid)
         grid['node_type'][is_open_boundary_node] = 3
 
         is_open_boundary_adjacent = reader_util.find_open_boundary_faces(grid['triangles'], grid['is_boundary_triangle'],grid['adjacency'], is_open_boundary_node)
@@ -98,28 +97,27 @@ class GenericUnstructuredReader(_BaseReader):
 
         #useful info for json output
         self.info['hindcast_average_time_step'] = reader_build_info['sorted_file_info']['hydro_model_time_step']
-
-
         pass
 
     def check_grid(self,grid):
         tt='Grid Check, '
         # check types of grid variables
+        si =self.shared_info
         type_checks={'x': np.float32,'triangles':np.int32}
         for name,t in type_checks.items():
             if grid[name] is not None and grid[name].dtype != t:
-                self.write_msg(tt + 'array dtype of grid variable"' + name + '" does not match required type "' +str(t)+ '"',
-                               exception=FatalError,
-                               hint='Check read method for this varaible converts to required type')
+                si.msg_logger.msg(tt + 'array dtype of grid variable"' + name + '" does not match required type "' +str(t)+ '"',
+                               fatal_error= True,
+                               hint='Check read method for this variable converts to required type')
 
         # check triangulation appears to be zero based index
         if np.max(grid['triangles'][:, :3]) >= self.grid['x'].shape[0] or np.min(grid['triangles'][:, :3]) < 0:
-            self.write_msg(tt+ 'out of bounds node number  node in triangulation, require zero based indices',
-                           exception=FatalError,
+            si.msg_logger.msg(tt+ 'out of bounds node number  node in triangulation, require zero based indices',
+                           fatal_error= True, exit_now=True,
                            hint='Ensure reader parameter "one_based_indices" is set correctly for hindcast file')
 
         elif np.min(grid['triangles']) == 1:
-            self.write_msg(tt+ 'smallest node index in triangulation ==1, require zero based indices',
+            si.msg_logger.msg(tt+ 'smallest node index in triangulation ==1, require zero based indices',
                            warning=True,
                            hint='Ensure reader parameter "one_based_indices" is set correctly for hindcast file')
 
@@ -135,11 +133,13 @@ class GenericUnstructuredReader(_BaseReader):
             time += self.params['time_zone']*3600.
         return time
 
-    def read_nodal_x_float64(self, nc):
+    def read_nodal_x_as_float64(self, nc):
+        si=self.shared_info
         gv= self.params['grid_variables']
         x = np.stack((nc.read_a_variable(gv['x'][0]), nc.read_a_variable(gv['x'][1])), axis=1).astype(np.float64)
         if self.params['cords_in_lat_long']:
-            x = self.convert_lat_long_to_meters_grid(x)
+            #todo write warning of conversion to meters grid
+            x = self.convert_lon_lat_to_meters_grid(x)
         return x
 
     def read_time_variable_grid_variables(self, nc, buffer_index, file_index):
@@ -157,7 +157,7 @@ class GenericUnstructuredReader(_BaseReader):
         data = nc.read_a_variable(self.params['grid_variables']['triangles'])
         if self.params['one_based_indices']:  data -= 1
         quad_cells_to_split = np.full((data.shape[0],),False,dtype=bool)
-        return data[:,:3].astype(np.int32), quad_cells_to_split
+        return data[:, :3].astype(np.int32), quad_cells_to_split
 
     def read_zlevel_as_float32(self, nc, file_index, zlevel_buffer, buffer_index):
         # read in place
@@ -189,7 +189,9 @@ class GenericUnstructuredReader(_BaseReader):
         return grid
 
 
-
+    def is_hindcast3D(self, nc):
+        #is zlevel defined then it is 3D
+        return  self.params['grid_variables']['zlevel'] is not None
 
 
 

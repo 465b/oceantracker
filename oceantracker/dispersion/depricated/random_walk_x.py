@@ -3,7 +3,7 @@ from oceantracker.util.parameter_checking import ParamDictValueChecker as PVC
 from oceantracker.dispersion._base_dispersion import _BaseTrajectoryModifer
 from numba import njit, guvectorize, int32, int64, float64
 
-class RandomWalk(_BaseTrajectoryModifer):
+class RandomWalkV1(_BaseTrajectoryModifer):
     # add random walk using x displacement
     def __init__(self):
         # set up default params
@@ -17,7 +17,7 @@ class RandomWalk(_BaseTrajectoryModifer):
         dt = si.model_substep_timestep
 
         info['random_walk_size'] = np.array((self.calc_walk(self.params['A_H'], dt), self.calc_walk(self.params['A_H'], dt), self.calc_walk(self.params['A_V'], dt)))
-        if not si.hindcast_is3D:
+        if not si.hydro_model_is3D:
             info['random_walk_size'] =  info['random_walk_size'][:2]
 
         # set up shortcut to data required to modify velocity  below

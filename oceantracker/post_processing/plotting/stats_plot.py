@@ -251,8 +251,14 @@ class retention_data:
         long = np.concatenate([item for item in self.data['depth_below_free_surface_long_living']])
 
         ax.set_title('Plankton depth below surface')
-        ax.boxplot(short,positions=[1],labels=['short\nliving'],whis=(0,100))
-        ax.boxplot(long,positions=[2],labels=['long\nliving'],whis=(0,100))
+        ax.boxplot(short,positions=[1],labels=['short\nliving'],
+                   #whis=(0,100)
+                   showfliers=False
+                   )
+        ax.boxplot(long,positions=[2],labels=['long\nliving'],
+                   #whis=(0,100)
+                   showfliers=False
+                   )
         ax.set_ylabel('depth (m)')
 
         return ax
@@ -264,14 +270,20 @@ class retention_data:
         long = np.concatenate([item for item in self.data['distance_traveled_long_living']])
 
         ax.set_title('Plankton distance traveled')
-        ax.set_yscale('log')
-        ax.boxplot(short,positions=[1],labels=['short\nliving'],whis=(0,100))
-        ax.boxplot(long,positions=[2],labels=['long\nliving'],whis=(0,100))
+        # ax.set_yscale('log')
+        ax.boxplot(short,positions=[1],labels=['short\nliving'],
+                   #whis=(0,100),
+                   showfliers=False
+                   )
+        ax.boxplot(long,positions=[2],labels=['long\nliving'],
+                   #whis=(0,100),
+                   showfliers=False
+                   )
         ax.set_ylabel('depth (m)')
-        try:
-            ax.set_ylim(0.9*min(np.min(short),np.min(long))),1.1*max(np.max(short),np.max(long))
-        except ValueError:
-            pass
+        # try:
+        #     ax.set_ylim(0.9*min(np.min(short),np.min(long))),1.1*max(np.max(short),np.max(long))
+        # except ValueError:
+        #     pass
 
         return ax
 

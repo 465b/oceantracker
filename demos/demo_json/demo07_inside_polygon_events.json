@@ -7,7 +7,7 @@
     },
     "reader": {
         "class_name": "oceantracker.reader.generic_unstructured_reader.GenericUnstructuredReader",
-        "input_dir": "E:/H_Local_drive/ParticleTracking/oceantracker03/demos\\demo_hindcast",
+        "input_dir": "E:\\OneDrive - Cawthron\\H_Local_drive\\ParticleTracking\\oceantracker\\demos\\demo_hindcast",
         "file_mask": "demoHindcast2D*.nc",
         "search_sub_dirs": true,
         "dimension_map": {
@@ -35,15 +35,14 @@
     },
     "base_case_params": {
         "run_params": {
-            "block_dry_cells": false
+            "block_dry_cells": true
         },
         "dispersion": {
             "A_H": 0.1
         },
         "tracks_writer": {
-            "turn_on_write_particle_properties_list": [
-                "n_cell"
-            ]
+            "class_name": "oceantracker.tracks_writer.track_writer_retangular.RectangularTrackWriter",
+            "write_dry_cell_index": true
         },
         "solver": {
             "n_sub_steps": 6

@@ -7,8 +7,9 @@ from oceantracker.util import json_util
 from oceantracker.util import time_util
 from oceantracker.post_processing.read_output_files import load_output_files
 from oceantracker import main
-from oceantracker.post_processing.plotting import plot_heat_maps,plot_tracks, plot_vertical_tracks, plot_utilities
-import build_demo_plots
+from oceantracker.post_processing.plotting import plot_statistics,plot_tracks, plot_vertical_tracks, plot_utilities
+import make_demo_plots
+import build_and_test_demos
 
 def mfn(movie_file, n=None):
     if movie_file is not None:
@@ -28,13 +29,12 @@ if __name__ == "__main__":
     parser.add_argument('--demo', default=None, type= int)
     parser.add_argument('--root_output_dir', default='output', type=str)
     parser.add_argument('-mp4', action='store_true')
-    parser.add_argument('-build', action='store_true')
-
+    parser.add_argument('-testing', action='store_true')
     args = parser.parse_args()
 
-    if args.build:
-        # build json and yamls
-        system('python build_and_test_demos.py')
+
+    build_and_test_demos.build_demos()
+
 
     if args.root_output_dir is None:  args.root_output_dir = getcwd()
 
@@ -52,7 +52,17 @@ if __name__ == "__main__":
         demo_list.sort()
     else:
         demo_list=[args.demo]
-        
+
+    test_demo=70
+    if  args.testing:
+        demo_list=[test_demo] # ros ver
+    else:
+        # get rid of d deveopmenrt demos
+        demo_list2=[]
+        for d in demo_list:
+            if d != test_demo : demo_list2.append((d))
+        demo_list= demo_list2
+
     for n in demo_list:
 
         f=glob.glob(path.join(json_dir, 'demo' + '%02.0f' % n + '*.json'))
@@ -60,8 +70,20 @@ if __name__ == "__main__":
             exit('runOTdemos.py: No demo file number ' + str(n))
 
         params = json_util.read_JSON(f[0])
+
         demo_name= params['shared_params']['output_file_base']
         params['reader']['input_dir'] = path.join(path.dirname(__file__),'demo_hindcast')
+
+        # tests or development choices of classes
+        if args.testing:
+            pass
+            params['reader'].update({'input_dir': 'F:\Hindcasts\Hindcast_samples_tests\ROMS_samples',
+                                   'file_mask': 'DopAnV2R3-ini2007_da_his.nc',})
+            #params['base_case_params'].update({'interpolator': {'class_name': 'oceantracker.interpolator.dev.vertical_walk_at_particle_location_interp_triangle_native_grid.InterpTriangularNativeGrid_Slayer_and_LSCgrid'}})
+            #params['base_case_params']['dispersion'].update({'A_V':0., 'A_H':0.})
+            #params['base_case_params']['particle_release_groups'][0]['pulse_size']=1
+
+
 
         # clean output folder
         params['shared_params']['root_output_dir'] = 'output'
@@ -74,6 +96,7 @@ if __name__ == "__main__":
                 print('Error during demo')
                 exit()
 
+        runInfo_file_name = path.join( params['shared_params']['root_output_dir'],params['shared_params']['output_file_base'],params['shared_params']['output_file_base']+'_runInfo.json')
         case_info_file_name = load_output_files.get_case_info_file_from_run_file(runInfo_file_name)
         caseInfo = load_output_files.read_case_info_file(case_info_file_name)
 
@@ -87,10 +110,16 @@ if __name__ == "__main__":
 
         if  args.noplot : continue
 
+        if args.testing:
+            #tracks=load_output_files.load_particle_track_vars(case_info_file_name)
+            #from oceantracker.post_processing.plotting.plot_utilities import display_grid
+            #display_grid(tracks['grid'],ginput=3)
+            pass
+
 
         # do plots
         if n <90:
-            getattr(build_demo_plots,demo_name)(runInfo_file_name,output_file_base)
+            getattr(make_demo_plots,demo_name)(runInfo_file_name,output_file_base)
 
         else:
             ax_lims = [1591000, 1601500, 5478500, 5491000]

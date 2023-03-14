@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as clr
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 import matplotlib.font_manager as font_manager
 
@@ -45,8 +46,10 @@ def draw_base_map(grid, ax=plt.gca(), axis_lims=None, back_ground_depth=True,
 
     if show_grid:
         ax.triplot(grid['x'][:, 0], grid['x'][:, 1], grid['triangles'], color=(0.8, 0.8, 0.8), linewidth=.5, zorder=1)
-    for o in grid['grid_outline']['open_boundary_nodes']:
-        plt.plot(grid['x'][o, 0], grid['x'][o, 1], '--','red')
+
+    sel = grid['node_type'] == 3 # open_boundary_nodes
+    plt.scatter(grid['x'][sel, 0], grid['x'][sel, 1],s= 4,marker= '.',c='darkgreen')
+
     ax.set_xticklabels([])
     ax.set_yticklabels([])
     ax.tick_params(axis="both", direction="in", right=True, top=True)
@@ -62,7 +65,7 @@ def display_grid(grid, ginput=0, axis_lims=None):
 
     draw_base_map(grid, show_grid=True, axis_lims=axis_lims)
     if 1==0:
-        bt = np.flatnonzero(grid['boundary_triangles'])
+        bt = np.flatnonzero(grid['is_boundary_triangle'])
         plt.plot(grid['x'][grid['triangles'][bt,:],0].T, grid['x'][grid['triangles'][bt,:],1].T,'r', zorder=9)
 
     if ginput > 0:
@@ -77,9 +80,10 @@ def display_grid(grid, ginput=0, axis_lims=None):
 def plot_field(grid, field_vals, ax=plt.gca(), color_map=None, vmin=None, vmax=None, zorder=3):
     # use tri surf to color map feild in 3D, defaul view is 2D from above
 
-    ax.tripcolor(grid['x'][:,0], grid['x'][:,1], field_vals, triangles=grid['triangles'],
+    pc = ax.tripcolor(grid['x'][:,0], grid['x'][:,1], field_vals, triangles=grid['triangles'],
                   shading='gouraud', cmap=color_map, edgecolors='none',
                   vmin=vmin, vmax=vmax, zorder=zorder)
+    return pc
 
 def plot_coloured_depth(grid, ax=plt.gca(), color_map=None, zorder=3):
     # find depth range inside axes to set max  and min depth
@@ -98,16 +102,35 @@ def plot_coloured_depth(grid, ax=plt.gca(), color_map=None, zorder=3):
 
     plot_field(grid, depth, ax=ax, color_map=color_map, vmin= 0., vmax=vmax, zorder=zorder)
 
+def plot_dry_cells(track_data,show_dry_cells=True, nt=0):
+
+    grid = track_data['grid']
+    cmap = clr.LinearSegmentedColormap.from_list('custom sand', ['#FFFFFF', '#cba254'], N=128)
+
+    if show_dry_cells and 'dry_cell_index' in track_data :
+        dry_cell_data = track_data['dry_cell_index'].copy().astype(np.float32)
+        dry_cell_data[dry_cell_data < 128] = np.nan
+        pc = plt.gca().tripcolor(grid['x'][:, 0], grid['x'][:, 1], facecolors=dry_cell_data[nt, :], triangles=grid['triangles'],
+                                 zorder=3, vmin=128, vmax=255, edgecolors='none', alpha=.3, cmap=cmap, antialiaseds=True)
+    else:
+        # small fast dummy plot
+        dry_cell_data = np.full((track_data['time'].shape[0],1),np.nan)
+        pc = plt.gca().tripcolor(grid['x'][:3, 0],  grid['x'][:3, 1], grid['triangles'][0,:],
+                                 zorder=3, vmin=128, vmax=255, edgecolors='face', alpha=0.)
+
+    return pc, dry_cell_data
+
+
 def plot_release_points_and_polygons(d, release_group=None, ax = plt.gca(), color =[.2, .8, .2]):
     # release_group is 1 based
     if release_group is None :
-        sel= range(len(d['particle_release_groups'])) # show all
+        sel= range(len(d['particle_release_group_info'])) # show all
     else:
         sel = [release_group-1]
 
     for n in sel:
 
-        rg = d['particle_release_groups'][n]
+        rg = d['particle_release_group_info'][n]
         p = np.asarray(rg['points'])
         if 'user_polygonID' in rg:
             ax.plot(p[:, 0], p[:, 1], '-', color=color,zorder=8, linewidth=1)

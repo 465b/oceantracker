@@ -3,6 +3,8 @@ from oceantracker.particle_properties.util import particle_operations_util, part
 from oceantracker.util.parameter_base_class import ParameterBaseClass
 from oceantracker.util.parameter_checking import  ParamDictValueChecker as PVC
 from oceantracker.common_info_default_param_dict_templates import particle_info
+from oceantracker.util.basic_util import atLeast_Nby1, nopass
+
 
 class _BasePropertyInfo(ParameterBaseClass):
     # properties which are maintained in memory and may be written out, eg group and particle
@@ -13,13 +15,18 @@ class _BasePropertyInfo(ParameterBaseClass):
 
         self.add_default_params({ 'description': PVC(None,str), 'time_varying':PVC(True, bool),'name': PVC(None, str),
             'write': PVC(True, bool), 'vector_dim': PVC(1, int, min = 1 ), 'prop_dim3': PVC(1, int, min=1),
-             'dtype':PVC(np.float64,type,possible_values=[np.float32, np.float64, np.int8, np.int16, np.int32, bool]),
-             'initial_value':PVC(0., (int,float, bool)),'update':PVC(True,bool)})
+             'dtype':PVC(np.float64, np.dtype),
+             'initial_value':PVC(0., float),
+             'update':PVC(True,bool)
+              })
 
+
+        self.class_doc(role='Particle properties hold data at current time step for each particle, accessed using their ``"name"`` parameter. Particle properties  many be \n * core properties set internally (eg particle location x )\n * derive from hindcast fields, \n * be calculated from other particle properties by user added class.')
 
     def initialize(self, **kwargs): pass
 
     def initial_value_at_birth(self, released_IDs):  pass
+
 
     def update(self,t,active): pass
 
@@ -46,6 +53,7 @@ class TimeVaryingInfo(_BasePropertyInfo):
             s += (self.params['vector_dim'],)
         self.data = self.data = np.full(s, self.params['initial_value'], dtype=  self.params['dtype'])
 
+
     def update(self): pass # manual update by default
     def set_values(self, value): self.data[0]=value
     def get_values(self): return self.data[0]
@@ -70,15 +78,16 @@ class ParticleProperty(_BasePropertyInfo):
         if self.params['prop_dim3'] > 0 and self.params['prop_dim3'] > 1:
             s += (self.params['prop_dim3'],)
 
+        self.info['array_size'] = s
         # set up data buffer
         self.data = np.full(s, self.params['initial_value'], dtype=  self.params['dtype'])
 
-    def initial_value_at_birth(self, released_IDs):
+    def initial_value_at_birth(self, new_part_IDs):
         # need to set at birth, as in compact mode particle buffer changes,
         # so cant rely on value at matrix construction in initialize
-        self.set_values(self.params['initial_value'], released_IDs)
+        self.set_values(self.params['initial_value'], new_part_IDs)  # sets this properties values
 
-    def update(self): pass # manual update by default
+    def update(self, active): pass # manual update by default
 
     def set_values(self, values, active):
 
@@ -119,7 +128,10 @@ class ParticleProperty(_BasePropertyInfo):
             raise Exception('compare_all_to_a_value: particle property ' + self.params['name'] +'>> particle comparisons using compare_prop_to_value only possible for scalar particle properties, not vectors')
 
         # to search only those in buffer use dataInBufferPtr()
-        return particle_comparisons_util.prop_compared_to_value(self.dataInBufferPtr(), test, value, out)
+        data = self.dataInBufferPtr()
+        if out is None: out = np.full((data.shape[0],), -127, np.int32)
+        found = particle_comparisons_util.prop_compared_to_value(data, test, value, out)
+        return found
 
     def find_subset_where(self, active, test, value, out=None):
         # searches a subset of active particles to find indicies
@@ -131,3 +143,9 @@ class ParticleProperty(_BasePropertyInfo):
 
         return particle_comparisons_util.prop_subset_compared_to_value(active, self.dataInBufferPtr(), test, value, out)
 
+    def find_those_in_range_of_values(self,value1,value2, out):
+        data = self.dataInBufferPtr()
+        if out is None: out = np.full((data.shape[0],), -127, np.int32)
+
+        found= particle_comparisons_util._find_all_in_range(data, value1,value2, out)
+        return found

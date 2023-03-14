@@ -39,6 +39,8 @@ base_case_params:
       - - 1597682.1237
         - 5489972.7479
       user_polygon_name: B
+  fields:
+  - class_name: oceantracker.fields.friction_velocity.FrictionVelocity
   particle_properties:
   - class_name: oceantracker.particle_properties.age_decay.AgeDecay
     decay_time_scale: 86400.0
@@ -71,8 +73,9 @@ base_case_params:
       - 5489972.7479
     pulse_size: 10
     release_interval: 3600
-    z_max: -4
-    z_min: -2
+    z_range:
+    - -2
+    - -4.0
   particle_statistics:
   - calculation_interval: 3600
     class_name: oceantracker.particle_statistics.gridded_statistics.GriddedStats2D_timeBased
@@ -83,10 +86,10 @@ base_case_params:
     - water_depth
   run_params: {}
   solver:
-    n_sub_steps: 6
+    n_sub_steps: 30
   velocity_modifiers:
-  - class_name: oceantracker.velocity_modifiers.terminal_velocity.AddTerminalVelocity
-    mean: -0.0005
+  - class_name: oceantracker.velocity_modifiers.terminal_velocity.TerminalVelocity
+    mean: -0.001
 reader:
   class_name: oceantracker.reader.schism_reader.SCHSIMreaderNCDF
   depth_average: false
@@ -94,11 +97,10 @@ reader:
     water_temperature: temp
   field_variables_to_depth_average:
   - water_velocity
-  - water_depth
   - salt
   - water_temperature
   file_mask: demoHindcastSchism3D.nc
-  input_dir: E:/H_Local_drive/ParticleTracking/oceantracker03/demos\demo_hindcast
+  input_dir: E:\OneDrive - Cawthron\H_Local_drive\ParticleTracking\oceantracker\demos\demo_hindcast
 shared_params:
   debug: true
   output_file_base: demo55_SCHISM_3D_fall_velocity

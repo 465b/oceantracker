@@ -20,18 +20,12 @@ Parameters:
 		- default: ``1``
 		- min: ``1``
 
-	* ``case_output_file_tag`` :   ``<class 'str'>``   *<optional>*
-		- default: ``None``
-
 	* ``class_name`` :   ``<class 'str'>`` **<isrequired>**
 		- default: ``None``
 
 	* ``count_status_equal_to`` :   ``<class 'str'>``   *<optional>*
 		- default: ``None``
 		- possible_values: ``dict_keys(['unknown', 'bad_cord', 'cell_search_failed', 'notReleased', 'dead', 'outside_open_boundary', 'frozen', 'stranded_by_tide', 'on_bottom', 'moving'])``
-
-	* ``description`` :   ``<class 'str'>``   *<optional>*
-		- default: ``None``
 
 	* ``name`` :   ``<class 'str'>``   *<optional>*
 		Description: - The internal name, which is used to reference the instance of this class within the code, eg. the name "water_velocity" would refers to a particle property or field used within the code
@@ -47,14 +41,17 @@ Parameters:
 		- min: ``1``
 
 	* ``particle_properties_to_track``:  *<optional>*
-		- a list containing type:  ``<class 'str'>``
-		- default list item: ``None``
+		- a list containing type:  ``[<class 'str'>]``
+		- default list : ``[]``
 		- can_be_empty_list: ``True``
 		- make_list_unique: ``True``
 
 	* ``release_group_to_track`` :   ``<class 'int'>``   *<optional>*
 		- default: ``None``
 		- min: ``0``
+
+	* ``role_output_file_tag`` :   ``<class 'str'>``   *<optional>*
+		- default: ``None``
 
 	* ``user_note`` :   ``<class 'str'>``   *<optional>*
 		- default: ``None``

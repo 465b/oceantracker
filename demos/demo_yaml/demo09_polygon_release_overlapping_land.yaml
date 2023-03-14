@@ -46,8 +46,8 @@ base_case_params:
   solver:
     n_sub_steps: 2
   tracks_writer:
-    turn_on_write_particle_properties_list:
-    - n_cell
+    class_name: oceantracker.tracks_writer.track_writer_retangular.RectangularTrackWriter
+    time_steps_per_per_file: 200
 case_list:
 - particle_release_groups:
   - points:
@@ -73,11 +73,12 @@ reader:
     x:
     - east
     - north
-  input_dir: E:/H_Local_drive/ParticleTracking/oceantracker03/demos\demo_hindcast
+  input_dir: E:\OneDrive - Cawthron\H_Local_drive\ParticleTracking\oceantracker\demos\demo_hindcast
   isodate_of_hindcast_time_zero: '2020-06-01'
   search_sub_dirs: true
   time_buffer_size: 24
 shared_params:
   add_date_to_run_output_dir: false
+  backtracking: true
   output_file_base: demo09_polygon_release_overlapping_land
   root_output_dir: output

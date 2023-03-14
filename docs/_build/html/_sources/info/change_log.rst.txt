@@ -1,6 +1,119 @@
+
 ###########################
 Change log
 ###########################
+
+Known issues
+__________________
+
+
+Version 0.3.03.000 2023-01-03
+_____________________________________
+
+New features
+--------------------
+
+#.  FVCOM reader built and passed tests so far
+#. ROMS reade started but not workng
+#. time variable grid data, eg zlevel, dry_cell flag have moved from from  reader variables to reader.grid_time_buffers
+
+Changes
+--------------------
+
+#. non-varying grid data is shared memory amongst cases, no change to how grid variables are accessed
+#. caserunner grid variables and buffers are  built from reader_build_info, as step towards developing a shared reader
+
+Version 0.3.01.04-06, Oct 04 2022
+_____________________________________
+
+New features
+--------------------
+
+#.?? internal rebuilt of buffered reader, as step towards using ring buffer needed for share reader
+
+Changes
+--------------------
+
+#. internal rebuilt of buffered reader, as step towards developing ring buffer for hindcast needed for share reader
+#.  grid variable now attached to reader, ie si.grid is now si.classes['reader'].grid
+#. changed reading of hindcast variables to normally avoid temporary copies  and be read direct into place to smooth out memory demand
+#. by default x_last_good is no longer written to tracks file
+
+Bug fixes
+--------------------
+
+#. trapped error with warning if netcdf chunk size of tracks file variable is over 4gb
+
+Version 0.3.01.02 Sept 13 2022
+________________________________
+
+New features
+--------------------
+
+#. Added residence count particle statistic, counts number of particles still inside designated release polygon at given time inervals, . Can be used to find residence time with release polygon, eg residence time in an estuary. See new demo 10
+
+Changes
+--------------------
+
+#. in stats classes count_staus_equal_to and count_status_greater tha, replae by 'count_status_in_range' param, see github pages
+#. post proceesing plot_heat_maps module now names plot_statistics
+
+Bug fixes
+--------------------
+
+#. ??
+
+
+Version 0.3.01.00 Sept 6 2022
+_____________________________
+
+New features
+--------------------
+
+#. 3D water_velocity in bottom bin  now uses loglayer interpolation (as in schisim), by adjusting fraction of cell to make linear vertical interp behave like log layer interp
+#. improved re-suspension physics
+    * resuspension jump size, size is now based on friction velocity so varies with flow speed, eq 9.28 in book Lynch : particles in the coastal ocean
+    * resuspension jump size is adjusted for terminal velocity/fall velocity
+    * friction velocity is now a user field ( no longer a user particle_property, see below change) based on log layer in bottom cell velocity and z
+
+#. Track animation colours dry cells, tracks_writer adds grid dry cell data to file, set tracks_writer param 'write_dry_cell_index' to false to stop writing dry cell data
+
+Changes
+--------------------
+
+#. class AddTerminalVelocity is now TerminalVelocity in module oceantracker.velocity_modifiers.terminal_velocity
+#. friction velocity is now a custom field (no longer a particle property), to do resuspension user must now add friction_velocity to custom field parameter list,eg 'fields' : [{'class_name': 'oceantracker.fields.friction_velocity.FrictionVelocity'}],
+#. removed polygon release zmin, zmax params, added zrange param for both point and polygon releases, so 3D releases random in this range
+#. tidied up particle release time span calc.
+#. ???
+
+Bug fixes
+--------------------
+
+#. divide by zero in depth cell search when grid has zero vertical thickness
+#. fixed- could  not read uncommented hgrid.gr3 files  for open boundary data, can now read whether hgrid file is with or without trailing comments on lines giving
+
+Version 0.3.00.23 30/7/22
+_____________________________
+
+
+New features
+--------------------
+
+#. added ability to split track output files into blocks with given number of time steps per file
+#. added individual timers to stats, events classes written to case info file
+
+Changes
+--------------------
+
+#. re ordered to ensue last time step is written to tracks files
+
+Bug fixes
+--------------------
+
+#. ??
+
+
 
 
 Version 0.2.774 20/7/22

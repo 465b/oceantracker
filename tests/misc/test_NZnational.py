@@ -1,5 +1,5 @@
 from oceantracker.main import run
-from oceantracker.post_processing.plotting import plot_heat_maps
+from oceantracker.post_processing.plotting import plot_statistics
 from oceantracker.post_processing.read_output_files import load_output_files
 from os import path
 import argparse
@@ -48,7 +48,7 @@ if __name__ == '__main__':
         }
 
     if not args.depthaverage:
-        case['velocity_modifiers']= [{'class_name': 'oceantracker.velocity_modifiers.terminal_velocity.AddTerminalVelocity', 'mean': 0.000}]
+        case['velocity_modifiers']= [{'class_name': 'oceantracker.velocity_modifiers.terminal_velocity.TerminalVelocity', 'mean': 0.000}]
         case['trajectory_modifiers']=[{'class_name': 'oceantracker.trajectory_modifiers.resuspension.BasicResuspension',
                                    'critical_friction_velocity': 0.025}]
 

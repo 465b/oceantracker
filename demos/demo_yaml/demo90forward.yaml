@@ -19,12 +19,12 @@ base_case_params:
     pulse_size: 1
     release_interval: 0
   run_params:
-    block_dry_cells: false
+    block_dry_cells: true
   solver:
     n_sub_steps: 60
   tracks_writer:
-    turn_on_write_particle_properties_list:
-    - n_cell
+    class_name: oceantracker.tracks_writer.track_writer_retangular.RectangularTrackWriter
+    write_dry_cell_index: true
 reader:
   class_name: oceantracker.reader.generic_unstructured_reader.GenericUnstructuredReader
   dimension_map:
@@ -43,7 +43,7 @@ reader:
     x:
     - east
     - north
-  input_dir: E:/H_Local_drive/ParticleTracking/oceantracker03/demos\demo_hindcast
+  input_dir: E:\OneDrive - Cawthron\H_Local_drive\ParticleTracking\oceantracker\demos\demo_hindcast
   isodate_of_hindcast_time_zero: '2020-06-01'
   search_sub_dirs: true
   time_buffer_size: 24

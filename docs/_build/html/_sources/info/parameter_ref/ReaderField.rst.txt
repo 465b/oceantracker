@@ -21,16 +21,6 @@ Parameters:
 
 		- default: ``None``
 
-	* ``create_particle_property_with_same_name`` :   ``<class 'bool'>``   *<optional>*
-		- default: ``True``
-		- possible_values: ``[True, False]``
-
-	* ``description`` :   ``<class 'str'>``   *<optional>*
-		- default: ``None``
-
-	* ``dtype`` :   ``<class 'numpy.dtype'>``   *<optional>*
-		- default: ``<class 'numpy.float64'>``
-
 	* ``is3D`` :   ``<class 'bool'>`` **<isrequired>**
 		- default: ``True``
 		- possible_values: ``[True, False]``
@@ -47,4 +37,8 @@ Parameters:
 
 	* ``user_note`` :   ``<class 'str'>``   *<optional>*
 		- default: ``None``
+
+	* ``write_interp_particle_prop_to_tracks_file`` :   ``<class 'bool'>``   *<optional>*
+		- default: ``True``
+		- possible_values: ``[True, False]``
 

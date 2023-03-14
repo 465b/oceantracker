@@ -2,29 +2,29 @@ from oceantracker.event_loggers._base_event_loggers import _BaseEventLogger
 import numpy as np
 from oceantracker.util.parameter_checking import  ParamDictValueChecker as PVC, ParameterListChecker as PLC
 from oceantracker.common_info_default_param_dict_templates import default_polygon_dict_params
-from oceantracker.util.message_and_error_logging import FatalError
 
+from time import perf_counter
 class LogPolygonEntryAndExit(_BaseEventLogger):
     # assumes non over lapping polygons
 
     def __init__(self):
         super().__init__()
         # set up info/attributes
-        self.add_default_params({'polygon_list': PLC(None, dict, can_be_empty_list=False,
+        self.add_default_params({'polygon_list': PLC([], [dict], can_be_empty_list=False,
                                                      default_value= default_polygon_dict_params),
-                                    'case_output_file_tag': PVC('inside_polygon_events',str)
+                                    'role_output_file_tag': PVC('inside_polygon_events',str)
                                                             })
 
     def check_requirements(self):
-        msg_list = self.check_class_required_fields_properties_grid_vars_and_3D(required_props=['event_polygon', 'current_polygon_for_event_logging'])
-        return msg_list
+       self.check_class_required_fields_prop_etc(required_props_list=['event_polygon', 'current_polygon_for_event_logging'])
+
 
 
     def initialize(self):
 
         super().initialize()  # set up using regular grid for  stats
         si = self.shared_info
-        if self.instanceID > 0 :
+        if self.info['instanceID']  > 0 :
             raise FatalError('LogPolygonEntryAndExit: can only have one instance')
 
         # add particle property to show which polygon particle is in, -1 = in no polygon
@@ -39,7 +39,7 @@ class LogPolygonEntryAndExit(_BaseEventLogger):
         self.set_up_output_file(['event_polygon'] )
 
     def update(self,**kwargs):
-
+        self.start_update_timer()
         part_prop = self.shared_info.classes['particle_properties']
 
         # find where polygon number has changed due to entry or exit
@@ -54,3 +54,5 @@ class LogPolygonEntryAndExit(_BaseEventLogger):
 
         # now updates written change polygon ID to no polygon for those exiting
         part_prop['event_polygon'].set_values(-1, IDs_event_ended)
+
+        self.stop_update_timer()

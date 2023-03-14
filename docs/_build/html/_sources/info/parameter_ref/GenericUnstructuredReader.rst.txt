@@ -21,6 +21,11 @@ Parameters:
 
 		- default: ``None``
 
+	* ``coordinate_projection`` :   ``<class 'str'>``   *<optional>*
+		Description: - string map project for meters grid for use by pyproj module, eg  "proj=utm +zone=16 +datum=NAD83"
+
+		- default: ``None``
+
 	* ``cords_in_lat_long`` :   ``<class 'bool'>``   *<optional>*
 		- default: ``False``
 		- possible_values: ``[True, False]``
@@ -28,9 +33,6 @@ Parameters:
 	* ``depth_average`` :   ``<class 'bool'>``   *<optional>*
 		- default: ``False``
 		- possible_values: ``[True, False]``
-
-	* ``description`` :   ``<class 'str'>``   *<optional>*
-		- default: ``None``
 
 	* ``dimension_map``: nested parameter dictionary
 		* ``node`` :   ``<class 'str'>``   *<optional>*
@@ -49,27 +51,33 @@ Parameters:
 			- default: ``None``
 
 	* ``field_variables``: nested parameter dictionary
+		* ``bottom_stress`` :   ``<class 'str'>``   *<optional>*
+			- default: ``None``
+
+		* ``salinity`` :   ``<class 'str'>``   *<optional>*
+			- default: ``None``
+
 		* ``tide`` :   ``<class 'str'>``   *<optional>*
 			- default: ``None``
 
 		* ``water_depth`` :   ``<class 'str'>``   *<optional>*
 			- default: ``None``
 
-		* ``water_salinity`` :   ``<class 'str'>``   *<optional>*
-			- default: ``None``
-
 		* ``water_temperature`` :   ``<class 'str'>``   *<optional>*
 			- default: ``None``
 
-		* ``water_velocity``:  *<optional>*
-			- a list containing type:  ``<class 'str'>``
-			- default list item: ``None``
+		* ``water_velocity``:**<isrequired>**
+			- a list containing type:  ``[<class 'str'>, None]``
+			- default list : ``['u', 'v', None]``
 			- can_be_empty_list: ``True``
 			- fixed_len: ``3``
 
+		* ``wind_stress`` :   ``<class 'str'>``   *<optional>*
+			- default: ``None``
+
 	* ``field_variables_to_depth_average``:  *<optional>*
-		- a list containing type:  ``<class 'str'>``
-		- default list item: ``None``
+		- a list containing type:  ``[<class 'str'>]``
+		- default list : ``[]``
 		- can_be_empty_list: ``True``
 
 	* ``file_mask`` :   ``<class 'str'>`` **<isrequired>**
@@ -77,8 +85,18 @@ Parameters:
 
 		- default: ``None``
 
+	* ``grid_file`` :   ``<class 'str'>``   *<optional>*
+		Description: - File name with hydrodynamic grid data, as path relative to input_dir, default is get grid from first hindasct file
+
+		- default: ``None``
+
 	* ``grid_variables``: nested parameter dictionary
 		* ``bottom_cell_index`` :   ``<class 'str'>``   *<optional>*
+			- default: ``None``
+
+		* ``is_dry_cell`` :   ``<class 'numpy.int8'>``   *<optional>*
+			Description: - Time variable flag of when cell is dry, 1= is dry cell
+
 			- default: ``None``
 
 		* ``time`` :   ``<class 'str'>`` **<isrequired>**
@@ -88,8 +106,8 @@ Parameters:
 			- default: ``None``
 
 		* ``x``:  *<optional>*
-			- a list containing type:  ``<class 'str'>``
-			- default list item: ``None``
+			- a list containing type:  ``[<class 'str'>]``
+			- default list : ``['x', 'y']``
 			- can_be_empty_list: ``True``
 			- fixed_len: ``2``
 
@@ -117,6 +135,22 @@ Parameters:
 
 		- default: ``None``
 
+	* ``one_based_indices`` :   ``<class 'bool'>``   *<optional>*
+		Description: - indcies in hindcast start at 1, not zero, eg. triangulation nodes start at 1 not zero as in python
+
+		- default: ``False``
+		- possible_values: ``[True, False]``
+
+	* ``required_file_dimensions``:  *<optional>*
+		- a list containing type:  ``[<class 'str'>]``
+		- default list : ``[]``
+		- can_be_empty_list: ``True``
+
+	* ``required_file_variables``:  *<optional>*
+		- a list containing type:  ``[<class 'str'>]``
+		- default list : ``[]``
+		- can_be_empty_list: ``True``
+
 	* ``search_sub_dirs`` :   ``<class 'bool'>``   *<optional>*
 		- default: ``False``
 		- possible_values: ``[True, False]``
@@ -132,4 +166,8 @@ Parameters:
 
 	* ``user_note`` :   ``<class 'str'>``   *<optional>*
 		- default: ``None``
+
+	* ``water_density`` :   ``<class 'int'>``   *<optional>*
+		- default: ``48``
+		- min: ``2``
 

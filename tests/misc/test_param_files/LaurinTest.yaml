@@ -1,11 +1,17 @@
 case_list:
 - dispersion:
-    A_H: 1.0
+    A_H: 0.2
     A_V: 0.001
+    class_name: oceantracker.dispersion.random_walk_varyingAz.RandomWalkVaryingAZ
+  fields:
+  - class_name: oceantracker.fields.friction_velocity.FrictionVelocity
+  - class_name: oceantracker.fields.field_vertical_gradient.VerticalGradient
+    name: A_Z_vertical_gradient
+    name_of_field: A_Z
   particle_concentrations:
   - class_name: oceantracker.particle_concentrations.particle_concentrations.ParticleConcentrations2D
   particle_properties:
-  - class_name: oceantracker.particle_properties.friction_velocity.FrictionVelocity
+  - class_name: oceantracker.particle_properties.total_water_depth.TotalWaterDepth
   particle_release_groups:
   - points:
     - - 502096
@@ -26,8 +32,8 @@ case_list:
     - - 448288.024467616
       - 5983779.777737856
       - -2
-    pulse_size: 50
-    release_interval: 600
+    pulse_size: 10
+    release_interval: 3600
   - class_name: oceantracker.particle_release_groups.polygon_release.PolygonRelease
     points: &id001
     - - 577905.0
@@ -42,8 +48,8 @@ case_list:
       - 5921191.0
     - - 578488.0
       - 5917969.0
-    pulse_size: 50
-    release_interval: 600
+    pulse_size: 100
+    release_interval: 3600
   particle_statistics:
   - calculation_interval: 100
     class_name: oceantracker.particle_statistics.polygon_statistics.PolygonStats2D_timeBased
@@ -261,29 +267,27 @@ case_list:
     particle_property_list: []
     polygon_list: *id002
   run_params:
-    duration: 4406400.0
-    minimum_water_depth: 0.2
+    block_dry_cells: true
+    duration: 604800.0
     open_boundary_type: 1
-    particle_buffer_size: 300000
+    particle_buffer_size: 120000
     write_tracks: true
   solver:
-    n_sub_steps: 12
+    RK_order: 2
+    n_sub_steps: 30
     screen_output_step_count: 1
   tracks_writer:
-    output_step_count: 4
+    output_step_count: 15
   trajectory_modifiers:
   - class_name: oceantracker.trajectory_modifiers.resuspension.BasicResuspension
     critical_friction_velocity: 0.01
-  - class_name: oceantracker.trajectory_modifiers.split_particles.SplitParticles
-    probability_of_splitting: 0.01
-    split_status_greater_than: dead
-    splitting_interval: 180
   velocity_modifiers:
-  - class_name: oceantracker.velocity_modifiers.terminal_velocity.AddTerminalVelocity
+  - class_name: oceantracker.velocity_modifiers.terminal_velocity.TerminalVelocity
     mean: -0.0
 reader:
   class_name: oceantracker.reader.schism_reader.SCHSIMreaderNCDF
   field_variables:
+    A_Z: diffusivity
     ECO_no3: ECO_no3
   field_variables_to_depth_average:
   - water_velocity

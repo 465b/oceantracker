@@ -13,7 +13,7 @@ class NetCDFhandler(object):
         self.file_name = file_name
         self.mode = mode
         try:
-            self.file_handle = Dataset(path.join(self.file_name), mode)
+            self.file_handle = Dataset(self.file_name, mode)
         except Exception as e:
             print('Ocean tracker could not create/find/read netCDF file="' + file_name + '"' + ', mode =' + mode)
             raise(e)
@@ -23,7 +23,15 @@ class NetCDFhandler(object):
 
         self.max_bytes_per_chunk= 4*10**9 # looks like chunks cant exceeded 4gb each
 
-    def add_a_Dimension(self, name, dim_size=None):
+        self.variable_info ={}
+        if mode == 'r':
+            # get variable info
+            v = self.file_handle.variables
+            for name in v.keys():
+                    self.variable_info[name] ={'dimensions':v[name].dimensions, 'shape': v[name].shape,'dtype': v[name].datatype}
+
+
+    def add_dimension(self, name, dim_size=None):
         # add a dimension for use in netcdf
         # print('AD',name,dim_size)
         if name not in self.file_handle.dimensions:
@@ -33,14 +41,12 @@ class NetCDFhandler(object):
         # add and write a variable of given nane and dim name list
         if type(dimList) != list and type(dimList) != tuple: dimList = [dimList]
         if dtype is None: dtype = np.float64  # double by default
-        fill_value =-127 if dtype in [np.int8,np.int16,np.int32,np.int64] else np.nan
+        fill_value =-127 if dtype in [np.uint8, np.int8,np.int16,np.int32,np.int64] else np.nan
 
-        if chunksizes is not None:
-            if np.prod(chunksizes)*8 > self.max_bytes_per_chunk:
-                raise ValueError('chunking too large may exceed 4GB limit')
 
         v = self.file_handle.createVariable(name, dtype, tuple(dimList), chunksizes=chunksizes, zlib=(compressionLevel > 0),
-                                            complevel=compressionLevel, fill_value=fill_value)
+                                                complevel=compressionLevel, fill_value=fill_value)
+
 
         # set attributes the hard way, must be easier way!
         if attributes is not None:
@@ -48,11 +54,14 @@ class NetCDFhandler(object):
                 setattr(self.file_handle.variables[name], key, self._sanitize_attribute(value))
         return v
 
-    def read_a_variable(self,name,sel=None):
+    def read_a_variable(self,name, sel=None, time_first_dim=True):
         if sel is None:
-            data= self.file_handle.variables[name][:]   #read a whole variable
+            data= self.file_handle.variables[name][:]   # read whole variable
         else:
-            data = self.file_handle.variables[name][sel, ...] # selection from first dimension
+            if time_first_dim:
+                data = self.file_handle.variables[name][sel, ...] # selection from first dimension
+            else:
+                data = self.file_handle.variables[name][..., sel]  # selection from last dimension
         return np.array(data)
 
     def read_variables(self, name_list,output=None):
@@ -71,7 +80,7 @@ class NetCDFhandler(object):
 
         # cycle through dims list to add dimension, if needed
         for n in range(len(dimList)):
-            self.add_a_Dimension(dimList[n], X.shape[n])  # an unlimted dimension
+            self.add_dimension(dimList[n], X.shape[n])  # an unlimted dimension
 
         if dtype is None: dtype = X.dtype  # preserve type unless explicitly changed
 
@@ -87,7 +96,7 @@ class NetCDFhandler(object):
     def write_part_of_first_dim_of_variable(self,name,data, sel):
         # write data as part of first dim of named variable with give indicies, only if numpy array list in sel indices is not empty
         if sel.shape[0] > 0:
-            self.file_handle.variables[name][sel, ...] = data[sel, ...]
+            self.file_handle.variables[name][sel, ...] = data[:]
 
     def write_global_attribute(self, name,value) :
         setattr(self.file_handle, name, self._sanitize_attribute(value))
@@ -106,7 +115,7 @@ class NetCDFhandler(object):
     def are_all_vars(self, name_list):        return all(self.are_vars(name_list))
 
     # dimensions
-    def get_dims(self): return self.file_handle.dimensions
+    def get_dims(self): return list(self.file_handle.dimensions.keys())
     def get_dim_size(self,dim_name):  return self.file_handle.dimensions[dim_name].size
 
     def is_dim(self,dim_name):return dim_name in self.file_handle.dimensions

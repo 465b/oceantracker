@@ -27,11 +27,11 @@ class retention_data:
         # read runInfo to get run-meta-info
         metadata["n_rep"] = run_case_info['performance']['replicates']
         
-        metadata["n_indiv_cases"] = len(run_case_info['user_params']['case_list'])
+        metadata["n_indiv_cases"] = len(run_case_info['user_supplied_params']['case_list'])
         metadata["n_total_cases"] = metadata["n_indiv_cases"] * metadata["n_rep"]
        
         metadata["stat_poly_names"] = \
-            [item['user_polygon_name'] for item in run_case_info['user_params']['base_case_params']['particle_statistics'][0]['polygon_list']]
+            [item['user_polygon_name'] for item in run_case_info['user_supplied_params']['base_case_params']['particle_statistics'][0]['polygon_list']]
 
         coulmn_header_type = [
             'case_info','case_info','case_info','case_info',

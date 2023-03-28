@@ -57,3 +57,20 @@ class  ParticleConcentrations2D(_BaseTriangleProperties):
                 particle_concentration[c] += 1.0 / vol
 
 
+class ParticleConcentrationsDepthLayer(ParticleConcentrations2D):
+
+    # def __init__(self):
+    #     super().__init__()
+    #     self.add_default_params({'layer_depth' : PVC(1, float, min=0)})
+
+    # def check_requirements(self):
+    #     super().__init__()
+    #     self.check_class_required_fields_prop_etc(required_props_list=['tide'])
+
+    def select_particles_to_count(self):
+        si= self.shared_info
+        part_prop =  si.classes['particle_properties']
+        status_sel = part_prop['status'].compare_all_to_a_value('eq', si.particle_status_flags['moving'], out=self.get_particle_index_buffer())
+        distance_from_surface = part_prop['tide'].data - part_prop['x'].data[:,2]
+        layer_sel = np.where(distance_from_surface < 1)[0]
+        return np.intersect1d(status_sel, layer_sel)

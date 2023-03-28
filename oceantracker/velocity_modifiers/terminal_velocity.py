@@ -77,7 +77,7 @@ class DielVelocity(TerminalVelocity):
         
         location = astral.LocationInfo(timezone="UTC",latitude=self.params['location'][0],
                                                       longitude=self.params['location'][1])
-        model_start_time = datetime.fromtimestamp(self.shared_info.model_start_time)
+        model_start_time = datetime.fromtimestamp(self.shared_info.solver_info['model_start_time'])
         self.noon = astral.sun.sun(location.observer, date=model_start_time)['noon'].timestamp()
 
 

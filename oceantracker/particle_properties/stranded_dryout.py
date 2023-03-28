@@ -30,7 +30,7 @@ class stranded_dryout(ParticleProperty):
         # compare all particles (at once) and add dt or reset them
         stranded_particles = np.where(particle_status == stranded_flag)
         stranded_particles = active[stranded_particles]
-        self.add_values_to(self.shared_info.model_substep_timestep,stranded_particles)
+        self.add_values_to(self.shared_info.solver_info['model_timestep'],stranded_particles)
         not_stranded_particles = np.where(particle_status != stranded_flag)[0]
         not_stranded_particles = active[not_stranded_particles]
         # check if the slicing for != stranded does weird things with non actives ones

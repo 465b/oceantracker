@@ -37,8 +37,8 @@ class light_limitation(ParticleProperty):
         # yields the elements in first list that are NOT in second
         not_suffocating = np.setdiff1d(active,suffocating)
         
-        self.add_values_to(self.shared_info.model_substep_timestep, suffocating)
-        self.add_values_to(-self.shared_info.model_substep_timestep, not_suffocating)
+        self.add_values_to(self.shared_info.solver_info['model_timestep'], suffocating)
+        self.add_values_to(-self.shared_info.solver_info['model_timestep'], not_suffocating)
         # only non-zero positive elements should be subtracted by dt
         self.set_values(0, active[np.where(self.data[active] < 0)])
 

@@ -21,10 +21,8 @@ from oceantracker.post_processing.plotting.plot_vertical_tracks import plot_rela
 
 #%%
 
-# deactivating dispersion to check how it affects the results
-
 #-----------------------------------------------
-run_name = '22_11_01_depth_losses_v06'
+run_name = '22_11_01_depth_losses_v07'
 #-----------------------------------------------
 
 input_dir = "/scratch/local1/hzg2/"
@@ -34,7 +32,7 @@ output_dir = "/scratch/local1/output/"
 
 # tweeked parameters:
 n_sub_steps = 60
-processors = 1 
+processors = 10
 
 max_time = 3600*24*30*6
 
@@ -47,7 +45,7 @@ threshold_to_cull = 0.001
 fraction_to_cull = 1
 
 sa_resolution = 0
-replicates = 1
+replicates = 9
 
 output_step_multiplier = 1 # hours between track recorded
 
@@ -61,6 +59,7 @@ release_polygon = [
         ])
     }
 ]
+
 
 observational_polygone = [
     {
@@ -276,7 +275,7 @@ params={
 	},
 	"base_case_params": {
 		"run_params": {
-			"write_tracks": True,
+			"write_tracks": False,
             "duration": max_time,
 			"particle_buffer_size": int(max_particle),
             "open_boundary_type": 0,
@@ -291,8 +290,7 @@ params={
             "output_step_count": int(n_sub_steps*output_step_multiplier)
         },
         "dispersion": {
-                # 'class_name': 'oceantracker.dispersion.random_walk_varyingAz.RandomWalkVaryingAZ',
-                'A_V': 0.01,
+                'class_name': 'oceantracker.dispersion.random_walk_varyingAz.RandomWalkVaryingAZ',
                 'A_H': 0.1,
             },
         "particle_properties": [

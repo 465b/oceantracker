@@ -88,16 +88,15 @@ class DielVelocity(TerminalVelocity):
         v_velocity_scaling = np.sign(v_velocity_scaling)
         return v_velocity_scaling
 
-    def modify_velocity(self,v, t, active):
-        # modify vertical velocity, if backwards, make negative
-        si = self.shared_info
-        v_scaling = self.calculate_sun_phase(t)
 
-        if self.params['variance'] == 0.:
-            # constant fall vel
-            particle_operations_util.add_value_to(v[:, 2],
-                self.params['mean'] * si.model_direction * v_scaling, active)
+    def update(self, nb, t, active):
+        si = self.shared_info
+        part_prop = si.classes['particle_properties']
+
+        v_scaling = self.calculate_sun_phase(t)
+        velocity_modifier = part_prop['velocity_modifier']       
+
+        if self.params['variance'] is None:
+            self._add_constant_vertical_vel(velocity_modifier.data, self.params['mean'] * si.model_direction * v_scaling, active)
         else:
-            particle_operations_util.add_to(v[:, 2],
-                si.classes['particle_properties']['terminal_velocity'].data, active,
-                scale = si.model_direction)
+            self._add_individual_vertical_vel(velocity_modifier.data, part_prop['terminal_velocity'].data,  si.model_direction * v_scaling, active)

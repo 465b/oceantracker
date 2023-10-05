@@ -19,7 +19,7 @@ from oceantracker.post_processing.transect_projection.transect import Transect
 
 #%%
 #-----------------------------------------------
-run_name = '22_12_08_retention_v13'
+run_name = 'tmp_debug'
 #-----------------------------------------------w
 
 #v07
@@ -753,20 +753,20 @@ params['case_list'] = cases
 
 
 #%% run the model
-# runInfo = main.run(params)
+runInfo = main.run(params)
 
 # #%% load and draw statistical overview
-path_to_dir = os.path.join(params['shared_params']['root_output_dir'],params['shared_params']['output_file_base'])
+# path_to_dir = os.path.join(params['shared_params']['root_output_dir'],params['shared_params']['output_file_base'])
 
-retention = stats_plot.retention_data(path_to_dir)
+# retention = stats_plot.retention_data(path_to_dir)
 # with open('/work/uh0296/u301513/metadata.pkl', 'wb') as file:
 #     pickle.dump(retenion.metadata, file)
 # with open('/work/uh0296/u301513/data.pkl', 'wb') as file:
 #     pickle.dump(retenion.data, file)
 
 # retention.plot_retention_sa_polycount_overview(fig_path=path_to_dir)
-retention.plot_retention_sa_sucess_overview(fig_path=path_to_dir)
-retention.plot_retention_box_plots(fig_path=path_to_dir)
+# retention.plot_retention_sa_sucess_overview(fig_path=path_to_dir)
+# retention.plot_retention_box_plots(fig_path=path_to_dir)
 
 # %% draw animations
 # cases = load_output_files.get_case_info_files_from_dir(path_to_dir)

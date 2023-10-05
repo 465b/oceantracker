@@ -19,7 +19,7 @@ from oceantracker.post_processing.transect_projection.transect import Transect
 
 #%%
 #-----------------------------------------------
-run_name = '22_12_08_retention_v14'
+run_name = '22_12_08_retention20'
 #-----------------------------------------------w
 
 #v07
@@ -37,7 +37,13 @@ run_name = '22_12_08_retention_v14'
 
 #v14
 # fixed broken diel migration
-# changed init light budget to max
+
+#v15
+# changed init light starvation to 0
+
+#v18
+# based on v15 and set light starvation to 3 months (3*28*24h)
+
 
 input_dir = "/work/uh0296/u301513/hzg_data/"
 output_dir = "/work/uh0296/u301513/ot_output/"
@@ -551,8 +557,8 @@ params={
                  'max_time_stranded': 3600*24*7},
                 {
                     'class_name': 'oceantracker.particle_properties.light_limitation.light_limitation',
-                    'max_time_wo_light': 3600*24*14
-                    # 'initial_value': 3600*24*14
+                    'max_time_wo_light': 3600*24*28*1,
+                    'initial_value': 0
                     },
                 {'class_name' : 'oceantracker.particle_properties.distance_travelled.DistanceTravelled'}
         ], 
@@ -751,10 +757,10 @@ retention = stats_plot.retention_data(path_to_dir)
 # with open('/work/uh0296/u301513/data.pkl', 'wb') as file:
 #     pickle.dump(retenion.data, file)
 
-# retention.plot_retention_sa_polycount_overview(fig_path=path_to_dir)
+retention.plot_retention_sa_polycount_overview(fig_path=path_to_dir)
 retention.plot_retention_sa_sucess_overview(fig_path=path_to_dir)
 retention.plot_retention_box_plots(fig_path=path_to_dir)
 
 # %% draw animations
-cases = load_output_files.get_case_info_files_from_dir(path_to_dir)
-stats_plot.animate_cases(cases)
+# cases = load_output_files.get_case_info_files_from_dir(path_to_dir)
+# stats_plot.animate_cases(cases)

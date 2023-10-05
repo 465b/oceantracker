@@ -11,6 +11,8 @@ from oceantracker.post_processing.plotting import plot_tracks
 from oceantracker.post_processing.read_output_files import load_output_files
 from oceantracker.util import json_util
 
+import pickle
+
 sns.set_context("talk")
 
 
@@ -31,7 +33,7 @@ class retention_data:
         metadata["n_total_cases"] = metadata["n_indiv_cases"] * metadata["n_rep"]
        
         metadata["stat_poly_names"] = \
-            [item['user_polygon_name'] for item in run_case_info['user_supplied_params']['base_case_params']['particle_statistics'][0]['polygon_list']]
+            [item['user_polygon_name'] for item in run_case_info['user_supplied_params']['case_list'][0]['particle_statistics'][0]['polygon_list']]
 
         coulmn_header_type = [
             'case_info','case_info','case_info','case_info',
@@ -250,6 +252,11 @@ class retention_data:
         short = np.concatenate([item for item in self.data['depth_below_free_surface_short_living']])
         long = np.concatenate([item for item in self.data['depth_below_free_surface_long_living']])
 
+        # write plot data to pickle
+        export = [short, long]
+        with open(os.path.join('/work/uh0296/u301513/ot_output/', f'dbf.pkl'),'wb') as f:
+            pickle.dump(export,f)
+
         ax.set_title('Plankton depth below surface')
         ax.boxplot(short,positions=[1],labels=['short\nliving'],
                    #whis=(0,100)
@@ -319,13 +326,20 @@ class retention_data:
         
         # filter particle counts for the surviving particles
         total = [np.sum(case[:,0,:],axis=1) for case in df['n_particle_total']]
-        threshold = np.average([case[0] for case in total])
+
+        post_peak_index = int(len(total[0])/2)
+        threshold = np.average([case[post_peak_index] for case in total])
 
         surviving = [case[-1] for case in total]
         if len(surviving) > plot_shape[0]*plot_shape[1]:
             print("Warning. Dataset surpisingly large. Cutting down to expected size")
             surviving = surviving[:plot_shape[0]*plot_shape[1]]
         surviving = np.reshape(surviving, plot_shape)
+
+        # write plot data to pickle
+        export = [surviving, threshold, self.metadata['split_frac'], self.metadata["vert_vel"]]
+        with open(os.path.join(fig_path, f'retention_success_sa_{migration_mode}.pkl'),'wb') as f:
+            pickle.dump(export,f)
 
         # draw figure
         fig,ax = plt.subplots(1,1,figsize=(24,12))
@@ -528,10 +542,6 @@ def flatclean(x):
     x = x.flatten()
     x = x[~np.isnan(x)]
     return x
-
-
-
-
 
 
 

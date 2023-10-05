@@ -1,7 +1,7 @@
 from random import normalvariate
-from numba import njit
+from numba import njit, types as nbtypes
 from oceantracker.dispersion.random_walk import RandomWalk
-#from oceantracker.interpolator.util.dev.vertical_walk_at_particle_location_eval_interp import _evalBCinterp
+#from oceantracker.interpolator.util.scatch_tests.vertical_walk_at_particle_location_eval_interp import _evalBCinterp
 import numpy as np
 
 class RandomWalkVaryingAZ(RandomWalk):
@@ -13,8 +13,8 @@ class RandomWalkVaryingAZ(RandomWalk):
         self.add_default_params({ } )
 
 
-    def initialize(self):
-        super().initialize()
+    def initial_setup(self):
+        super().initial_setup()
         si=self.shared_info
         pgm = si.classes['particle_group_manager']
 
@@ -24,20 +24,19 @@ class RandomWalkVaryingAZ(RandomWalk):
        self.check_class_required_fields_prop_etc(required_fields_list=['A_Z','A_Z_vertical_gradient'],
                                                              requires3D=True,
                                                              required_props_list=['A_Z','A_Z_vertical_gradient','nz_cell', 'x', 'n_cell'])
-
     # apply random walk
-    def update(self,nb,  time, active):
+    def update(self, time_sec, active):
         # add up 2D/3D diffusion coeff as random walk vector, plus vertical advection given by
-
         si= self.shared_info
         prop = si.classes['particle_properties']
         self._add_random_walk_velocity_modifier(prop['A_Z'].data, prop['A_Z_vertical_gradient'].data,
                                                 self.info['random_walk_velocity'],
-                                                np.abs(si.solver_info['model_timestep']),
+                                                np.abs(si.solver_info['model_time_step']),
                                                 active, prop['velocity_modifier'].data)
 
     @staticmethod
-    @njit(fastmath=True)
+    @njit()
+    #@njit(nbtypes.void(nbtypes.float32[:], nbtypes.float32[:], nbtypes.float64[:], nbtypes.float64,nbtypes.int32[:], nbtypes.float64[:, :]))
     def _add_random_walk_velocity_modifier(A_Z,A_Z_vertical_gradient,random_walk_velocity,timestep, active, velocity_modifier):
         # add vertical advection effect of dispersion to random walk, see Lynch Particles in the Coastal Ocean: Theory and Applications
         # this avoids particle accumulating in areas of high vertical gradient of A_Z, ie top and bottom

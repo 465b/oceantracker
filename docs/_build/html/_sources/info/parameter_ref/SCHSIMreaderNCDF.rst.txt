@@ -10,27 +10,22 @@ SCHSIMreaderNCDF
 
 **Inheritance:** _BaseReader> GenericUnstructuredReader> SCHSIMreaderNCDF
 
-**Default internal name:** ``"not given in defaults"``
-
 
 Parameters:
 ************
+
+	* ``EPSG_transform_code`` :   ``<class 'int'>``   *<optional>*
+		Description: - Integer code needed to enable transformation from/to meters to/from lat/lon (see https://epsg.io/ to find EPSG code for hydro-models meters grid)
+
+		- default: ``None``
+		- min: ``0``
 
 	* ``class_name`` :   ``<class 'str'>``   *<optional>*
 		Description: - Class name as string A.B.C, used to import this class from python path
 
 		- default: ``None``
 
-	* ``coordinate_projection`` :   ``<class 'str'>``   *<optional>*
-		Description: - string map project for meters grid for use by pyproj module, eg  "proj=utm +zone=16 +datum=NAD83"
-
-		- default: ``None``
-
 	* ``cords_in_lat_long`` :   ``<class 'bool'>``   *<optional>*
-		- default: ``False``
-		- possible_values: ``[True, False]``
-
-	* ``depth_average`` :   ``<class 'bool'>``   *<optional>*
 		- default: ``False``
 		- possible_values: ``[True, False]``
 
@@ -53,7 +48,7 @@ Parameters:
 
 		* ``water_velocity``:  *<optional>*
 			- a list containing type:  ``[<class 'str'>]``
-			- default list : ``['hvel']``
+			- default list : ``[]``
 			- can_be_empty_list: ``True``
 			- fixed_len: ``2``
 
@@ -79,7 +74,7 @@ Parameters:
 	* ``hgrid_file_name`` :   ``<class 'str'>``   *<optional>*
 		- default: ``None``
 
-	* ``input_dir`` :   ``<class 'str'>``   *<optional>*
+	* ``input_dir`` :   ``<class 'str'>`` **<isrequired>**
 		- default: ``None``
 
 	* ``isodate_of_hindcast_time_zero`` :   ``iso8601date``   *<optional>*
@@ -88,17 +83,6 @@ Parameters:
 	* ``max_numb_files_to_load`` :   ``<class 'int'>``   *<optional>*
 		- default: ``10000000``
 		- min: ``1``
-
-	* ``minimum_total_water_depth`` :   ``<class 'float'>``   *<optional>*
-		Description: - Min. water depth used to decide if stranded by tide and which are dry cells to block particles from entering
-
-		- default: ``0.25``
-		- min: ``0.0``
-
-	* ``name`` :   ``<class 'str'>``   *<optional>*
-		Description: - The internal name, which is used to reference the instance of this class within the code, eg. the name "water_velocity" would refers to a particle property or field used within the code
-
-		- default: ``None``
 
 	* ``one_based_indices``: nested parameter dictionary
 	* ``required_file_dimensions``:  *<optional>*
@@ -111,8 +95,12 @@ Parameters:
 		- default list : ``[]``
 		- can_be_empty_list: ``True``
 
-	* ``search_sub_dirs`` :   ``<class 'bool'>``   *<optional>*
+	* ``requires_3D`` :   ``<class 'bool'>``   *<optional>*
 		- default: ``False``
+		- possible_values: ``[True, False]``
+
+	* ``search_sub_dirs`` :   ``<class 'bool'>``   *<optional>*
+		- default: ``True``
 		- possible_values: ``[True, False]``
 
 	* ``time_buffer_size`` :   ``<class 'int'>``   *<optional>*
@@ -120,9 +108,11 @@ Parameters:
 		- min: ``2``
 
 	* ``time_zone`` :   ``<class 'int'>``   *<optional>*
+		Description: - time zone in hours relative to UTC/GMT , eg NZ standard time is time zone 12
+
 		- default: ``None``
 		- min: ``-12``
-		- max: ``23``
+		- max: ``12``
 
 	* ``user_note`` :   ``<class 'str'>``   *<optional>*
 		- default: ``None``

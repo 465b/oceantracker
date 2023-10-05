@@ -4,20 +4,18 @@ VerticalGradient
 
 **Description:** Calculated a vertical gradient field with name  "name_of_field" param, as a field named "name_of_field_vertical_grad"
 
-**Class:** oceantracker.fields.field_vertical_gradient.VerticalGradient
+**class_name:** oceantracker.fields.field_vertical_gradient.VerticalGradient
 
 **File:** oceantracker/fields/field_vertical_gradient.py
 
 **Inheritance:** _BaseField> UserFieldBase> VerticalGradient
-
-**Default internal name:** ``"not given in defaults"``
 
 
 Parameters:
 ************
 
 	* ``class_name`` :   ``<class 'str'>``   *<optional>*
-		Description: - Class name as string A.B.C, used to import this class from python path
+		Description: Class name as string A.B.C, used to import this class from python path
 
 		- default: ``None``
 
@@ -28,9 +26,6 @@ Parameters:
 	* ``is_time_varying`` :   ``<class 'bool'>``   *<optional>*
 		- default: ``True``
 		- possible_values: ``[True, False]``
-
-	* ``name`` :   ``<class 'str'>`` **<isrequired>**
-		- default: ``None``
 
 	* ``name_of_field`` :   ``<class 'str'>`` **<isrequired>**
 		- default: ``None``

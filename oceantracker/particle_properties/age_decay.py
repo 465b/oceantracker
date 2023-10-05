@@ -1,12 +1,11 @@
 from oceantracker.particle_properties._base_properties import ParticleProperty
 import numpy as np
-from oceantracker.util.parameter_checking import ParamDictValueChecker as PVC
+from oceantracker.util.parameter_checking import ParamValueChecker as PVC
 class AgeDecay(ParticleProperty):
 
     def __init__(self):
         super().__init__()
-        self.add_default_params({'name': PVC('age_decay', str) ,
-                                 'initial_value': PVC(1., float,doc_str='Particle property at the time of release'),
+        self.add_default_params({ 'initial_value': PVC(1., float,doc_str='Particle property at the time of release'),
                                  'decay_time_scale': PVC( 1.*3600*24, float)})
         self.class_doc(description='Exponentially decaying particle property based on age.')
 

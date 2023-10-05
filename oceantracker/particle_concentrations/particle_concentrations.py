@@ -1,5 +1,5 @@
 from oceantracker.particle_concentrations._base_user_triangle_properties import _BaseTriangleProperties
-from oceantracker.util.parameter_checking import ParamDictValueChecker as PVC
+from oceantracker.util.parameter_checking import ParamValueChecker as PVC
 from numba import njit
 import numpy as np
 
@@ -27,10 +27,10 @@ class  ParticleConcentrations2D(_BaseTriangleProperties):
         super().set_up_output_file()
         # add 2D variables
         nc= self.nc
-        nc.create_a_variable('particle_count', ['time_dim','triangle_dim'], dtype=self.particle_count.dtype)
-        nc.create_a_variable('particle_concentration', ['time_dim', 'triangle_dim'], dtype=self.particle_concentration.dtype)
+        nc.create_a_variable('particle_count',['time_dim','triangle_dim'], self.particle_count.dtype, description='count of particles in each triangle at given time')
+        nc.create_a_variable('particle_concentration', ['time_dim', 'triangle_dim'], self.particle_concentration.dtype, description='concentration of particles in each triangle at given time')
 
-    def update(self,n_buffer, time):
+    def update(self, time_sec):
         si=self.shared_info
         grid = si.classes['reader'].grid
 
@@ -40,8 +40,8 @@ class  ParticleConcentrations2D(_BaseTriangleProperties):
                                       grid['triangle_area'],
                                        self.particle_count,
                                         self.particle_concentration,  sel)
-        self.write(n_buffer, time)
-        self.record_time_stats_last_recorded(time)
+        self.write(time_sec)
+        self.record_time_stats_last_recorded(time_sec)
 
     @staticmethod
     @njit()

@@ -4,20 +4,18 @@ DistanceTravelled
 
 **Description:** 
 
-**Class:** oceantracker.particle_properties.distance_travelled.DistanceTravelled
+**class_name:** oceantracker.particle_properties.distance_travelled.DistanceTravelled
 
 **File:** oceantracker/particle_properties/distance_travelled.py
 
 **Inheritance:** _BasePropertyInfo> ParticleProperty> DistanceTravelled
-
-**Default internal name:** ``"distance_travelled"``
 
 
 Parameters:
 ************
 
 	* ``class_name`` :   ``<class 'str'>``   *<optional>*
-		Description: - Class name as string A.B.C, used to import this class from python path
+		Description: Class name as string A.B.C, used to import this class from python path
 
 		- default: ``None``
 
@@ -27,11 +25,11 @@ Parameters:
 	* ``dtype`` :   ``<class 'numpy.dtype'>``   *<optional>*
 		- default: ``<class 'numpy.float64'>``
 
+	* ``fill_value`` :   ``[<class 'int'>, <class 'float'>]``   *<optional>*
+		- default: ``None``
+
 	* ``initial_value`` :   ``<class 'float'>``   *<optional>*
 		- default: ``0.0``
-
-	* ``name`` :   ``<class 'str'>``   *<optional>*
-		- default: ``distance_travelled``
 
 	* ``prop_dim3`` :   ``<class 'int'>``   *<optional>*
 		- default: ``1``
@@ -42,7 +40,7 @@ Parameters:
 		- possible_values: ``[True, False]``
 
 	* ``type`` :   ``<class 'str'>``   *<optional>*
-		Description: - particle property
+		Description: particle property
 
 		- default: ``user``
 		- possible_values: ``['manual_update', 'from_fields', 'user']``

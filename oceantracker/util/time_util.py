@@ -1,41 +1,51 @@
-from datetime import  datetime, timedelta
+from datetime import  datetime
 import dateutil.parser
 import math
 
 import numpy as np
 # deal with date time operations,
 
+def seconds_to_datetime64(s):  return np.asarray(s).astype('datetime64[s]')
 
 
-def ot_time_zero(): return datetime(1970,1,1)
+def seconds_to_isostr(s): return str(seconds_to_datetime64(s))
 
-def seconds_to_date(s): return ot_time_zero() + timedelta(seconds=s) # better than total seconds which allows for computers time zone
+def datetime64_to_seconds(dt64):
+    return dt64.astype(np.float64)
 
-def seconds_to_iso8601str(s): return seconds_to_date(s).isoformat() # better than total seconds which allows for computers time zone
+def isostr_to_datetime64(s):   return np.datetime64(s).astype('datetime64[s]')
+
+def isostr_to_seconds(s):    return isostr_to_datetime64(s).astype(np.float64)
+
+def seconds_to_pretty_duration_string(s,seconds=True):
+    td = np.timedelta64(int(np.round(s)),'s')
+    days = td.astype('timedelta64[D]').astype(int)
+    hours = (td.astype('timedelta64[h]') - days * 24).astype(int)
+    minutes = (td.astype('timedelta64[m]') - days * 24 * 60 - hours * 60).astype(int)
+    # Create the string representation
+    s =  f"{days} days {hours} hrs {minutes} min"
+    if seconds:
+        seconds = (td.astype('timedelta64[s]') - days * 24 * 60 * 60 - hours * 60 * 60 - minutes*60).astype(int)
+        s += f" {seconds} sec"
+
+    return  s
+
+def seconds_to_hours_mins_string(s):
+    min = int(s / 60)
+    hours =int(min /60)
+    min  = int(min - hours * 60)
+    return   f"{hours:1d} hrs {min:2d} min"
+
 def seconds_to_pretty_str(s, seconds= True):
     fmt="%Y-%m-%d %H:%M"
     if seconds: fmt +=":%S"
-    s_str= seconds_to_date(s).strftime(fmt)
-    return s_str
-def seconds_to_short_date(s):
-    fmt="%Y_%m_%d"
-    s_str= seconds_to_date(s).strftime(fmt)
-    return s_str
-def iso8601str_to_seconds(s):  return date_to_seconds(date_from_iso8601str(s))
-
-def date_to_seconds(date): return  (date-ot_time_zero()).total_seconds()
+    dt = datetime.utcfromtimestamp(s)
+    return  dt.strftime(fmt)
 
 
 
 def diff(date1,date2) :  return  (date1 - date2).total_seconds()
 
-
-def date_from_iso8601str(s, err_msg='')  :
-    try:
-        d = dateutil.parser.isoparse(s)
-        return d
-    except AssertionError:
-        raise(err_msg  + ', dates must be iso8601 string eg 2019-09-17T21:21:00.123456,  minmal string example 2019-02-01')
 
 def iso8601_str(d)   :  return d.isoformat()
 

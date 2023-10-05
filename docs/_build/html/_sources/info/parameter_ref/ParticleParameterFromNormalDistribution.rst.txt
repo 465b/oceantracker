@@ -4,20 +4,18 @@ ParticleParameterFromNormalDistribution
 
 **Description:** 
 
-**Class:** oceantracker.particle_properties.particle_parameter_from_normal_distribution.ParticleParameterFromNormalDistribution
+**class_name:** oceantracker.particle_properties.particle_parameter_from_normal_distribution.ParticleParameterFromNormalDistribution
 
 **File:** oceantracker/particle_properties/particle_parameter_from_normal_distribution.py
 
 **Inheritance:** _BasePropertyInfo> ParticleProperty> ParticleParameterFromNormalDistribution
-
-**Default internal name:** ``"not given in defaults"``
 
 
 Parameters:
 ************
 
 	* ``class_name`` :   ``<class 'str'>``   *<optional>*
-		Description: - Class name as string A.B.C, used to import this class from python path
+		Description: Class name as string A.B.C, used to import this class from python path
 
 		- default: ``None``
 
@@ -27,14 +25,11 @@ Parameters:
 	* ``dtype`` :   ``<class 'numpy.dtype'>``   *<optional>*
 		- default: ``<class 'numpy.float64'>``
 
+	* ``fill_value`` :   ``[<class 'int'>, <class 'float'>]``   *<optional>*
+		- default: ``None``
+
 	* ``initial_value`` :   ``<class 'float'>``   *<optional>*
 		- default: ``0.0``
-
-	* ``mean`` :   ``<class 'float'>`` **<isrequired>**
-		- default: ``0.0``
-
-	* ``name`` :   ``<class 'str'>``   *<optional>*
-		- default: ``None``
 
 	* ``prop_dim3`` :   ``<class 'int'>``   *<optional>*
 		- default: ``1``
@@ -45,7 +40,7 @@ Parameters:
 		- possible_values: ``[True, False]``
 
 	* ``type`` :   ``<class 'str'>``   *<optional>*
-		Description: - particle property
+		Description: particle property
 
 		- default: ``user``
 		- possible_values: ``['manual_update', 'from_fields', 'user']``
@@ -56,6 +51,9 @@ Parameters:
 
 	* ``user_note`` :   ``<class 'str'>``   *<optional>*
 		- default: ``None``
+
+	* ``value`` :   ``<class 'float'>`` **<isrequired>**
+		- default: ``0.0``
 
 	* ``variance`` :   ``<class 'float'>`` **<isrequired>**
 		- default: ``0.0``

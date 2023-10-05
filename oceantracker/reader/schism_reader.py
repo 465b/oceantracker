@@ -1,18 +1,16 @@
 import numpy as np
 from numba import  njit
-from datetime import  datetime, timedelta
+from datetime import  datetime
 from oceantracker.reader.generic_unstructured_reader import GenericUnstructuredReader
 from copy import  copy
-from oceantracker.util.parameter_checking import ParamDictValueChecker as PVC, ParameterListChecker as PLC
-from oceantracker.util.ncdf_util import NetCDFhandler
+from oceantracker.util.parameter_checking import ParamValueChecker as PVC, ParameterListChecker as PLC
 from oceantracker.util import time_util
-from oceantracker.fields.reader_field import ReaderField
-from oceantracker.reader.util.reader_util import split_quad_cells, append_split_cell_data
-
+from oceantracker.reader.util.reader_util import append_split_cell_data
+from oceantracker.util.triangle_utilities_code import split_quad_cells
 
 #todo add optional standard feilds by list of internal names, using a stanard feild maping maping
 #todo a way to map al stanard feilds but supress reading them unless requested?
-class SCHSIMreaderNCDF(GenericUnstructuredReader):
+class SCHISMSreaderNCDF(GenericUnstructuredReader):
     # loads a standard SCHISM netcdf output file with nodal data
     # variable names can be tweaked via maps in shared_params, if non-standard names used
 
@@ -21,7 +19,7 @@ class SCHSIMreaderNCDF(GenericUnstructuredReader):
         super().__init__()  # required in children to get parent defaults
         self.add_default_params({  # if be used alongside 3D vel
                         'hgrid_file_name': PVC(None, str),
-                        'field_variables': {'water_velocity': PLC(['hvel'], [str], fixed_len=2),
+                        'field_variables': {'water_velocity': PLC([], [str], fixed_len=2),
                                             'water_depth': PVC('depth', str),
                                             'tide': PVC('elev', str)},
                                 })
@@ -30,7 +28,7 @@ class SCHSIMreaderNCDF(GenericUnstructuredReader):
 
     def is_hindcast3D(self, nc): return  nc.is_var('hvel')
 
-    def get_number_of_z_levels(self, nc):  return nc.get_dim_size('nSCHISM_vgrid_layers')
+    def get_number_of_z_levels(self, nc):  return nc.dim_size('nSCHISM_vgrid_layers')
 
     def is_var_in_file_3D(self, nc, var_name_in_file):  return nc.is_var_dim(var_name_in_file, 'nSCHISM_vgrid_layers')
 
@@ -47,11 +45,11 @@ class SCHSIMreaderNCDF(GenericUnstructuredReader):
 
     def read_zlevel_as_float32(self, nc, file_index, zlevel_buffer, buffer_index):
         # read in place
-        zlevel_buffer[buffer_index,:] = nc.read_a_variable('zcor', sel=file_index).astype(np.float32)
+        zlevel_buffer[buffer_index,...] = nc.read_a_variable('zcor', sel=file_index).astype(np.float32)
 
     def read_dry_cell_data(self,nc,file_index, is_dry_cell_buffer, buffer_index):
         # calculate dry cell flags, if any cell node is dry
-        #todo enforce read as boolean
+        #todo enforce read as boolean??
         grid = self.grid
         # get dry cells for each triangle allowing for splitting of quad cells
         data_added_to_buffer = nc.read_a_variable('wetdry_elem', file_index)
@@ -59,16 +57,19 @@ class SCHSIMreaderNCDF(GenericUnstructuredReader):
 
     def additional_setup_and_hindcast_file_checks(self, nc, msg_logger):
         # sort out which velocity etc are there and adjust field variables
+        si= self.shared_info
         params = self.params
         fv= params['field_variables']
 
         if not nc.is_var('hvel'):
             # run in depth averaged mode if only a 2D Schisim run
-            params['depth_average']= True
+            si.settings['run_as_depth_averaged']= True
             msg_logger.msg(' 3D Schism velocity variable "hvel" not in hydo-model trying to run in depth average mode using "dahv" variable', note=True)
             fv['water_velocity'] = ['dahv'] # one vector component
+        else:
+            fv['water_velocity'] = ['hvel']
 
-        if params['depth_average']:
+        if si.settings['run_as_depth_averaged']:
             #sort out which velo to use
             if  nc.is_var('dahv'):
                 fv['water_velocity'] = ['dahv']
@@ -84,29 +85,24 @@ class SCHSIMreaderNCDF(GenericUnstructuredReader):
             else:
                 msg_logger.msg('No "vertical_velocity" variable in Schism hydro-model files, assuming vertical_velocity=0', note=True)
 
-        if  nc.is_var('minimum_depth'):
-            # use schism min depth times 1.2 to allow for diff due to interp cell tide to nodes in schisms output
-            params['minimum_total_water_depth']= 1.2*float(nc.read_a_variable('minimum_depth'))
 
-
-
-    def make_non_time_varying_grid(self,nc, grid):
-        grid =super().make_non_time_varying_grid(nc, grid)
+    def build_grid(self, nc, grid):
+        grid =super().build_grid(nc, grid)
         return grid
 
-    def read_time(self, nc, file_index=None):
-        if file_index is None:
-            time = nc.read_a_variable('time', sel=None) # read all times
-        else:
-            time = nc.read_a_variable('time', sel=file_index)
+    def read_time_sec_since_1970(self, nc, file_index=None):
+        time = nc.read_a_variable('time', sel=file_index)
 
-        base_date=  [ int(float(x)) for x in nc.get_var_attr('time','base_date').split()]
+        base_date=  [ int(float(x)) for x in nc.var_attr('time','base_date').split()]
 
         d0= datetime(base_date[0], base_date[1], base_date[2], base_date[3], base_date[4])
-        time = time + time_util.date_to_seconds(d0)
+        d0 = np.datetime64(d0).astype('datetime64[s]')
+        sec = time_util.datetime64_to_seconds(d0)
+        time += sec
 
         if self.params['time_zone'] is not None:
-            time += self.params['time_zone']*3600.
+            time += self.params['time_zone'] * 3600.
+
         return time
 
     def read_bottom_cell_index_as_int32(self, nc):

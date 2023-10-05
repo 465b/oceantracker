@@ -1,9 +1,9 @@
 import numpy as np
-from oceantracker.particle_properties.util import particle_operations_util, particle_comparisons_util
+from oceantracker.particle_properties import particle_comparisons_util, particle_operations_util
 from oceantracker.util.parameter_base_class import ParameterBaseClass
-from oceantracker.util.parameter_checking import  ParamDictValueChecker as PVC
+from oceantracker.util.parameter_checking import  ParamValueChecker as PVC
 from oceantracker.common_info_default_param_dict_templates import particle_info
-from oceantracker.util.basic_util import atLeast_Nby1, nopass
+from oceantracker.util import time_util
 
 
 class _BasePropertyInfo(ParameterBaseClass):
@@ -13,17 +13,18 @@ class _BasePropertyInfo(ParameterBaseClass):
         # set up info/attributes
         super().__init__()  # required in children to get parent defaults
 
-        self.add_default_params({ 'description': PVC(None,str), 'time_varying':PVC(True, bool),'name': PVC(None, str),
-            'write': PVC(True, bool), 'vector_dim': PVC(1, int, min = 1 ), 'prop_dim3': PVC(1, int, min=1),
-             'dtype':PVC(np.float64, np.dtype),
-             'initial_value':PVC(0., float),
-             'update':PVC(True,bool)
+        self.add_default_params({   'description': PVC(None,str),
+                                    'time_varying':PVC(True, bool),
+                                    'write': PVC(True, bool), 'vector_dim': PVC(1, int, min = 1 ), 'prop_dim3': PVC(1, int, min=1),
+                                    'dtype':PVC(np.float64, np.dtype),
+                                    'initial_value':PVC(0.,float),
+                                    'fill_value': PVC(None,[int,float]),
+                                    'update':PVC(True,bool)
               })
-
 
         self.class_doc(role='Particle properties hold data at current time step for each particle, accessed using their ``"name"`` parameter. Particle properties  many be \n * core properties set internally (eg particle location x )\n * derive from hindcast fields, \n * be calculated from other particle properties by user added class.')
 
-    def initialize(self, **kwargs): pass
+    def initial_setup(self, **kwargs): pass
 
     def initial_value_at_birth(self, released_IDs):  pass
 
@@ -34,7 +35,7 @@ class _BasePropertyInfo(ParameterBaseClass):
 
     def num_vector_dimensions(self):  return 0 if self.data.ndim == 1 else self.data.shape[1]
 
-    def get_dtype(self): return self.data.dtype
+    def get_dtype(self):  return self.params['dtype']
 
 
 class TimeVaryingInfo(_BasePropertyInfo):
@@ -46,12 +47,12 @@ class TimeVaryingInfo(_BasePropertyInfo):
         super().__init__()  # required in children to get parent defaults and merge with give params
 
 
-    def initialize(self,**kwargs):
+    def initial_setup(self, **kwargs):
 
         s=(1,)
         if self.params['vector_dim'] > 1:
             s += (self.params['vector_dim'],)
-        self.data = self.data = np.full(s, self.params['initial_value'], dtype=  self.params['dtype'])
+        self.data = self.data = np.full(s, self.params['initial_value'], dtype=  self.get_dtype(),order='c')
 
 
     def update(self): pass # manual update by default
@@ -69,8 +70,10 @@ class ParticleProperty(_BasePropertyInfo):
                                             doc_str='particle property',
                                             possible_values=particle_info['known_prop_types']),
                                  })
-    def initialize(self):
-        s=(self.shared_info.particle_buffer_size,)
+    def initial_setup(self):
+        si = self.shared_info
+        #s=(self.shared_info.particle_buffer_size,)
+        s = (si.classes['particle_group_manager'].info['current_particle_buffer_size'],)
         if self.params['vector_dim'] > 1:
             s += (self.params['vector_dim'],)
 
@@ -80,12 +83,17 @@ class ParticleProperty(_BasePropertyInfo):
 
         self.info['array_size'] = s
         # set up data buffer
-        self.data = np.full(s, self.params['initial_value'], dtype=  self.params['dtype'])
+        self.data = np.full(s, self.params['initial_value'], dtype=  self.get_dtype(), order='c')
 
     def initial_value_at_birth(self, new_part_IDs):
         # need to set at birth, as in compact mode particle buffer changes,
         # so cant rely on value at matrix construction in initialize
-        self.set_values(self.params['initial_value'], new_part_IDs)  # sets this properties values
+        value =self.params['initial_value']
+
+        if self.get_dtype() == np.dtype('<M8[s]'): # datetime64 in seconds
+            value = time_util.seconds_to_datetime64(value)
+
+        self.set_values(value, new_part_IDs)  # sets this properties values
 
     def update(self, active): pass # manual update by default
 
@@ -97,25 +105,18 @@ class ParticleProperty(_BasePropertyInfo):
         else:
             particle_operations_util.set_value(self.data, values, active)
 
-    def add_values_to(self, values, active):
-        # set property using using indicies sel
-        if type(values) == np.ndarray:
-            if values.shape[0]  != active.shape[0] : raise Exception('add_values_to: shape of values must match number of indices to set in active')
-            particle_operations_util.add_values_to(self.data, values, active)
-        else:
-            particle_operations_util.add_value_to(self.data, values, active)
+    def fill_buffer(self,value):
+        n_in_buffer = self.shared_info.classes['particle_group_manager'].info['particles_in_buffer']
+        self.data[:n_in_buffer,...] = value
 
-    def add_prop_to(self, prop_name, sel, scale = 1.0):
-        particle_operations_util.add_to(self.dataInBufferPtr(), self.shared_info.classes['particle_properties'][prop_name].dataInBufferPtr(), sel, scale= scale)
 
     def get_values(self, sel):
         # get property values using indices sel
         return np.take(self.data,sel, axis=0)  # for integer index sel, take is faster than numpy fancy indexing and numba
 
-    def copy_prop(self,prop_name, sel):
-        particle_operations_util.copy(self.dataInBufferPtr(), self.shared_info.classes['particle_properties'][prop_name].dataInBufferPtr(), sel)
+    def used_buffer(self): return self.data[:self.shared_info.classes['particle_group_manager'].info['particles_in_buffer'], ...]
 
-    def dataInBufferPtr(self): return self.data[:self.shared_info.classes['particle_group_manager'].particles_in_buffer, ...]
+    def full_buffer(self):  return self.data
 
     # particle selection methods
     # if out given, uses index buffers to speed, by reducing memory creation, and making it more likely index values are in chip cache
@@ -125,12 +126,12 @@ class ParticleProperty(_BasePropertyInfo):
         # if out is None, given result returns a view of new variable
 
         if self.is_vector():
-            raise Exception('compare_all_to_a_value: particle property ' + self.params['name'] +'>> particle comparisons using compare_prop_to_value only possible for scalar particle properties, not vectors')
+            raise Exception('compare_all_to_a_value: particle property ' + self.info['name'] +'>> particle comparisons using compare_prop_to_value only possible for scalar particle properties, not vectors')
 
-        # to search only those in buffer use dataInBufferPtr()
-        data = self.dataInBufferPtr()
+        # to search only those in buffer use used_buffer()
+        data = self.used_buffer()
         if out is None: out = np.full((data.shape[0],), -127, np.int32)
-        found = particle_comparisons_util.prop_compared_to_value(data, test, value, out)
+        found = particle_comparisons_util.compared_prop_to_value(data, test, value, out)
         return found
 
     def find_subset_where(self, active, test, value, out=None):
@@ -139,13 +140,13 @@ class ParticleProperty(_BasePropertyInfo):
         # if out is None, given result returns a view of new variable
 
         if self.is_vector():
-            raise Exception('find_subset_where: particle property ' + self.params['name'] + '>> particle comparisons using compare_prop_to_value only possible for scalar particle properties, not vectors')
+            raise Exception('find_subset_where: particle property ' + self.info['name'] + '>> particle comparisons using compare_prop_to_value only possible for scalar particle properties, not vectors')
 
-        return particle_comparisons_util.prop_subset_compared_to_value(active, self.dataInBufferPtr(), test, value, out)
+        return particle_comparisons_util.prop_subset_compared_to_value(active, self.used_buffer(), test, value, out)
 
     def find_those_in_range_of_values(self,value1,value2, out):
-        data = self.dataInBufferPtr()
+        data = self.used_buffer()
         if out is None: out = np.full((data.shape[0],), -127, np.int32)
 
-        found= particle_comparisons_util._find_all_in_range(data, value1,value2, out)
+        found= particle_comparisons_util._find_all_in_range(data, value1, value2, out)
         return found

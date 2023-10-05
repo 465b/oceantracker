@@ -1,13 +1,12 @@
 from oceantracker.particle_properties._base_properties import ParticleProperty
-from oceantracker.util.parameter_checking import ParamDictValueChecker as PVC
+from oceantracker.util.parameter_checking import ParamValueChecker as PVC
 from numba import njit
 import numpy as np
 
 class TotalWaterDepth(ParticleProperty):
     def __init__(self):
         super().__init__()
-        self.add_default_params({'name': PVC('total_water_depth', str),
-                                 'is_time_varying': PVC(True,bool),
+        self.add_default_params({'is_time_varying': PVC(True,bool),
                                  'num_components': PVC(1, bool),
                                  'is3D': PVC(False,bool)})
 

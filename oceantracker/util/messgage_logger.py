@@ -1,11 +1,14 @@
 from os import path, remove
 import traceback
-
+from time import  perf_counter
+from oceantracker.common_info_default_param_dict_templates import docs_base_url
 class GracefulError(Exception):
     def __init__(self, message='-no error message given',hint=None):
         # Call the base class constructor with the parameters it needs
         msg= 'Error >> ' + message + '\n hint= ' + hint if hint is not None else ' Look at messages above or in .err file'
         super(GracefulError, self).__init__(msg)
+
+
 
 def msg_str(msg,tabs=0):
     tab = '  '
@@ -15,11 +18,25 @@ def msg_str(msg,tabs=0):
     return m
 
 class MessageLogger(object):
-    def __init__(self,screen_tag):
-        self.screen_tag = screen_tag
+    def __init__(self, screen_tag,max_warnings = 50):
+        self.screen_tag = screen_tag + ':'
+        self.max_warnings = max_warnings
         self.fatal_error_count = 0
-        self.warnings_and_errors=[]
+        self.warnings_list=[]
+        self.errors_list=[]
+        self.notes_list = []
         self.log_file = None
+        self.error_warning_count = 0
+
+        # build links lookup
+        link_map= [['parameter_ref_toc', 'info/parameter_ref/parameter_ref_toc.html'],
+                   ['release_groups', 'info/parameter_ref/release_groups_toc.html'],
+                   ['howto_release_groups', 'info/how_to/C_release_groups.html']
+                    ]
+        self.links={}
+        for l in link_map:
+            self.links[l[0]]= docs_base_url + l[1]
+
 
     def set_up_files(self,run_output_dir,output_file_base):
 
@@ -35,8 +52,14 @@ class MessageLogger(object):
             remove(self.error_file_name)
 
         return  log_file_name, error_file_name
+    #todo add abilty to return excecption/traceback?
+    def msg(self, msg_text, warning=False, note=False,
+            hint=None, tag=None, tabs=0, crumbs=None, link=None,
+            fatal_error=False, exit_now=False, exception = None, traceback_str=None):
 
-    def msg(self, msg_text, warning=False, note=False, hint=None, tag=None, tabs=0, crumbs=None, fatal_error=False,exit_now=False, traceback_str=None):
+        if exception is not None:
+            fatal_error = True
+            exit_now = True
 
         if fatal_error: self.fatal_error_count +=1
 
@@ -45,65 +68,79 @@ class MessageLogger(object):
         # first line of message
         if fatal_error:
             m[0] += msg_str( '>>> Error: ', tabs)
+            self.error_warning_count += 1
 
         elif warning:
             m[0] += msg_str('>>> Warning: ' , tabs)
+            self.error_warning_count += 1
         elif note:
             m[0] += msg_str('>>> Note: ', tabs)
         else:
             m[0] += msg_str('', tabs)
 
-        if tag is not None: m[0] += ', in ' + tag + '>'
+        if exception is not None:
+            m[0] += msg_str('exception >>: ' + str(exception), tabs+2)
+
+        if traceback_str is not None:
+            m[0] += msg_str('traceback >>: ' + str(traceback_str), tabs + 2)
 
         m[0] +=  msg_text
 
         # first line complete
 
         if crumbs is not None:
-            m.append(msg_str('In: ' + crumbs, tabs + 1))
+            m.append(msg_str('in: ' + crumbs, tabs + 3))
         if hint is not None:
-            m.append(msg_str('Hint: ' + hint, tabs + 2))
+            m.append(msg_str('Hint: ' + hint, tabs + 3))
+        if link is not None:
+            m.append(msg_str('see user documentation: ' + self.links[link], tabs + 3))
 
         # write message lines
         for l in m:
-            print(self.screen_tag + ' ' + l)
+            ll = self.screen_tag + ' ' + l
+            print(ll)
             if self.log_file is not None:
-                self.log_file.write(l + '\n')
+                self.log_file.write(ll + '\n')
 
             # keeplist ond warnings errors etc to print at end
-            if fatal_error or warning or note:
-                self.warnings_and_errors.append(l)
-
-        # mange whether to exit now or not:
-        if fatal_error: self.fatal_error_count += 1
+            if fatal_error:
+                    self.errors_list.append(l)
+            if warning :
+                if len(self.warnings_list) <= self.max_warnings:
+                    self.warnings_list.append(l)
+            if note:
+                if len(self.notes_list) <= self.max_warnings:
+                    self.notes_list.append(l)
 
         # todo add traceback to message?
         if exit_now:
             raise GracefulError('Fatal error cannot continue')
 
     def has_fatal_errors(self): return  self.fatal_error_count > 0
-    def set_max_warnings(self,n_max): self.max_warnings=n_max
 
     def exit_if_prior_errors(self,msg=None):
         if self.has_fatal_errors():
             raise GracefulError('Fatal error cannot continue >>> ' +msg if msg is not None else '', hint='Check above or run.err file for errors')
 
-    def insert_screen_line(self):
+    def print_line(self):
         self.msg('--------------------------------------------------------------------------')
 
-    def write_progress_marker(self, msg, tabs=0):
+    def progress_marker(self, msg, tabs=0, start_time=None):
+
+        # add completion time if start given
+        if start_time is not None:
+            msg = f' {msg},\t  {perf_counter()-start_time:1.3f} sec'
+            tabs += 2
+
         self.msg('- ' + msg, tabs=tabs + 1)
 
-    def show_all_warnings_and_errors(self,error=None):
-        for l in self.warnings_and_errors:
-            print(self.screen_tag + ' ' + l)
-            if self.log_file is not None:
-                self.log_file.write(l + '\n')
-        if error is not None:
-            self.msg(str(error))
-            self.msg(traceback.format_exc())
+    def show_all_warnings_and_errors(self):
 
-
+        for t in [self.notes_list, self.warnings_list, self.errors_list]:
+            for l in t:
+                print(self.screen_tag + ' ' + l)
+                if self.log_file is not None:
+                    self.log_file.write(l + '\n')
 
     def write_error_log_file(self, e=None):
 
@@ -111,8 +148,11 @@ class MessageLogger(object):
 
         with open(path.normpath(self.error_file_name),'w') as f:
             f.write('_____ Known warnings and Errors ________________________________\n')
-            for l in self.warnings_and_errors:
-                f.write(l + '\n')
+            for t in [self.notes_list, self.warnings_list, self.errors_list]:
+                for l in t:
+                    print(self.screen_tag + ' ' + l)
+                    if self.log_file is not None:
+                        self.log_file.write(l + '\n')
 
 
             f.write('________Trace back_____________________________\n')

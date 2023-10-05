@@ -2,7 +2,7 @@
 #---------------------------------------
 import oceantracker.main as main
 from oceantracker.util import json_util
-params = json_util.read_JSON("..\demo_json\demo61_concentration_test.json")
+params = json_util.read_JSON("..\demo_param_files\demo61_concentration_test.json")
 
 runInfo_file_name, has_errors = main.run(params)
 
@@ -13,8 +13,6 @@ from oceantracker.post_processing.read_output_files.load_output_files import loa
 from oceantracker.post_processing.plotting.plot_statistics import animate_concentrations
 
 output_file= "output\demo61_concentration_test"
-
-case_info_file_name = get_case_info_file_from_run_file(runInfo_file_name)
 
 c = load_concentration_vars(case_info_file_name, var_list=['particle_concentration', 'C'])
 

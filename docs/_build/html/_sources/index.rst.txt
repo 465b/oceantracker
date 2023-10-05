@@ -21,7 +21,7 @@ Fast particle tracking in unstructured grids
    </video>
   </center>
 
-OceanTracker is a fast extendable code for offline particle tracking in unstructured grids [1]_.
+OceanTracker is a fast extendable code for offline particle tracking in unstructured grids [1]_, which also works with regular grid hydrodynamic models.
 
 OceanTracker's speed enables millions of particles to be simulated in unstructured grids. This
 significantly increases the range of particle behaviours that can be modeled and the quality of statistics
@@ -44,16 +44,12 @@ Features
 * Native grid particle tracking which preserves the vertical resolution
       * `SCHISM <http://ccrm.vims.edu/schismweb/>` for both  Slayer and LSC vertical grids
       * FVCOM model output, which preserves the resolution of
-      * Support for ROMs regular grids is being developed
+      * regular native grid ROMs
 * Builds heat maps on the fly, without recording particle tracks, also inside polygon counts computed on the fly
 * Backward and forward in time particle tracking
 * Shoreline stranding of particles by the tide and resuspension from the bottom
 * 2D and 3D particle tracking, with option to run 3D as 2D
 
-.. note::
-
-   Particle tracking is currently set up for generic unstructured grids and SCHISM netcdf output. Will be expanding use to other grids and output formats.
-   Particle tracking in structured grids is also being added, eg. ROMS
 
 ====================
 Architecture
@@ -61,8 +57,9 @@ Architecture
 
 * Implemented in Python
 * Driven by parameters in JSON or YAML file, or in code from a Python dictionary
+* "helper class" to assist new user build parameters
 * Tools to read output, plus plot animations
-* Highly customizable at parameter level
+* Computational pipeline built from user parameters level
 * Extendable to create novel particle behaviours, eg. vertical migration of plankton
 * Can run particle tracking cases in parallel to further improve computational speed
 
@@ -71,13 +68,13 @@ Architecture
    :width: 200
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
    :hidden:
    :caption: Contents:
 
    info/about.rst
    info/features.rst
-   info/demos/demos.rst
+   info/gallery.rst
    info/users_guide.rst
 
 .. warning::

@@ -1,6 +1,9 @@
-from oceantracker.common_info_default_param_dict_templates import default_case_param_template, default_class_names
 
+from oceantracker.util.parameter_util import make_class_instance_from_params
 from oceantracker.util.module_importing_util import import_module_from_string
+from oceantracker import common_info_default_param_dict_templates as common_info
+from oceantracker.util.parameter_checking import merge_params_with_defaults
+
 
 class SharedInfoClass(object):
     # allows working classes access to instances of other classes to use their methods
@@ -9,101 +12,69 @@ class SharedInfoClass(object):
 
     def reset(self):
         self.classes = {}
-        self.class_interators_using_name = {}
-        self.core_class_interator = {}
-        self.classes_as_lists ={}
         # fill in known user class and iterator names
-        for key, item in default_case_param_template.items():
-            if type(item) == list:
-                self.classes[key] = {}
-                self.classes_as_lists[key] = []
-                self.class_interators_using_name[key] = {'all': {}, 'user': {} , 'manual_update':{}}
+        for key in list(common_info.class_dicts.keys()):
+            self.classes[key] = {}
 
+    def add_core_class(self, name, params, crumbs =''):
 
-    def add_core_class(self,class_type, instance,  check_if_core_class=True):
         ml= self.msg_logger
+        crumb_base = f' >>> adding core class type >> "{name}" '
 
-        if class_type not in default_case_param_template and check_if_core_class:
-            ml.msg('add_core_class, name is not a known core class, name=' + class_type,
-                         crumbs='Adding core class type=' + class_type,
-                         exception = True)
+        # make instance  and merge params
+        i = make_class_instance_from_params(name, params, ml, class_role_name=name,
+                                            crumbs=crumb_base + crumbs )
+        self.classes[name] = i
+        return i
 
-        self.classes[class_type]= instance
-        self.core_class_interator[class_type] = instance
-
-
-    def create_class_interator(self,class_type, known_iteration_groups=None):
-        if class_type not in self.classes: self.classes[class_type] = {}
-        if class_type not in self.class_interators_using_name: self.class_interators_using_name[class_type] = {'all': {}}
-
-        if known_iteration_groups is not None:
-            for g in known_iteration_groups:
-                self.class_interators_using_name[class_type].update({g :{}})
-
-    def add_class_instance_to_interator_lists(self, class_type, iteration_group, i, crumbs=''):
+    def create_class_dict_instance(self,name,class_role, group, params,  crumbs=''):
         # dynamically  get instance of class from string eg oceantracker.solver.Solver
         ml= self.msg_logger
-        crumbs += ' >>> Adding_class type >> ' + class_type + '(group= ' + iteration_group +')'
 
-        known_list_classes= []
-        for key, item in default_case_param_template.items():
-            if type(item) == list:
-                known_list_classes.append(key)
+        instanceID = len(self.classes[class_role])
 
-        if class_type not in known_list_classes:
-            ml.msg('add_to_class_list: name is not a known class list,class_type=' + class_type , exception = True, crumbs = crumbs)
+        crumb_base = f' >>> adding_class type >> "{class_role}"  (name=  "{name}" instance #{instanceID: 1d}), '
+
+        # make instance  and merge params
+        i = make_class_instance_from_params(name, params, self.msg_logger,
+                                            crumbs= crumb_base + crumbs)
+
+        if class_role not in common_info.class_dicts.keys() :
+            ml.msg(f'Class type = "{class_role}": name is not a known class_role=' + class_role ,
+                   exception = True, crumbs =  crumb_base + crumbs)
 
         # now add to class lists and interators
-        # firts check it is known interation group
-        if iteration_group not in self.class_interators_using_name[class_type]:
-            ml.msg('add_to_class_list: iteration_group  for class_type=' + class_type + ', group="'
-                         + iteration_group + '", is not one of known types=' + str(
-                self.class_interators_using_name[class_type].keys()), fatal_error=True)
 
-        i.info['instanceID'] = len(self.classes[class_type])  # needed for release group identification info etc, zero based
+        i.info['group'] = group
 
-        if 'name' not in i.params or i.params['name'] is None:
-            i.params['name'] = f"{ i.info['instanceID']:04}"
+        # needed for release group identification info etc, zero based
+        i.info['instanceID'] =  instanceID
 
-        name = i.params['name']
-        if name in self.classes[class_type]:
-            ml.msg('Class type"' + class_type + '" already has a class with name = "' + i.params['name']
+        i.info['class_role'] = class_role
+
+        if name in self.classes[class_role]:
+            ml.msg('Class type"' + class_role + '" already has a class with name = "' + i.info['name']
                          + '", "name" parameter must be unique',
-                         crumbs = ' Checking for unique class names >>> '+  crumbs, fatal_error=True)
+                         crumbs =    crumb_base + crumbs,  fatal_error=True)
 
+        else:
+            self.classes[class_role][name] = i
+        return i
 
-        self.classes[class_type][name] = i
-        self.classes_as_lists[class_type].append(i)
-
-        self.class_interators_using_name[class_type]['all'][name] = i
-        self.class_interators_using_name[class_type][iteration_group][name] = i
-
-    def delete_add_class_instance_to_interators(self, name, class_type, iteration_group, i):
-        i.info['instanceID'] = len(self.classes[class_type]) # needed for release group identification info etc
-        self.classes[class_type][name] = i
-        self.classes_as_lists[class_type].append(i)
-
-        self.class_interators_using_name[class_type]['all'][name] = i
-        self.class_interators_using_name[class_type][iteration_group][name] = i
-
-
-
-
-    def all_class_instance_pointers_iterator(self, asdict=False):
+    def all_class_instance_pointers_iterator(self):
         # build list of all points for iteration, eg in calling all close methods
-        if asdict:  p={}
-        else:  p = []
+        p = []
 
         for name, item in self.classes.items():
-           if type(item) != dict:
-                if item is not None:
-                    if asdict: p[name] = item
-                    else: p.append(item)
+           if name in common_info.class_dicts.keys():
+               # set of classes
+               if item is not None:
+                    for key, i in item.items():
+                        if i is not None:  p.append(i)
+
            else:
-               # must be list  dict
-               for key, i in item.items():
-                    if i is not None:
-                        if asdict: p[name] = i
-                        else:  p.append(i)
+                if item is not None:
+                    p.append(item)
+
         return p
 

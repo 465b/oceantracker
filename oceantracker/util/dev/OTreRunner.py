@@ -24,12 +24,12 @@ def build_reader(input_dir, params):
 
     # get dummry oceanTrackerSimulation instance with intialised reader
     otsim = OceanTrackerCaseRunner()
-    otsim.shared_info.case_runner_params= {'sorted_hindcast_file_info' : file_info}  # nack to give reader acess to hindcastr file info
+    otsim.shared_info.working_params= {'sorted_hindcast_file_info' : file_info}  # nack to give reader acess to hindcastr file info
 
-    params['reader'].update({'time_buffer_size' : file_info['n_time_steps_in_hindcast']}) # set buffer size to hindcast size
+    params['reader'].update({'time_buffer_size': file_info['n_time_steps_in_hindcast']})  # set buffer size to hindcast size
 
     reader = otsim._build_class_instance('reader', params['reader'], show_warnings=False)
-    reader.initialize()
+    reader.initial_setup()
 
     # fill buffer
     bt = params['shared_params']['backtracking']
@@ -46,8 +46,8 @@ class OceanTrackerReRunner(object):
 
     def first_run(self, params, test_root_output_dir = None):
 
-        params['shared_params'].update({'processors': 1, 'replicates': 1, # enforce single core
-                                        'input_dir' : 'Missing'})
+        params['shared_params'].update({'processors': 1,  # enforce single core
+                                           'input_dir': 'Missing'})
 
         ot1 = OceanTrackerRunMain()
 
@@ -89,8 +89,8 @@ class OceanTrackerReRunner(object):
         reader = self.otsim.shared_info.classes['reader']
 
         # clear, then add new release groups   re formed with new param
-        si.classes['particle_release_groups']=[]
-        t_start, t_end, estimated_total_particles= otsim._setup_particle_release_groups(case_params['particle_release_groups'])
+        si.classes['release_groups']=[]
+        t_start, t_end, estimated_total_particles= otsim._setup_particle_release_groups(case_params['release_groups'])
 
         # adjust shared model run time and duration
         si.model_start_time= t_start
@@ -98,7 +98,7 @@ class OceanTrackerReRunner(object):
 
         # reset any stats, reallocate count arrays, based on new release groups
         for s in si.classes['particle_statistics']:
-            s.initialize()
+            s.initial_setup()
 
         particle.info['num_released'] = 0
 
@@ -117,8 +117,8 @@ class OceanTrackerReRunner(object):
              'time_base_seconds_since': reader.params['hindcast_date_of_time_zero'],
              'hindcast': {'start_time': t1,
                           'end_time': t2,
-                          'start_date': time_util.seconds_to_iso8601str(t1),
-                          'end_date': time_util.seconds_to_iso8601str(t2),
+                          'time_start': time_util.seconds_to_isostr(t1),
+                          'time_end': time_util.seconds_to_isostr(t2),
                           'nodes': grid['x'].shape[0],
                           },
              }
@@ -153,7 +153,6 @@ if __name__ == '__main__':
     case = {
             'write_tracks':  False,
             'write_grid': False,
-            'particle_buffer_size': 500,
             'solver': {'n_sub_steps': 2},
             'interp2D': {
                 'class_name': 'oceantracker.interpolator.interp_triangle_native_grid.InterpTriangularNativeGrid_Slayer_and_LSCgrid'},
@@ -161,10 +160,10 @@ if __name__ == '__main__':
                 'class_name': 'oceantracker.interpolator.interp_triangle_native_grid.Interp3DTriangular_native_grid'},
             'particle_group_manager': {'class_name': 'OTreRunner.EmitOutputParticle'},
             'dispersion': {'A_H': 0.1, },
-            'particle_release_groups': [
+            'release_groups': [
                 {'points': [[1594500, 5482700], [1598000, 5486100]],
                  'pulse_size': 1, 'release_interval': 6 * 3600},
-                {'class_name': 'oceantracker.particle_release_groups.polygon_release.PolygonRelease',
+                {'class_name': 'oceantracker.release_groups.polygon_release.PolygonRelease',
                  'points': [[1597682.1237, 5489972.7479],
                             [1598604.1667, 5490275.5488],
                             [1598886.4247, 5489464.0424],
@@ -224,7 +223,7 @@ if __name__ == '__main__':
         {'release_start_date': '2017-01-05', 'points': [[1594500, 5482700], [
             1598000, 5486100]], 'pulse_size': 10, 'release_interval': 1 * 3600},
         {'release_start_date': '2017-01-05',
-            'class_name': 'oceantracker.particle_release_groups.polygon_release.PolygonRelease',
+            'class_name': 'oceantracker.release_groups.polygon_release.PolygonRelease',
          'points': [[1597682.1237, 5489972.7479],
                     [1598604.1667, 5490275.5488],
                     [1598886.4247, 5489464.0424],
@@ -233,8 +232,8 @@ if __name__ == '__main__':
          'pulse_size': 10, 'release_interval': 3 * 3600}
 
     ]
-    # loop over tests
-    print('rerunner tests')
+    # loop over misc
+    print('rerunner misc')
     for pg in prg:
         print(pg)
         ot_rerunner.rerun(pg)

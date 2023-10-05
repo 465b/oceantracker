@@ -4,38 +4,29 @@ PolygonStats2D_timeBased
 
 **Description:** 
 
-**Class:** oceantracker.particle_statistics.polygon_statistics.PolygonStats2D_timeBased
+**class_name:** oceantracker.particle_statistics.polygon_statistics.PolygonStats2D_timeBased
 
 **File:** oceantracker/particle_statistics/polygon_statistics.py
 
 **Inheritance:** _BaseParticleLocationStats> GriddedStats2D_timeBased> _CorePolygonMethods> PolygonStats2D_timeBased
 
-**Default internal name:** ``"not given in defaults"``
-
 
 Parameters:
 ************
 
-	* ``calculation_interval`` :   ``<class 'float'>``   *<optional>*
-		Description: - time in sec, between calculating statistics
-
-		- default: ``3600.0``
-
 	* ``class_name`` :   ``<class 'str'>``   *<optional>*
-		Description: - Class name as string A.B.C, used to import this class from python path
+		Description: Class name as string A.B.C, used to import this class from python path
 
 		- default: ``None``
 
-	* ``count_status_in_range``:  *<optional>*
-		Description: - Count only those particles with status which fall in the given range
+	* ``count_end_date`` :   ``iso8601date``   *<optional>*
+		Description: Stop particle counting from this date
 
-		- a list containing type:  ``[<class 'str'>]``
-		- default list : ``['frozen', 'moving']``
-		- can_be_empty_list: ``True``
-		- min_length: ``2``
-		- max_length: ``2``
+		- default: ``None``
 
-	* ``file_tag`` :   ``<class 'str'>``   *<optional>*
+	* ``count_start_date`` :   ``iso8601date``   *<optional>*
+		Description: Start particle counting from this date
+
 		- default: ``None``
 
 	* ``grid_size``:  *<optional>*
@@ -44,12 +35,9 @@ Parameters:
 		- can_be_empty_list: ``True``
 		- fixed_len: ``2``
 
-	* ``name`` :   ``<class 'str'>``   *<optional>*
-		Description: - The internal name, which is used to reference the instance of this class within the code, eg. the name "water_velocity" would refers to a particle property or field used within the code
-
-		- default: ``None``
-
 	* ``particle_property_list``:  *<optional>*
+		Description: - Create statistics for these named particle properties, list = ["water_depth"], for statics on water depth at particle locations inside the counted regions
+
 		- a list containing type:  ``[<class 'str'>]``
 		- default list : ``[]``
 		- can_be_empty_list: ``True``
@@ -62,10 +50,40 @@ polygon_list: still working on display  of lists of dict, eg nested polygon list
 	* ``role_output_file_tag`` :   ``<class 'str'>``   *<optional>*
 		- default: ``stats_polygon_time``
 
+	* ``status_max`` :   ``[<class 'str'>]``   *<optional>*
+		Description: Count only those particles with status  <= to this value
+
+		- default: ``moving``
+		- possible_values: ``['unknown', 'bad_cord', 'cell_search_failed', 'notReleased', 'dead', 'outside_open_boundary', 'frozen', 'stranded_by_tide', 'on_bottom', 'moving']``
+
+	* ``status_min`` :   ``[<class 'str'>]``   *<optional>*
+		Description: Count only those particles with status >= to thsi value
+
+		- default: ``frozen``
+		- possible_values: ``['unknown', 'bad_cord', 'cell_search_failed', 'notReleased', 'dead', 'outside_open_boundary', 'frozen', 'stranded_by_tide', 'on_bottom', 'moving']``
+
+	* ``update_interval`` :   ``<class 'float'>``   *<optional>*
+		Description: Time in seconds between calculating statistics
+
+		- default: ``3600.0``
+		- units: ``sec``
+
 	* ``user_note`` :   ``<class 'str'>``   *<optional>*
 		- default: ``None``
 
 	* ``write`` :   ``<class 'bool'>``   *<optional>*
+		Description: Write statistcs to disk
+
 		- default: ``True``
 		- possible_values: ``[True, False]``
+
+	* ``z_max`` :   ``<class 'float'>``   *<optional>*
+		Description: Count only those particles with vertical positions <= to this value
+
+		- default: ``1e+32``
+
+	* ``z_min`` :   ``<class 'float'>``   *<optional>*
+		Description: Count only those particles with vertical positions >=  to this value
+
+		- default: ``-1e+32``
 

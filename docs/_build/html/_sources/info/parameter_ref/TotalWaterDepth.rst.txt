@@ -4,20 +4,18 @@ TotalWaterDepth
 
 **Description:** 
 
-**Class:** oceantracker.particle_properties.total_water_depth.TotalWaterDepth
+**class_name:** oceantracker.particle_properties.total_water_depth.TotalWaterDepth
 
 **File:** oceantracker/particle_properties/total_water_depth.py
 
 **Inheritance:** _BasePropertyInfo> ParticleProperty> TotalWaterDepth
-
-**Default internal name:** ``"total_water_depth"``
 
 
 Parameters:
 ************
 
 	* ``class_name`` :   ``<class 'str'>``   *<optional>*
-		Description: - Class name as string A.B.C, used to import this class from python path
+		Description: Class name as string A.B.C, used to import this class from python path
 
 		- default: ``None``
 
@@ -26,6 +24,9 @@ Parameters:
 
 	* ``dtype`` :   ``<class 'numpy.dtype'>``   *<optional>*
 		- default: ``<class 'numpy.float64'>``
+
+	* ``fill_value`` :   ``[<class 'int'>, <class 'float'>]``   *<optional>*
+		- default: ``None``
 
 	* ``initial_value`` :   ``<class 'float'>``   *<optional>*
 		- default: ``0.0``
@@ -37,9 +38,6 @@ Parameters:
 	* ``is_time_varying`` :   ``<class 'bool'>``   *<optional>*
 		- default: ``True``
 		- possible_values: ``[True, False]``
-
-	* ``name`` :   ``<class 'str'>``   *<optional>*
-		- default: ``total_water_depth``
 
 	* ``num_components`` :   ``<class 'bool'>``   *<optional>*
 		- default: ``1``
@@ -54,7 +52,7 @@ Parameters:
 		- possible_values: ``[True, False]``
 
 	* ``type`` :   ``<class 'str'>``   *<optional>*
-		Description: - particle property
+		Description: particle property
 
 		- default: ``user``
 		- possible_values: ``['manual_update', 'from_fields', 'user']``

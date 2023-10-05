@@ -5,7 +5,9 @@ from numba  import njit
 from copy import copy,deepcopy
 from oceantracker.util.parameter_base_class import ParameterBaseClass
 from oceantracker.util.ncdf_util import  NetCDFhandler
-from oceantracker.util.parameter_checking import ParamDictValueChecker as PVC, ParameterListChecker as PLC
+from oceantracker.util import  output_util
+
+from oceantracker.util.parameter_checking import ParamValueChecker as PVC, ParameterListChecker as PLC
 
 class _BaseEventLogger(ParameterBaseClass):
 
@@ -20,18 +22,11 @@ class _BaseEventLogger(ParameterBaseClass):
         self.check_class_required_fields_prop_etc(required_props_list=['event_has_started_boolean'])
 
 
-    def initialize(self):
+    def initial_setup(self):
         si = self.shared_info
-        buffer_size= si.particle_buffer_size
-
-        # boolean buffer partile prop to recorded history of event having started (must be prop to be managed in compact mode)
+        # boolean buffer particle prop to recorded history of event having started (must be prop to be managed in compact mode)
         particle = si.classes['particle_group_manager']
-        particle.create_particle_property('manual_update',dict(name='event_has_started_boolean',  initial_value=False, dtype=bool, write=False))
-
-        # place to record which particles where events has just started or
-        # just end based on changes in event_has_started_boolean to know which events to write
-        self.event_has_started_IDbuffer = np.full((buffer_size,), -1, np.int32)
-        self.event_has_ended_IDbuffer   = np.full((buffer_size,), -1, np.int32)
+        particle.create_particle_property('event_has_started_boolean','manual_update',dict(initial_value=False, dtype=bool, write=False))
 
         self.time_steps_written = 0
 
@@ -46,8 +41,8 @@ class _BaseEventLogger(ParameterBaseClass):
         IDs_event_began, IDs_event_ended = self._find_particles_where_event_has_started_or_ended_numba(
                                                         event_has_started_boolean,
                                                         event_is_happening_boolean,
-                                                        self.event_has_started_IDbuffer,
-                                                        self.event_has_ended_IDbuffer)
+                                                        self.get_partID_buffer('event_has_started'),
+                                                        self.get_partID_buffer('event_has_ended'))
         return  IDs_event_began, IDs_event_ended
 
     def set_up_output_file(self,addition_prop_to_write = None):
@@ -61,8 +56,8 @@ class _BaseEventLogger(ParameterBaseClass):
 
         # set up unique list of props to write
         info['prop_to_write'] = list(set(deepcopy(params['particle_prop_to_write_list']) + addition_prop_to_write))
+        info['output_file'] = si.output_file_base + '_' + self.params['role_output_file_tag'] + '_' + self.info['name'] + '.nc'
 
-        info['output_file'] = si.output_file_base + '_events_%03.0f' % (self.info['instanceID']  + 1) + '.nc'
         self.nc = NetCDFhandler(os.path.join(si.run_output_dir, info['output_file']), 'w')
 
         self.nc.add_dimension('event_dim', dim_size=None) # open dim
@@ -72,8 +67,8 @@ class _BaseEventLogger(ParameterBaseClass):
         vec_dims= ['oneD','twoD','threeD' ]
         for n, d in enumerate(vec_dims): self.nc.add_dimension(d, dim_size=n + 1)
 
-        self.nc.create_a_variable('event_flag', ['event_dim'], {'notes': 'event strated =1, ended = -1'}, np.int8, chunksizes=[chunk])
-        self.nc.create_a_variable('time', ['event_dim'], {'notes': 'time in sec'}, np.float64,  chunksizes=[chunk])
+        self.nc.create_a_variable('event_flag',['event_dim'], np.int8, description='event started=1, ended = -1', chunksizes=[chunk])
+        self.nc.create_a_variable('time', ['event_dim'],np.float64, description='time in seconds since 1970-01-01', chunksizes=[chunk])
 
         for prop_name in  info['prop_to_write']:
             pp = part_prop[prop_name]
@@ -84,7 +79,7 @@ class _BaseEventLogger(ParameterBaseClass):
                 dims +=  [vec_dims[pp.num_vector_dimensions() - 1]]
                 cs +=  [pp.num_vector_dimensions()]
 
-            self.nc.create_a_variable(prop_name, dims, {'notes': 'values when event started or ended'}, pp.get_dtype(), chunksizes= cs)
+            self.nc.create_a_variable(prop_name, dims, pp.get_dtype(),description='values when event started or ended', chunksizes= cs)
 
     def write_events(self,IDs_event_began, IDs_event_ended):
         # prop to write is list of particle prop to write beyond the standard ones, e.g.  ID of polygon each particle is inside, to note which polygon event is associated with
@@ -135,4 +130,9 @@ class _BaseEventLogger(ParameterBaseClass):
         return event_has_started_IDbuffer[:n_started], event_has_ended_IDbuffer[:n_finished]
 
     def close(self):
-        if self.params['write']:  self.nc.close()
+        if self.params['write']:
+            # add attributes mapping release index to release group name
+            si = self.shared_info
+            nc = self.nc
+            output_util.add_release_group_ID_info_to_netCDF(nc, si.classes['release_groups'])
+            nc.close()

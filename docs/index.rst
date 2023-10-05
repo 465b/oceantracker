@@ -50,10 +50,6 @@ Features
 * Shoreline stranding of particles by the tide and resuspension from the bottom
 * 2D and 3D particle tracking, with option to run 3D as 2D
 
-.. note::
-
-   Particle tracking is currently set up for generic unstructured grids and SCHISM netcdf output. Will be expanding use to other grids and output formats.
-   Particle tracking in structured grids is also being added, eg. ROMS
 
 ====================
 Architecture
@@ -61,8 +57,9 @@ Architecture
 
 * Implemented in Python
 * Driven by parameters in JSON or YAML file, or in code from a Python dictionary
+* "helper class" to assist new user build parameters
 * Tools to read output, plus plot animations
-* Highly customizable at parameter level
+* Computational pipeline built from user parameters level
 * Extendable to create novel particle behaviours, eg. vertical migration of plankton
 * Can run particle tracking cases in parallel to further improve computational speed
 
@@ -71,13 +68,13 @@ Architecture
    :width: 200
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
    :hidden:
    :caption: Contents:
 
    info/about.rst
    info/features.rst
-   info/demos/demos.rst
+   info/gallery.rst
    info/users_guide.rst
 
 .. warning::

@@ -1,17 +1,18 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>Future development &#8212; OceanTracker Beta 0.3 documentation</title>
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <title>Future development &#8212; OceanTracker Beta 0.4 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../_static/doctools.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -49,26 +50,19 @@
 
 
 <h3>Navigation</h3>
-<p><span class="caption-text">Contents:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
 <li class="toctree-l1"><a class="reference internal" href="features.html">Features</a></li>
-<li class="toctree-l1"><a class="reference internal" href="demos/demos.html">Demos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gallery.html">Gallery</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="users_guide.html">Users guide</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="users_guide/installing.html">Installing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="users_guide/running_ocean_tracker.html">Running OceanTracker</a></li>
-<li class="toctree-l2"><a class="reference internal" href="users_guide/code_structure.html">Code Structure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="users_guide/parameters_overview.html">Parameters overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installing.html">Installing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how_to.html">How to notebooks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="running_ocean_tracker.html">Running OceanTracker</a></li>
 <li class="toctree-l2"><a class="reference internal" href="parameter_ref/parameter_ref_toc.html">Parameter details</a></li>
-<li class="toctree-l2"><a class="reference internal" href="users_guide/output_files.html">Output files</a></li>
-<li class="toctree-l2"><a class="reference internal" href="users_guide/post_processing.html">Post processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how_to/D_output_files.html">Output files</a></li>
 <li class="toctree-l2"><a class="reference internal" href="change_log.html">Change log</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Future development</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#future-additions">Future additions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#possible-additions">Possible additions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#minor-features-fixes">Minor features/fixes</a></li>
-</ul>
-</li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Future development</a></li>
 </ul>
 </li>
 </ul>
@@ -87,12 +81,12 @@
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="documentwrapper">
@@ -102,41 +96,12 @@
           <div class="body" role="main">
             
   <section id="future-development">
-<h1>Future development<a class="headerlink" href="#future-development" title="Permalink to this headline">¶</a></h1>
+<h1>Future development<a class="headerlink" href="#future-development" title="Permalink to this heading">¶</a></h1>
 <section id="future-additions">
-<h2>Future additions<a class="headerlink" href="#future-additions" title="Permalink to this headline">¶</a></h2>
+<h2>Future additions<a class="headerlink" href="#future-additions" title="Permalink to this heading">¶</a></h2>
 <ol class="arabic simple">
-<li><p>add status_modifier list of classes, to hold tidal stranding, kill old particles etc</p></li>
-<li><p>more post step bookkeeping to pre step bookkeeping to eliminate 2 costly update_cell</p></li>
-<li><p>find a numba container suitable for passing all fields and part prop as a group by name, to allow assess to all and reduce arguments needed</p></li>
-<li><p>velocity interpolator which tweaks flows parallel to faces with adjacent dry cell or land bounday? after random walk velocity is added?</p></li>
-<li><dl class="simple">
-<dt>Fuse looping for field interpolation for particle properties to reduce RAM-CPU memory traffic</dt><dd><ul class="simple">
-<li><p>kernal version of interpolate fields</p></li>
-<li><p>fuse velocity interpolation and euler step</p></li>
-<li><p>Update field derived particle properties as a group with kernel interpolator</p></li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><p>make error trapping reponse  more consistent, eg some errors return no info</p></li>
-<li><dl class="simple">
-<dt>Fuse Runge-kutta steps loops to reduce RAM-CPU memory traffic</dt><dd><ul class="simple">
-<li><p>kernal versions of BC walk and vertical walk</p></li>
-<li><p>fuse BC walk and velocity interpolation using kernals</p></li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><p>Reader memory shared between parallel cases</p></li>
-<li><p>support for structured grids, eg. ROMS</p></li>
-<li><p>option for particle tracking to work natively in lat/log cords</p></li>
-<li><p>RK45 solver to allow adaptive time stepping to improve accuracy for those particles where flows are rapidly varying in time or space.</p></li>
-<li><p>Read release points/polygons from file, eg shape files, csv</p></li>
-<li><p>system to check data types match those required when used in numba signatures</p></li>
 <li><dl class="simple">
 <dt>Shared/asynchronous reader to speed solution and save total memory, changes required:</dt><dd><ul class="simple">
-<li><p>reader buffer as ring buffer on global hindcast time step</p></li>
 <li><p>set up shared grid and reader field memory in parent and child model runs</p></li>
 <li><p>set up  control variables as shared memory and child and parent responses to reader buffer changes</p></li>
 <li><p>spawn asynchronous model runs, based on parent readers time steps in the buffer</p></li>
@@ -160,16 +125,39 @@
 </dd>
 </dl>
 </li>
+<li><p>velocity interpolator which tweaks flows parallel to faces with adjacent dry cell or land boundary? after random walk velocity is added?</p></li>
+<li><dl class="simple">
+<dt>Fuse looping for field interpolation for particle properties to reduce RAM-CPU memory traffic</dt><dd><ul class="simple">
+<li><p>kernal version of interpolate fields</p></li>
+<li><p>fuse velocity interpolation and euler step</p></li>
+<li><p>Update field derived particle properties as a group with kernel interpolator</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p>make error trapping reponse  more consistent, eg some errors return no info</p></li>
+<li><dl class="simple">
+<dt>Fuse Runge-kutta steps loops to reduce RAM-CPU memory traffic</dt><dd><ul class="simple">
+<li><p>kernal versions of BC walk and vertical walk</p></li>
+<li><p>fuse BC walk and velocity interpolation using kernals</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p>option for particle tracking to work natively in lat/log cords for global scale models</p></li>
+<li><p>Read release points/polygons from file, eg shape files, csv</p></li>
 </ol>
 </section>
 <section id="possible-additions">
-<h2>Possible additions<a class="headerlink" href="#possible-additions" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
+<h2>Possible additions<a class="headerlink" href="#possible-additions" title="Permalink to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p>find a numba container suitable for passing all fields and part prop as a group by name, to allow assess to all and reduce arguments needed</p></li>
 <li><p>merge numerical solver and random walk by moving to numerical solution as a stochastic ODE?</p></li>
-</ul>
+<li><p>RK45 solver to allow adaptive time stepping to improve accuracy for those particles where flows are rapidly varying in time or space.</p></li>
+</ol>
 </section>
 <section id="minor-features-fixes">
-<h2>Minor features/fixes<a class="headerlink" href="#minor-features-fixes" title="Permalink to this headline">¶</a></h2>
+<h2>Minor features/fixes<a class="headerlink" href="#minor-features-fixes" title="Permalink to this heading">¶</a></h2>
 <ol class="arabic simple">
 <li><p>Make grid variables which dont vary in time as sharedmemory</p></li>
 <li><p>automatic particle buffer size estimate factor of 2 too large</p></li>
@@ -226,7 +214,7 @@
       &copy;2022, R. Vennell.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.3</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

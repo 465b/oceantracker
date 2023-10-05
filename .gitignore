@@ -10,4 +10,6 @@ venv
 *.svg
 /profiling/output/
 /oceantracker.egg-info/
-/colborators/tests/output/
+/tutorials_how_to/output/
+/tests/misc/output/
+/demos/root_output_dir/

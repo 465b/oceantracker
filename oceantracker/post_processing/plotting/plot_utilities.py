@@ -65,7 +65,7 @@ def display_grid(grid, ginput=0, axis_lims=None):
 
     draw_base_map(grid, show_grid=True, axis_lims=axis_lims)
     if 1==0:
-        bt = np.flatnonzero(grid['is_boundary_triangle'])
+        bt = np.flatnonzero(grid['is_boundary_triangle']==1)
         plt.plot(grid['x'][grid['triangles'][bt,:],0].T, grid['x'][grid['triangles'][bt,:],1].T,'r', zorder=9)
 
     if ginput > 0:
@@ -124,15 +124,15 @@ def plot_dry_cells(track_data,show_dry_cells=True, nt=0):
 def plot_release_points_and_polygons(d, release_group=None, ax = plt.gca(), color =[.2, .8, .2]):
     # release_group is 1 based
     if release_group is None :
-        sel= range(len(d['particle_release_group_info'])) # show all
+        sel = list(d['release_locations'].keys()) # plot all release groups
+
     else:
-        sel = [release_group-1]
+        sel= [release_group]
 
-    for n in sel:
-
-        rg = d['particle_release_group_info'][n]
-        p = np.asarray(rg['points'])
-        if 'user_polygonID' in rg:
+    for name in sel:
+        rg = d['release_locations'][name]
+        p = rg['points'][:,:2]
+        if rg['is_polygon']:
             ax.plot(p[:, 0], p[:, 1], '-', color=color,zorder=8, linewidth=1)
         else:
             ax.plot(p[:, 0], p[:, 1], '.', color=color, markersize=10,zorder=14)
@@ -203,18 +203,16 @@ def show_output(plot_file_name=None, ):
     plt.show()
     plt.close()  # prevents over plotting
 
-def animation_output(anim, movie_file, fps = 15, dpi=300):
+def animation_output(anim, movie_file, fps = 15, dpi=300,show=True):
 
-    if movie_file is  None :
-        plt.show()
-    else:
+    if show :    plt.show()
+    if movie_file is not None:
         print('Building movie:  ' + movie_file)
         try:
             FFMpegWriter = animation.writers['ffmpeg']
         except Exception as e:
             print('OceanTracker post_processing error: could not make movie as ffmpeg no installed or other error initialising ffmpeg')
             print('           Install ffmpeg??, doing screen plot instead')
-            plt.show()
             plt.close()
             return
 
@@ -223,3 +221,4 @@ def animation_output(anim, movie_file, fps = 15, dpi=300):
         anim.save(movie_file, writer=writer, dpi=dpi)
 
         plt.close() # prevents over plotting
+

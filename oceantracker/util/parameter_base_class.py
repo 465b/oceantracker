@@ -3,63 +3,13 @@ import numpy as np
 import traceback
 from time import perf_counter
 from oceantracker.shared_info import SharedInfoClass
-from oceantracker.util.parameter_checking import ParamDictValueChecker as PVC, merge_params_with_defaults
+from oceantracker.util.parameter_checking import ParamValueChecker as PVC, merge_params_with_defaults
 from oceantracker.util.module_importing_util import import_module_from_string
-from oceantracker.common_info_default_param_dict_templates import default_class_names, default_case_param_template
-
+from oceantracker.util import spell_check_util
 # parameter dictionaries are nested dictionaries or lists of dictionaries
 
-def make_class_instance_from_params(params,msg_logger, class_type_name=None, base_case_params =None,
-                                    nseq=None, crumbs='', merge_params=True):
-    # make a class instance  dynamically,  get instance of class from string eg oceantracker.solver.Solver
-    if base_case_params is None : base_case_params={}
-
-    # add class sequence number, used for in class list
-    if nseq is None:
-        nseq= 0
-        sequ_tag = ''
-    else:
-        sequ_tag = '[#' + str(nseq) + '] '
-    crumbs += sequ_tag
-
-    # work out class name
-    if 'class_name' not in params:  params['class_name'] = None
-
-    if params['class_name'] is None and class_type_name is not None:
-        # get from base case or default classes
-        if 'class_name' in base_case_params and base_case_params['class_name'] is not None:
-            params['class_name'] = base_case_params['class_name']
-        elif class_type_name in default_class_names:
-            params['class_name'] = default_class_names[class_type_name]
-        else:
-            msg_logger.msg('params for ' + crumbs + ' must contain class_name ' + class_type_name,
-                           fatal_error=True, exit_now=True, hint= 'given params are = ' + str(params))
-
-    #elif package_info is not None:
-    #    # try to convert to long name
-    #    if params['class_name'] in package_info['short_class_name_map']:
-    #        params['class_name'] = package_info['short_class_name_map'][params['class_name']]
-
-    i = import_module_from_string(params['class_name'],msg_logger)
-
-
-    i.info['nseq']= nseq
-    i.info['class_type'] = class_type_name
-
-    if merge_params:
-        # merge template with base case first
-        if class_type_name in default_case_param_template and type(default_case_param_template[class_type_name]) != list:
-            base_case_params = merge_params_with_defaults(base_case_params,
-                                                    default_case_param_template[class_type_name], {},msg_logger,
-                                                    check_for_unknown_keys=False,
-                                                    crumbs=crumbs+'merging core clasess base case with case template' )
-
-        i.params  = merge_params_with_defaults(params, i.default_params, base_case_params, msg_logger, crumbs=crumbs)
-
-    return i
-
 class ParameterBaseClass(object):
-    # object with default parameters as class dictionary, that are check against expections
+    # object with default parameters as class dictionary, that are checked against expections
     # philosophy is that
     # 1) is that all the options that can be tweaked on an object are parameters, with defaults
     # 2) a class where defaults are checked against expectation
@@ -69,12 +19,10 @@ class ParameterBaseClass(object):
     # 6) Defaults must be set in .__init__()  using method ._update_default_param_dictionary({})
     # 7) children must call   super().__init__()   to get defaults of parent
 
-    code_timer = basic_util.BlockTimer()
     shared_info = SharedInfoClass()  # for all to access
 
-    def initialize(self): pass
+    def initial_setup(self): pass
 
-        
     def close(self):  pass
 
     def __init__(self):
@@ -85,9 +33,18 @@ class ParameterBaseClass(object):
                    }
         self.default_params={}
         self.add_default_params({'class_name': PVC(None,str, doc_str='Class name as string A.B.C, used to import this class from python path'),
-                                 'name':  PVC(None, str, doc_str='The internal name, which is used to reference the instance of this class within the code, eg. the name "water_velocity" would refers to a particle property or field used within the code'),
-                                 'user_note': PVC(None, str),
+                                  'user_note': PVC(None, str),
                                  })
+
+        self.partID_buffers={} # dict of int32 ID number buffers
+    def intitial_setup(self):
+        # setup done before other classes set
+        pass
+
+    def final_setup(self):
+        # setup done after all other classes have intitial_setup, ie things that depend on settingas of othe classes
+        # eg particle buffer size
+        pass
 
     def add_default_params(self,d=None):
         # add default as key word or dictionary
@@ -106,37 +63,28 @@ class ParameterBaseClass(object):
 
 
     def check_class_required_fields_prop_etc(self, required_props_list=[], required_fields_list=[],
-                                             required_grid_time_buffers_var_list=[],
                                              required_grid_var_list=[], requires3D=None):
         si = self.shared_info
         grid = si.classes['reader'].grid
-        grid_time_buffers=  si.classes['reader'].grid_time_buffers
 
         for name in required_grid_var_list:
             if name not in grid:
-               si.msg_logger.msg('     class ' + self.params['class_name'] + ', ' + self.params['name']
-                                + ' requires grid variable  "' + name + '"' + ' to work', fatal_error=True)
-
-        for name in required_grid_time_buffers_var_list:
-            if name not in grid_time_buffers:
-               si.msg_logger.msg('     class ' + self.params['class_name'] + ', ' + self.params['name']
+               si.msg_logger.msg('     class ' + self.params['class_name'] + ', ' + self.info['name']
                                 + ' requires grid variable  "' + name + '"' + ' to work', fatal_error=True)
 
         for name in required_fields_list:
             if name not in si.classes['fields']:
-                si.msg_logger.msg('     class ' + self.params['class_name'] + ', "' + self.params['name']
+                si.msg_logger.msg('     class ' + self.params['class_name'] + ', "' + self.info['name']
                                 + '" requires field  "' + name + '"' + ' to work, add to reader["field_variables"], or add to fields param class list', fatal_error=True)
 
         for name in required_props_list:
             if name not in si.classes['particle_properties']:
-                si.msg_logger.msg('     class ' + self.params['class_name'] + ', particle property "' + self.params['name']
+                si.msg_logger.msg('     class ' + self.params['class_name'] + ', particle property "' + self.info['name']
                                 + '" requires particle property  "' + name + '"'
                                 + ' to work, add to reader["field_variables"], or add to fields param list, or add to particle_properties', fatal_error=True)
 
-        if requires3D and (requires3D and not si.hydro_model_is3D):
-                si.msg_logger.msg('     class ' + self.params['class_name'] + ', ' + self.params['name'] + ' can only be used with 3D hindcast ', fatal_error=True)
-
-
+        if requires3D and not si.is_3D_run:
+                si.msg_logger.msg('     class ' + self.params['class_name'] + ', ' + self.info['name'] + ' can only be used with 3D hindcast ', fatal_error=True)
 
     def remove_default_params(self, name_list):
         # used to get rid if paramters of parent class which are not used by a child class
@@ -150,29 +98,34 @@ class ParameterBaseClass(object):
         for key in name_list:
             self.default_params[key] ={}
 
-
-
-
     # below dynamical adds shared particle index buffers when first used within in a class instance
     # buffers are used to hold selections of particles, saving memory and time by reuse
     # use with care as returned view may refer to same buffer!!
 
-    def get_particle_index_buffer(self):
-        # return pointer to particle buffer of indcies
-        # set up if not already attribute of class
-        if not hasattr(self, 'particle_index_buffer_data'):
-            self.particle_index_buffer_data = np.full((self.shared_info.particle_buffer_size,), -127, np.int32)
+    def get_partID_buffer(self, name):
+        # creates, expands and provides access to particle ID number buffers of this class
+        # having these buffers aviods creating new memory every time
+        #  a selection of particle IDs is made, eg status == moving
+        # WARNING never refer directly to the partID_buffers, alawys use this method
+        #         to access buffer, as buffer size is dynamically changing
+        si = self.shared_info
+        current_particle_buffer_size = si.classes['particle_group_manager'].info['current_particle_buffer_size']
 
-        return self.particle_index_buffer_data[:]
+        if name not in self.partID_buffers:
+            # create a new ID buffer
+            self.partID_buffers[name] = np.full((current_particle_buffer_size,), -127, dtype=np.int32)
 
-    def get_particle_subset_buffer(self):
-        # return pointer to particle buffer of indcies
-        # set up if not already attribute of class
-        if not hasattr(self, 'particle_subset_buffer_data'):
-            self.particle_subset_buffer_data = np.full((self.shared_info.particle_buffer_size,), -127, np.int32)
+        elif self.partID_buffers[name].size < current_particle_buffer_size:
+            # particle buffer must have increased so enlarge ID buffer to match
+            new_index = np.zeros((current_particle_buffer_size,), dtype=np.int32)
+            np.copyto(new_index[:self.partID_buffers[name].size], self.partID_buffers[name])
+            self.partID_buffers[name] = new_index
 
-        return self.particle_subset_buffer_data[:]
+        return self.partID_buffers[name] # return, new, expanded or existing buffer
 
+    def get_partID_subset_buffer(self, name):
+        # wrapper to help ensure a subset ID buffer is not the same as main buffer
+        return self.get_partID_buffer(name +'_subset')
 
     def start_update_timer(self): self.update_timer_t0 = perf_counter()
 

@@ -4,21 +4,15 @@ ParticleConcentrations2D
 
 **Description:** 
 
-**Class:** oceantracker.particle_concentrations.particle_concentrations.ParticleConcentrations2D
+**class_name:** oceantracker.particle_concentrations.particle_concentrations.ParticleConcentrations2D
 
 **File:** oceantracker/particle_concentrations/particle_concentrations.py
 
 **Inheritance:** _BaseTriangleProperties> ParticleConcentrations2D
 
-**Default internal name:** ``"not given in defaults"``
-
 
 Parameters:
 ************
-
-	* ``calculation_interval`` :   ``<class 'float'>``   *<optional>*
-		- default: ``1``
-		- min: ``1``
 
 	* ``class_name`` :   ``<class 'str'>`` **<isrequired>**
 		- default: ``None``
@@ -26,11 +20,6 @@ Parameters:
 	* ``count_status_equal_to`` :   ``<class 'str'>``   *<optional>*
 		- default: ``None``
 		- possible_values: ``dict_keys(['unknown', 'bad_cord', 'cell_search_failed', 'notReleased', 'dead', 'outside_open_boundary', 'frozen', 'stranded_by_tide', 'on_bottom', 'moving'])``
-
-	* ``name`` :   ``<class 'str'>``   *<optional>*
-		Description: - The internal name, which is used to reference the instance of this class within the code, eg. the name "water_velocity" would refers to a particle property or field used within the code
-
-		- default: ``None``
 
 	* ``only_update_concentrations_on_write`` :   ``<class 'bool'>``   *<optional>*
 		- default: ``False``
@@ -51,7 +40,11 @@ Parameters:
 		- min: ``0``
 
 	* ``role_output_file_tag`` :   ``<class 'str'>``   *<optional>*
-		- default: ``None``
+		- default: ``_concentrations_``
+
+	* ``update_interval`` :   ``<class 'float'>``   *<optional>*
+		- default: ``1``
+		- min: ``1``
 
 	* ``user_note`` :   ``<class 'str'>``   *<optional>*
 		- default: ``None``

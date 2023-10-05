@@ -1,42 +1,85 @@
 import numpy as np
-from oceantracker.util import basic_util
+from oceantracker.util import basic_util, output_util
 from oceantracker.util.ncdf_util import NetCDFhandler
 from oceantracker.util.parameter_base_class import ParameterBaseClass
 from os import  path
-from oceantracker.util.parameter_checking import  ParamDictValueChecker as PVC, ParameterListChecker as PLC
+from oceantracker.util.parameter_checking import  ParamValueChecker as PVC, ParameterListChecker as PLC
 from oceantracker.common_info_default_param_dict_templates import particle_info
 from numba.typed import List as NumbaList
+from numba import  njit
 
+from oceantracker.util import time_util
 class _BaseParticleLocationStats(ParameterBaseClass):
 
     def __init__(self):
         # set up info/attributes
         super().__init__()
-
-        self.add_default_params({ 'calculation_interval':       PVC(24*60*60.,float),
+        #todo add depth range for count
+        self.add_default_params({ 'update_interval':       PVC(60*60.,float, doc_str='Time in seconds between calculating statistics', units='sec'),
+                                  'count_start_date': PVC(None, 'iso8601date',doc_str= 'Start particle counting from this date'),
+                                  'count_end_date': PVC(None, 'iso8601date', doc_str='Stop particle counting from this date'),
                                   'role_output_file_tag' :           PVC('stats_base',str),
-                                  'file_tag': PVC(None, str),
-                                  'write':                      PVC(True,bool),
-                                  'count_status_in_range' :  PLC(['frozen', 'moving'], [str], min_length=2, max_length=2,
-                                                                 doc_str=' Count only those particles with status which fall in the given range'),
-                                  'particle_property_list': PLC([], [str], make_list_unique=True)    })
+                                  'write':                      PVC(True,bool,doc_str='Write statistcs to disk'),
+                                  'status_min': PVC('frozen', [str], possible_values=particle_info['status_keys_list'],
+                                                                 doc_str=' Count only those particles with status >= to thsi value'),
+                                  'status_max': PVC('moving', [str], possible_values=particle_info['status_keys_list'],
+                                                    doc_str=' Count only those particles with status  <= to this value'),
+                                  'z_min': PVC(-1.0E32, float, doc_str=' Count only those particles with vertical positions >=  to this value'),
+                                  'z_max': PVC( 1.0E32, float,  doc_str=' Count only those particles with vertical positions <= to this value'),
+                                  'particle_property_list': PLC([], [str], make_list_unique=True, doc_str='Create statistics for these named particle properties, list = ["water_depth"], for statics on water depth at particle locations inside the counted regions') })
         self.sum_binned_part_prop = {}
         self.info['output_file'] = None
         self.class_doc(role='Particle statistics, based on spatial particle counts and particle properties in a grid or within polygons. Statistics are \n * separated by release group \n * can be a time series of statistics or put be in particle age bins.')
 
-    def initialize(self):
+    def initial_setup(self):
         si =self.shared_info
+        info = self.info
+        params = self.params
        # used to create boolean of those to count
-        self.info['time_last_stats_recorded'] = si.time_of_nominal_first_occurrence
+        info['time_last_stats_recorded'] = si.time_of_nominal_first_occurrence
 
+        self.check_part_prop_list()
+
+        if params['count_start_date'] is None:
+            info['start_time'] = si.solver_info['model_start_time']
+        else:
+            info['start_time'] = time_util.isostr_to_seconds(params['count_start_date'])
+
+        if params['count_end_date'] is None:
+            info['end_time'] = si.solver_info['model_end_time']
+        else:
+            info['end_time'] = time_util.isostr_to_seconds(params['count_end_date'])
+
+
+    def check_part_prop_list(self):
+        si = self.shared_info
+        part_prop = si.classes['particle_properties']
+        pgm = si.classes['particle_group_manager']
+        names=[]
+        for name in self.params['particle_property_list']:
+
+            if not pgm.is_particle_property(name,crumbs=f'Particle Statistic "{self.info["name"]}" >'):
+                continue
+
+            if part_prop[name].is_vector():
+                si.msg_logger.msg('On the fly statistical Binning of vector particle property  "' + name + '" not yet implemented', warning=True)
+
+            elif part_prop[name].get_dtype() != np.float64:
+                si.msg_logger.msg(f'On the fly statistics can currently only track float64 particle properties, ignoring property  "{name}", of type "{str(part_prop[name].get_dtype())}"',
+                                  warning=True)
+            else:
+                names.append(name)
+
+        # set params to reduced list
+        self.params['particle_property_list'] = names
 
     def set_up_spatial_bins(self): basic_util.nopass()
 
     def open_output_file(self):
         si=self.shared_info
         if self.params['write']:
-            self.info['output_file'] = si.output_file_base + '_' + self.params['role_output_file_tag'] + '_%03.0f' % (self.info['instanceID']  + 1)
-            self.info['output_file'] += '.nc' if self.params['file_tag'] is None else '_'+ self.params['file_tag'] + '.nc'
+            self.info['output_file'] = si.output_file_base + '_' + self.params['role_output_file_tag']
+            self.info['output_file'] += '_' + self.info['name'] + '.nc'
             self.nc = NetCDFhandler(path.join(si.run_output_dir, self.info['output_file']), 'w')
         else:
             self.nc = None
@@ -45,21 +88,28 @@ class _BaseParticleLocationStats(ParameterBaseClass):
     def set_up_time_bins(self,nc):
         # stats time variables commute to all 	for progressive writing
         nc.add_dimension('time_dim', None)  # unlimited time
-        nc.create_a_variable('time', ['time_dim'], {'notes': 'time in seconds'}, np.double)
+        nc.create_a_variable('time', ['time_dim'],  np.float64, description= 'time in seconds')
 
         # other output common to all types of stats
-        nc.create_a_variable('num_released', ['time_dim'], {'notes': 'total number released'}, np.int64)
+        nc.create_a_variable('num_released', ['time_dim'], np.int64, description='total number released')
 
-    def  set_up_part_prop_lists(self):
+    def set_up_part_prop_lists(self):
         # set up list of part prop and sums to enable averaging of particle properties
         si=self.shared_info
         part_prop = si.classes['particle_properties']
         self.prop_list, self.sum_prop_list = [],[]
-
+        # todo put this in numba uti;, for other classes to use
+        names=[]
         for key, prop in self.sum_binned_part_prop.items():
             if part_prop[key].is_vector():
                 si.msg_logger.msg('On the fly statistical Binning of vector particle property  "' + key + '" not yet implemented', warning=True)
+
+            elif part_prop[key].get_dtype() != np.float64:
+                si.msg_logger.msg(f'On the fly statistics  can currently only track float64 particle properties, ignoring property  "{key}", of type "{str(part_prop[key].get_dtype())}"',
+                                  warning=True)
+
             else:
+                names.append(names)
                 self.prop_list.append(part_prop[key].data) # must used dataptr here
                 self.sum_prop_list.append(self.sum_binned_part_prop[key][:])
 
@@ -76,22 +126,86 @@ class _BaseParticleLocationStats(ParameterBaseClass):
             # otherwise use types of arrays
             self.prop_list = NumbaList(self.prop_list)
             self.sum_prop_list = NumbaList(self.sum_prop_list)
+        pass
 
-    def select_particles_to_count(self, out):
-        # select  those> 0 or equal given value to count in stats
+
+
+    def is_time_to_count(self):
         si = self.shared_info
-        part_prop = si.classes['particle_properties']
+        params= self.params
+        info=self.info
 
-        sel = part_prop['status'].find_those_in_range_of_values(
-                si.particle_status_flags[self.params['count_status_in_range'][0]],
-                si.particle_status_flags[self.params['count_status_in_range'][1]],
-                out=out)
+        if params['count_start_date'] is None:
+            info['start_time'] = si.solver_info['model_start_time']
+        else:
+            info['start_time'] = time_util.isostr_to_seconds(params['count_start_date'])
 
-        return sel
+        if params['count_end_date'] is None:
+            info['end_time'] = si.solver_info['model_end_time']
+        else:
+            info['end_time'] = time_util.isostr_to_seconds(params['count_end_date'])
+
+        md= si.model_direction
+        out =   info['start_time'] * md <=  si.solver_info['current_model_time'] * md  <= info['end_time'] * md
+        return out
 
     def record_time_stats_last_recorded(self, t):   self .info['time_last_stats_recorded'] = t
 
-    def update(self): basic_util.nopass()
+    # overload this method to subset indicies in out of particles to count
+    def select_particles_to_count(self, out):
+        return out
+
+    @staticmethod
+    @njit
+    def sel_status_and_z(status, x, status_min, status_max, z_min, z_max, num_in_buffer, out):
+        n_found = 0
+        if x.shape[1] == 3:
+            # 3D selection
+            for n in range(num_in_buffer):
+                if status_min <= status[n] <= status_max and z_min <= x[n, 2] <= z_max:
+                    out[n_found] = n
+                    n_found += 1
+        else:
+            # 2D selection
+            for n in range(num_in_buffer):
+                if status_min <= status[n] <= status_max:
+                    out[n_found] = n
+                    n_found += 1
+
+        return out[:n_found]
+
+    def update(self, time_sec):
+        if not self.is_time_to_count(): return
+        si= self.shared_info
+        part_prop = si.classes['particle_properties']
+        params = self.params
+
+        self.start_update_timer()
+
+        self.record_time_stats_last_recorded(time_sec)
+        num_in_buffer = si.classes['particle_group_manager'].info['particles_in_buffer']
+
+        # first select those to count based on status and z location
+        sel = self.sel_status_and_z(part_prop['status'].data, part_prop['x'].data,
+                                    si.particle_status_flags[params['status_min']], si.particle_status_flags[params['status_max']],
+                                    params['z_min'] , params['z_max'],
+                                    num_in_buffer,  self.get_partID_buffer('B1'))
+
+        # any overloaded sub-selection of particles given in child classes
+        sel = self.select_particles_to_count(sel)
+
+        #update prop list data, as buffer may have expnaded
+        #todo do this only when expansion occurs??
+        part_prop = self.shared_info.classes['particle_properties']
+        for n, name in enumerate(self.sum_binned_part_prop.keys()):
+            self.prop_list[n]= part_prop[name].data
+
+        self.do_counts(time_sec,sel)
+
+        self.write_time_varying_stats(self.nWrites, time_sec)
+        self.nWrites += 1
+
+        self.stop_update_timer()
 
     def write_time_varying_stats(self, n, time):
         # write nth step in file
@@ -110,12 +224,16 @@ class _BaseParticleLocationStats(ParameterBaseClass):
         nc = self.nc
         # write total released in each release group
         num_released=[]
-        for pg in si.class_interators_using_name['particle_release_groups']['all'].values():
-            num_released.append(pg.info['number_released'])
+        for name, i in si.classes['release_groups'].items():
+            num_released.append(i.info['number_released'])
 
         if self.params['write']:
             self.info_to_write_at_end()
-            nc.write_a_new_variable('number_released_each_release_group', np.asarray(num_released,dtype=np.int64), ['release_group_dim'], {'Notes': 'Total number released in each release group'})
-            nc.write_global_attribute('total_num_particles_released', si.classes['particle_group_manager'].particles_released)
+            nc.write_a_new_variable('number_released_each_release_group', np.asarray(num_released,dtype=np.int64), ['release_group_dim'], description='Total number released in each release group')
+            nc.write_global_attribute('total_num_particles_released', si.classes['particle_group_manager'].info['particles_released'])
+
+            # add attributes mapping release index to release group name
+            output_util.add_release_group_ID_info_to_netCDF(nc, si.classes['release_groups'] )
+
             nc.close()
-        nc = None  # parallel pool cant pickle nc
+        self.nc = None  # parallel pool cant pickle nc

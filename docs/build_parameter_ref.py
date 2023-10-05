@@ -1,20 +1,19 @@
 # build full parm ref from dict and classes defaults
-from os import path, mkdir
+from os import path, mkdir, listdir
 from glob import  glob
 import inspect
 import importlib
-from copy import copy
-from oceantracker.common_info_default_param_dict_templates import run_params_defaults_template, default_case_param_template, default_class_names
-from oceantracker.util.parameter_checking import ParamDictValueChecker as PVC, ParameterListChecker as PLC
+
+import oceantracker.common_info_default_param_dict_templates as common_info
+from oceantracker.util.parameter_checking import ParamValueChecker as PVC, ParameterListChecker as PLC
 from oceantracker.util.parameter_base_class import ParameterBaseClass
 from oceantracker.util import package_util
-from oceantracker.util.yaml_util import write_YAML
 
 root_param_ref_dir = path.join(package_util.get_root_package_dir(),'docs', 'info', 'parameter_ref')
 
 
 class RSTfileBuilder(object):
-    def __init__(self, file_name,title):
+    def __init__(self, file_name, title):
         self.lines=[]
         self.toc_dict = {}
         self.file_name = file_name + '.rst'
@@ -43,6 +42,8 @@ class RSTfileBuilder(object):
         if type(body) != list: body=[body]
         self.lines.append({'type': 'directive', 'direct_type': direct_type, 'body' : body, 'indent' :indent, 'params':{}})
         self.add_lines()
+        self.add_lines()
+
 
     def collapsable_code(self,file_name):
         a=1
@@ -89,7 +90,7 @@ class RSTfileBuilder(object):
 
     def write_param_dict_defaults(self, params):
         self.add_lines()
-        self.add_directive('warning', body='Lots more to add here and work on layout!!')
+        #self.add_directive('warning', body='Lots more to add here and work on layout!!')
 
         self.add_heading('Parameters:', level=0)
 
@@ -104,18 +105,17 @@ class RSTfileBuilder(object):
 
             if type(item) == dict:
                 self.add_lines('* ``' + key + '``:' + ' nested parameter dictionary' , indent=indent+1)
-
                 self.add_params_from_dict( item, indent=1)
-
                 continue
 
-
             if type(item) == PVC:
+
+                if item.info['obsolete'] is not None: continue # dont write obsolete params
                 self.add_lines('* ``' + key + '`` :   ``' + str(item.info['type']) + '`` '
                                + ('  *<optional>*' if not item.info['is_required'] else '**<isrequired>**') , indent=indent+1)
 
                 if item.info['doc_str'] is not None:
-                    self.add_lines('Description: - ' + str(item.info['doc_str'].strip()), indent=indent+2)
+                    self.add_lines('Description: ' + str(item.info['doc_str'].strip()), indent=indent+2)
                     self.add_lines()
 
                 self.add_lines('- default: ``' + str(item.get_default()) + '``', indent=indent+2)
@@ -125,6 +125,7 @@ class RSTfileBuilder(object):
                         self.add_lines('- ' + k + ': ``' + str(v) + '``', indent=indent+2)
 
                 self.add_lines()
+
             elif type(item) == PLC:
 
                 self.add_lines('* ``' + key + '``:' + ('  *<optional>*' if not item.info['is_required'] else '**<isrequired>**'), indent=indent + 1)
@@ -153,26 +154,23 @@ class RSTfileBuilder(object):
                 self.add_lines()
 
 
-def make_sub_pages(class_type):
+def make_class_sub_pages(class_role, link_tag=''):
     # make doc pages from defaults of all python in named dir
 
-    if class_type in default_class_names:
-        mod_name= default_class_names[class_type].rsplit('.', maxsplit=2)[0]
-    else:
-        mod_name=package_util.get_package_name()+ '.' +class_type
+    mod_name=package_util.get_package_name() + '.' + class_role
 
     mod = importlib.import_module( mod_name)
 
     package_dir= package_util.get_package_dir()
 
-    toc = RSTfileBuilder(class_type+'_toc', class_type)
+    toc = RSTfileBuilder(class_role+'_toc', class_role + link_tag)
 
     toc.add_lines('**Module:** ' + package_util.package_relative_file_name(mod.__name__).strip())
     toc.add_lines()
 
-    toc.add_new_toc_to_page(class_type, maxdepth=1,sort_body=True)
+    toc.add_new_toc_to_page(class_role, maxdepth=1,sort_body=True)
     instance = None
-    for f in glob(path.join( package_dir,class_type,'*.py')):
+    for f in glob(path.join( package_dir,class_role,'*.py')):
 
         mod_str= path.splitext(f)[0].split(package_util.get_root_package_dir() +'\\')[-1].replace('\\','.')
         mod = importlib.import_module(mod_str)
@@ -192,7 +190,7 @@ def make_sub_pages(class_type):
 
             p.add_lines('**Description:** ' + (instance.docs['description'] if instance.docs['description'] is not None else '' ) )
             p.add_lines()
-            p.add_lines('**Class:** ' + c.__module__ + '.' + c.__name__)
+            p.add_lines('**class_name:** ' + c.__module__ + '.' + c.__name__)
             p.add_lines()
 
             p.add_lines('**File:** ' + package_util.package_relative_file_name(mod.__file__))
@@ -208,10 +206,6 @@ def make_sub_pages(class_type):
             p.add_lines('**Inheritance:** ' + parents + c.__name__)
             p.add_lines()
 
-            internal_name = instance.default_params['name'].get_default() if instance.default_params['name'].get_default() is not None else 'not given in defaults'
-            p.add_lines('**Default internal name:** ``"' + internal_name.strip() + '"``' )
-            p.add_lines()
-
             # get all defaults and wrte to yaml
             #instance.merge_with_class_defaults({},{})
             #write_YAML(name+'.yaml',instance.params)
@@ -221,7 +215,7 @@ def make_sub_pages(class_type):
             p.add_params_from_dict(instance.default_params)
 
             p.write()
-            toc.add_toc_link(class_type,p)
+            toc.add_toc_link(class_role,p)
 
     # add role from last instance, as it derives from base class
     if instance is not None:
@@ -235,48 +229,74 @@ def build_param_ref():
     # parameter ref  TOC
 
     page= RSTfileBuilder('parameter_ref_toc','Parameter details')
-
-
-    page.add_lines('Links to details of parameter default values, acceptable values etc.')
+    page.add_lines('Links to details of parameter default values for settings and classes, acceptable values etc.')
     page.add_lines()
-    page.add_directive('note',body= 'Lots more to add here!!')
 
-    page.add_heading('Top level parameters',level=1)
-    sp = RSTfileBuilder('shared_params', 'shared_params')
-    sp.write_param_dict_defaults(run_params_defaults_template['shared_params'])
+    # settings sub page
+    sp = RSTfileBuilder('settings', 'Settings')
+    settings_dict = common_info.shared_settings_defaults
+    settings_dict.update(common_info.case_settings_defaults)
+    sp.add_heading('Top level settings/parameters', level=2)
+    sp.write_param_dict_defaults(settings_dict)
 
-    page.add_new_toc_to_page('top', maxdepth=1)
-    page.add_toc_link('top', sp)
+    page.add_heading('Top level settings', level=2)
+    page.add_new_toc_to_page('Settings', maxdepth=1)
+    page.add_toc_link('Settings',sp)
 
-    # look at readers
-    toc= make_sub_pages('reader')
-    page.add_toc_link('top', toc)
 
-    page.add_heading('Case parameters',level=1)
-
-    page.add_new_toc_to_page('case', maxdepth=1, sort_body=True)
-
-    rp = RSTfileBuilder('run_params', 'run_params')
-    rp.write_param_dict_defaults(default_case_param_template['run_params'])
-    page.add_toc_link('case',rp)
-
-    page.add_heading('Core classes',level=2)
+    # core classes
+    page.add_heading('Core "class" roles',level=2)
+    page.add_lines('Only one core class per role. These have singular role names.')
     page.add_new_toc_to_page('core', maxdepth=1)
-    for key in sorted(default_case_param_template.keys()):
-        if key in ['run_params'] or  type(default_case_param_template[key])==list: continue
+    for key in sorted(common_info.core_classes.keys()):
+        #if key in ['run_params'] or  type(common_info.core_classes[key])==list: continue
 
-        toc = make_sub_pages(key)
+        toc = make_class_sub_pages(key)
         page.add_toc_link('core', toc)
 
-    page.add_heading('User added classes',level=2)
+    page.write()
+
+    page.add_heading('Multiple classes for each role',level=2)
+    page.add_lines('Can be many classes per role, each with a user given name as part of  dictionary for each role. These roles have plural names.')
+    page.add_new_toc_to_page('role_dicts', maxdepth=1, sort_body=True)
+
     page.add_new_toc_to_page('user', maxdepth=1)
-    for key in sorted(default_case_param_template.keys()):
-        if type(default_case_param_template[key]) != list: continue
-        toc = make_sub_pages(key)
+    for key in sorted(common_info.class_dicts.keys()):
+        toc = make_class_sub_pages(key)
         page.add_toc_link('user', toc)
 
     # write toc page at end
     page.write()
 
 if __name__ == "__main__":
+
     build_param_ref()
+
+    # convert ipyhton to
+    import subprocess
+    from os import  path, chdir, rename, remove
+    import shutil
+    from glob import  glob
+
+    chdir(r'../tutorials_how_to')
+    print('h')
+    dest = r'../docs/info/how_to'
+    for f in glob('*.ipynb'):
+        subprocess.run('jupyter nbconvert '+ f + '  --to rst')
+        subprocess.run('jupyter nbconvert ' + f + '  --to script')
+        f_base = f.split('.')[0]
+        print(f_base)
+        f_base + '_files'
+        old_fn = f_base+'.rst'
+        new_fn = path.join(dest,old_fn)
+        if path.isfile(new_fn):
+            remove(new_fn)
+        shutil.move(old_fn, dest)
+
+        old_dir = f_base  +'_files'
+        new_dir = path.join(dest, old_dir)
+        print(old_dir,new_dir)
+        if path.isdir(old_dir) :
+            if path.isdir(new_dir): shutil.rmtree(new_dir, ignore_errors=True)
+            shutil.move(old_dir, new_dir)
+

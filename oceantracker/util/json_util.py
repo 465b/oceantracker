@@ -38,6 +38,21 @@ def read_JSON(file_name):
 
 #Store as JSON a numpy.ndarray or any nested-list composition.
 class MyEncoder(json.JSONEncoder):
+    def _custom_preprocess_dict(self, val):
+
+        if isinstance(val,(float,np.float64,np.float32)) and not np.isfinite(val):
+            return 'not finite'
+        if isinstance(val, datetime):
+            return  val.isoformat()
+        else:
+           return val
+
+    def encode_notused(self, d):
+        if isinstance(d,dict):
+            for key in d.keys():
+                d[key]= self._custom_preprocess_dict(d[key])
+
+        return super().encode(d)
 
     def default(self, obj):
 
@@ -45,7 +60,10 @@ class MyEncoder(json.JSONEncoder):
             # first numpy types
             if isinstance(obj, np.ndarray):
                 if np.all(np.isfinite(obj)):
-                    return  obj.tolist()
+                    if obj.dtype == np.datetime64:
+                        str(obj)
+                    else:
+                        return  obj.tolist()
                 else:
                     # fire fox cant read nan in json so make an object array, with nan as none
                     r= np.full_like(obj, None, dtype=object)
@@ -57,10 +75,6 @@ class MyEncoder(json.JSONEncoder):
                 # make single numpy int values
                 return int(obj)
 
-            elif isinstance(obj,(float, np.float32, np.float64)) :
-                # make single numpy float values
-                val =float(obj)  if np.isfinite(obj) else None
-                return val
 
             # date/time strings
             elif isinstance(obj, (datetime, date)):
@@ -72,14 +86,61 @@ class MyEncoder(json.JSONEncoder):
             elif type(obj) == np.datetime64:
                 return str(obj)
 
+            elif isinstance(obj, (np.bool_,np.bool)):
+                return bool(obj)
+
             elif type(obj) == np.timedelta64:
                 return str(obj.astype(timedelta)) # timedelta has better formating
 
             elif isinstance(obj,np.dtype):
                 return str(obj)
+            elif type(obj) == timedelta:
+                return str(obj)
+
+            elif np.isnan(obj) or not np.isfinite(obj) :
+                return None
 
             return json.JSONEncoder.default(self, obj)
 
         except:
             raise ValueError(' basic_util- catch JSON encode error- object type ' + str(type(obj))+ ' as ' + str(obj))
             return 'BadValue'
+
+# geojson polygons
+#todo make reader to/from internal polygon format
+geojson_polygon_template ={
+   "type": "Feature",
+   "geometry":  "Polygon",
+        "coordinates": None ,#[] N by 2 list
+
+        "properties": {
+                "polygon_group": None,  # use for tagging domain and islands?
+                'name' : None, # name of polygo assigrn by user or code
+                'user_polygonID': None,
+                'user_polygon_name' : None,
+
+        }
+}
+
+
+geometries_template = {
+'type': 'FeatureCollection',
+'features': None,
+}
+
+def writegeojson(f,polygonlist):
+    features = [F0]
+    for i in map['islands']:
+        f = {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": i['points']
+            },
+            "properties": {
+                "boundary_type": "island",
+            }
+        }
+        features.append(f)
+    #with open('data\oceanum_grid_outline.geojson','w') as f:
+    #    geojson.dump(geometries,f)

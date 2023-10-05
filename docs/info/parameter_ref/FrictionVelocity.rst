@@ -4,20 +4,18 @@ FrictionVelocity
 
 **Description:** 
 
-**Class:** oceantracker.fields.friction_velocity.FrictionVelocity
+**class_name:** oceantracker.fields.friction_velocity.FrictionVelocity
 
 **File:** oceantracker/fields/friction_velocity.py
 
 **Inheritance:** _BaseField> UserFieldBase> FrictionVelocity
-
-**Default internal name:** ``"friction_velocity"``
 
 
 Parameters:
 ************
 
 	* ``class_name`` :   ``<class 'str'>``   *<optional>*
-		Description: - Class name as string A.B.C, used to import this class from python path
+		Description: Class name as string A.B.C, used to import this class from python path
 
 		- default: ``None``
 
@@ -28,9 +26,6 @@ Parameters:
 	* ``is_time_varying`` :   ``<class 'bool'>``   *<optional>*
 		- default: ``True``
 		- possible_values: ``[True, False]``
-
-	* ``name`` :   ``<class 'str'>``   *<optional>*
-		- default: ``friction_velocity``
 
 	* ``num_components`` :   ``<class 'int'>``   *<optional>*
 		- default: ``1``

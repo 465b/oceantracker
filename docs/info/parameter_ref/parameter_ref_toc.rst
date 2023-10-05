@@ -2,39 +2,23 @@
 Parameter details
 ##################
 
-Links to details of parameter default values, acceptable values etc.
+Links to details of parameter default values for settings and classes, acceptable values etc.
 
 
-.. note::
-
-	Lots more to add here!!
-
-
-
-Top level parameters
-=====================
+Top level settings
+___________________
 
 
 .. toctree::
 	:maxdepth: 1
 
-	shared_params.rst
-	reader_toc.rst
+	settings.rst
 
 
-Case parameters
-================
+Core "class" roles
+___________________
 
-
-.. toctree::
-	:maxdepth: 1
-
-	run_params.rst
-
-
-Core classes
-_____________
-
+Only one core class per role. These have singular role names.
 
 .. toctree::
 	:maxdepth: 1
@@ -43,12 +27,20 @@ _____________
 	field_group_manager_toc.rst
 	interpolator_toc.rst
 	particle_group_manager_toc.rst
+	reader_toc.rst
+	resuspension_toc.rst
 	solver_toc.rst
 	tracks_writer_toc.rst
 
 
-User added classes
-___________________
+Multiple classes for each role
+_______________________________
+
+Can be many classes per role, each with a user given name as part of  dictionary for each role. These roles have plural names.
+
+.. toctree::
+	:maxdepth: 1
+
 
 
 .. toctree::
@@ -58,8 +50,8 @@ ___________________
 	fields_toc.rst
 	particle_concentrations_toc.rst
 	particle_properties_toc.rst
-	particle_release_groups_toc.rst
 	particle_statistics_toc.rst
+	release_groups_toc.rst
 	status_modifiers_toc.rst
 	time_varying_info_toc.rst
 	trajectory_modifiers_toc.rst

@@ -4,20 +4,18 @@ AgeDecay
 
 **Description:** Exponentially decaying particle property based on age.
 
-**Class:** oceantracker.particle_properties.age_decay.AgeDecay
+**class_name:** oceantracker.particle_properties.age_decay.AgeDecay
 
 **File:** oceantracker/particle_properties/age_decay.py
 
 **Inheritance:** _BasePropertyInfo> ParticleProperty> AgeDecay
-
-**Default internal name:** ``"age_decay"``
 
 
 Parameters:
 ************
 
 	* ``class_name`` :   ``<class 'str'>``   *<optional>*
-		Description: - Class name as string A.B.C, used to import this class from python path
+		Description: Class name as string A.B.C, used to import this class from python path
 
 		- default: ``None``
 
@@ -30,13 +28,13 @@ Parameters:
 	* ``dtype`` :   ``<class 'numpy.dtype'>``   *<optional>*
 		- default: ``<class 'numpy.float64'>``
 
+	* ``fill_value`` :   ``[<class 'int'>, <class 'float'>]``   *<optional>*
+		- default: ``None``
+
 	* ``initial_value`` :   ``<class 'float'>``   *<optional>*
-		Description: - Particle property at the time of release
+		Description: Particle property at the time of release
 
 		- default: ``1.0``
-
-	* ``name`` :   ``<class 'str'>``   *<optional>*
-		- default: ``age_decay``
 
 	* ``prop_dim3`` :   ``<class 'int'>``   *<optional>*
 		- default: ``1``
@@ -47,7 +45,7 @@ Parameters:
 		- possible_values: ``[True, False]``
 
 	* ``type`` :   ``<class 'str'>``   *<optional>*
-		Description: - particle property
+		Description: particle property
 
 		- default: ``user``
 		- possible_values: ``['manual_update', 'from_fields', 'user']``

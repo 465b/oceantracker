@@ -9,7 +9,7 @@ from oceantracker.post_processing.read_output_files import load_output_files
 
 from oceantracker.util import time_util
 
-def plot_tracks(track_data, fraction_to_plot=None, show_grid=False,credit=None, heading =None,
+def plot_tracks(track_data, show_grid=False,credit=None, heading =None,
                 title=None, axis_lims=None, show_start=False, back_ground_depth=True, back_ground_color_map= None,
                 plot_file_name=None, polygon_list_to_plot = None):
 
@@ -23,7 +23,7 @@ def plot_tracks(track_data, fraction_to_plot=None, show_grid=False,credit=None, 
 
     ax.plot(track_data['x'][:,:, 0], track_data['x'][:, :, 1], linewidth=.5)
     if show_start:
-        # show al starts, eg random within polygon
+        # show all starts, eg random within polygon
         ax.scatter( track_data['x0'][ :, 0],  track_data['x0'][ :, 1], edgecolors=None, c='green', s=4, zorder =8)
 
     plot_utilities.plot_release_points_and_polygons(track_data, ax=ax) # these are nominal starts
@@ -38,7 +38,7 @@ def animate_particles(track_data, axis_lims=None, colour_using_data= None, show_
                       back_ground_depth=True, back_ground_color_map = None, credit=None, heading= None,
                       size_using_data= None,  part_color_map=None,
                       vmin=None, vmax=None,
-                      release_group=None, show_dry_cells = False):
+                      release_group=None, show_dry_cells = False, show=True):
     def draw_frame(nt):
         if show_dry_cells:
             dry_cell_plot.set_array(dry_cell_data[nt, :])
@@ -107,7 +107,7 @@ def animate_particles(track_data, axis_lims=None, colour_using_data= None, show_
     fig.tight_layout()
 
     anim = animation.FuncAnimation(fig, draw_frame, frames=num_frames, interval=interval, blit=True)
-    plot_utilities.animation_output(anim, movie_file, fps=fps, dpi=dpi)
+    plot_utilities.animation_output(anim, movie_file, fps=fps, dpi=dpi, show=show)
     return anim
 
 

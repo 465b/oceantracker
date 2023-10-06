@@ -1,14 +1,14 @@
-#########################
-ConstantParticleProperty
-#########################
+#############
+ParticleLoad
+#############
 
-**Description:** Constant particle property which does not vary in time, which can be used to calculate spatial and temporal statistics from particle properties
+**Description:** Particle property which carries a load or mass, which can be used to calculate spatial and temporal statistics of this load or mass
 
-**class_name:** oceantracker.particle_properties.constant_part_prop.ConstantParticleProperty
+**class_name:** oceantracker.particle_properties.load_carrying.ParticleLoad
 
-**File:** oceantracker/particle_properties/constant_part_prop.py
+**File:** oceantracker/particle_properties/load_carrying.py
 
-**Inheritance:** _BasePropertyInfo> ParticleProperty> ConstantParticleProperty
+**Inheritance:** _BasePropertyInfo> ParticleProperty> ParticleLoad
 
 
 Parameters:
@@ -29,18 +29,21 @@ Parameters:
 		- default: ``None``
 
 	* ``initial_value`` :   ``<class 'float'>``   *<optional>*
-		- default: ``0.0``
+		Description: Value of the particle property when it is released
+
+		- default: ``1.0``
 
 	* ``prop_dim3`` :   ``<class 'int'>``   *<optional>*
 		- default: ``1``
 		- min: ``1``
 
+	* ``release_group_parameters``: nested parameter dictionary
 	* ``time_varying`` :   ``<class 'bool'>``   *<optional>*
 		- default: ``True``
 		- possible_values: ``[True, False]``
 
 	* ``type`` :   ``<class 'str'>``   *<optional>*
-		Description: particle property
+		Description: type of particle property, used to manage how to update particle property
 
 		- default: ``user``
 		- possible_values: ``['manual_update', 'from_fields', 'user']``
@@ -52,22 +55,13 @@ Parameters:
 	* ``user_note`` :   ``<class 'str'>``   *<optional>*
 		- default: ``None``
 
-	* ``value`` :   ``<class 'float'>``   *<optional>*
-		Description: Value of the particle property for each particle which does not vary with time
-
-		- default: ``1.0``
-
-	* ``variance`` :   ``<class 'float'>``   *<optional>*
-		Description: Optional variance of the value given to each individual particle, which then does not vary in time, drawn from normal distribution, with mean "value"  and given variance
-
-		- default: ``None``
-		- min: ``0.0``
-
 	* ``vector_dim`` :   ``<class 'int'>``   *<optional>*
 		- default: ``1``
 		- min: ``1``
 
 	* ``write`` :   ``<class 'bool'>``   *<optional>*
+		Description: Write particle property to tracks or event files file
+
 		- default: ``True``
 		- possible_values: ``[True, False]``
 

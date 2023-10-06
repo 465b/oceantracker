@@ -7,6 +7,11 @@ dispersion:
 dispersion_miss-spelt:
   A_H: 0.1
 output_file_base: demo06_reefstranding
+particle_properties:
+  my_constant_prop:
+    class_name: oceantracker.particle_properties.load_carrying.ParticleLoad
+    initial_value: 100
+    variance: 10.0
 'particle_properties ':
   Oxygen:
     class_name: oceantracker.particle_properties.age_decay.AgeDecay
@@ -14,10 +19,27 @@ output_file_base: demo06_reefstranding
     initial_value: 20.0
   distance_travelled:
     class_name: oceantracker.particle_properties.distance_travelled.DistanceTravelled
-  my_constant_prop:
-    class_name: oceantracker.particle_properties.constant_part_prop.ConstantParticleProperty
-    value: 100
-    variance: 10.0
+particle_statistics:
+  polystats1:
+    class_name: oceantracker.particle_statistics.polygon_statistics.PolygonStats2D_timeBased
+    particle_property_list:
+    - water_depth
+    polygon_list:
+    - points:
+      - - 1597682.1237
+        - 5489972.7479
+      - - 1598604.1667
+        - 5490275.5488
+      - - 1598886.4247
+        - 5489464.0424
+      - - 1597917.3387
+        - 5489000
+      - - 1597300
+        - 5489000
+      - - 1597682.1237
+        - 5489972.7479
+    update_interval: 1800
+    use_release_group_polygons: true
 reader:
   class_name: oceantracker.reader.generic_unstructured_reader.GenericUnstructuredReader
   dimension_map:

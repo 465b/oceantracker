@@ -41,8 +41,28 @@ Parameters:
 	* ``max_age_to_bin`` :   ``<class 'float'>``   *<optional>*
 		- default: ``2592000.0``
 
+	* ``max_water_depth`` :   ``<class 'float'>``   *<optional>*
+		Description: Count only those particles in water depths less than this value
+
+		- default: ``None``
+
+	* ``max_z`` :   ``<class 'float'>``   *<optional>*
+		Description: Count only those particles with vertical position <= to this value
+
+		- default: ``None``
+
 	* ``min_age_to_bin`` :   ``<class 'float'>``   *<optional>*
 		- default: ``0.0``
+
+	* ``min_water_depth`` :   ``<class 'float'>``   *<optional>*
+		Description: Count only those particles in water depths greater than this value
+
+		- default: ``None``
+
+	* ``min_z`` :   ``<class 'float'>``   *<optional>*
+		Description: Count only those particles with vertical position >=  to this value
+
+		- default: ``None``
 
 	* ``particle_property_list``:  *<optional>*
 		Description: - Create statistics for these named particle properties, list = ["water_depth"], for statics on water depth at particle locations inside the counted regions
@@ -52,7 +72,9 @@ Parameters:
 		- can_be_empty_list: ``True``
 		- make_list_unique: ``True``
 
-	* ``polygon_list``:**<isrequired>**
+	* ``polygon_list``:  *<optional>*
+		Description: - List of dict with polygon cords and optional nmmes, min is  {"points": [[2.,3.],....]}
+
 
 polygon_list: still working on display  of lists of dict, eg nested polygon list 
 
@@ -77,6 +99,12 @@ polygon_list: still working on display  of lists of dict, eg nested polygon list
 		- default: ``3600.0``
 		- units: ``sec``
 
+	* ``use_release_group_polygons`` :   ``<class 'bool'>``   *<optional>*
+		Description: Omit polygon_list param and use all polygon release polygons as statistics/counting polygons, useful for building release group polygon to polygon connectivity matrix.
+
+		- default: ``False``
+		- possible_values: ``[True, False]``
+
 	* ``user_note`` :   ``<class 'str'>``   *<optional>*
 		- default: ``None``
 
@@ -85,14 +113,4 @@ polygon_list: still working on display  of lists of dict, eg nested polygon list
 
 		- default: ``True``
 		- possible_values: ``[True, False]``
-
-	* ``z_max`` :   ``<class 'float'>``   *<optional>*
-		Description: Count only those particles with vertical positions <= to this value
-
-		- default: ``1e+32``
-
-	* ``z_min`` :   ``<class 'float'>``   *<optional>*
-		Description: Count only those particles with vertical positions >=  to this value
-
-		- default: ``-1e+32``
 

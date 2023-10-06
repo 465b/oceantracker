@@ -1,16 +1,13 @@
 import numpy as np
-from numba import njit
+from time import perf_counter
 from oceantracker.util.parameter_base_class import ParameterBaseClass
-from oceantracker.particle_properties import particle_operations_util
-from oceantracker.util import time_util
-from oceantracker.util.profiling_util import function_profiler
-from oceantracker.util.parameter_checking import ParamValueChecker as PVC, merge_params_with_defaults
+from oceantracker.particle_properties.util import particle_operations_util
+from oceantracker.util.parameter_checking import ParamValueChecker as PVC
 from oceantracker.common_info_default_param_dict_templates import particle_info
-from oceantracker.util import numpy_util,  spell_check_util
+from oceantracker.util import spell_check_util
 from  oceantracker.particle_group_manager.util import  pgm_util
 
 # holds and provides access to different types a group of particle properties, eg position, feild properties, custom properties
-import sys, gc
 class ParticleGroupManager(ParameterBaseClass):
 
     def __init__(self):
@@ -259,6 +256,7 @@ class ParticleGroupManager(ParameterBaseClass):
     def update_PartProp(self, t, active):
         # updates particle properties which can be updated automatically. ie those derive from reader fields or custom prop. using .update() method
         si = self.shared_info
+        t0 = perf_counter()
         si.classes['time_varying_info']['time'].set_values(t)
         si.classes['time_varying_info']['num_part_released_so_far'].set_values(self.info['particles_released'])
         part_prop =si.classes['particle_properties']
@@ -277,6 +275,7 @@ class ParticleGroupManager(ParameterBaseClass):
         for key, i in si.classes['particle_properties'].items():
             if i.info['group'] == 'user':
                 i.update(active)
+        si.block_timer('Update particle properties',t0)
 
     def status_counts_and_kill_old_particles(self, t,):
         # deactivate old particles for each release group
@@ -306,14 +305,14 @@ class ParticleGroupManager(ParameterBaseClass):
         # kill if fraction of buffer are dead or > 20% active particles are, only if buffer at least 25% full
         if nDead > 100_000 and nDead >= 0.20*info['particles_in_buffer']:
                 # if too many dead then delete from memory
-                si.msg_logger.msg(f'removing dead {nDead:,3d} particles from memory, as more than 20% are dead', tabs=3)
+                si.msg_logger.msg(f'removing dead {nDead:,} particles from memory, as more than 20% are dead', tabs=3)
 
                 # only  retain alive particles in buffer
                 for pp in part_prop.values():
                         pp.data[:num_alive,...] = pp.get_values(ID_alive)
 
                 # mark remaining not released to make inactive
-                notReleased = np.arange(num_alive, si.particle_buffer_size)
+                notReleased = np.arange(num_alive, info['current_particle_buffer_size'])
                 part_prop['status'].set_values(si.particle_status_flags['notReleased'], notReleased)
 
                 info['particles_in_buffer'] = num_alive # record new number in buffer

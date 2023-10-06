@@ -34,7 +34,7 @@ demo_base_params={'output_file_base' : None,
    'time_step' : 900,
     'debug': True,
     'reader': {"class_name": 'oceantracker.reader.generic_unstructured_reader.GenericUnstructuredReader',
-                'input_dir': 'demo_hindcast',
+                'input_dir': '.',
                 'file_mask': 'demoHindcast2D*.nc',
                 'search_sub_dirs': True,
                 'dimension_map': {'time': 'time', 'node': 'nodes'},
@@ -45,17 +45,19 @@ demo_base_params={'output_file_base' : None,
     'user_note':'test of notes',
     'dispersion_miss-spelt': {'A_H': .1},
     'dispersion': {'A_H': .1},
+    #'pre_processing':{'my_polygons':{'class_name': 'oceantracker.pre_processing.read_geomerty.ReadCoordinates',
+    #                                 'file_name':'demo_hindcast/test.geojson',
+    #                                 'type':'polygon'}},
     'tracks_writer': {'turn_on_write_particle_properties_list': ['n_cell'], 'write_dry_cell_index': True},
     'release_groups': {'mypoints1':{'points': [[1594500, 5483000]], 'pulse_size': 200, 'release_interval': 0}
                                 },
     'particle_properties ': {
                         'Oxygen': { 'class_name': 'oceantracker.particle_properties.age_decay.AgeDecay', 'decay_time_scale': 1. * 3600 * 24,'initial_value' : 20.},
                         'distance_travelled':   {'class_name': 'oceantracker.particle_properties.distance_travelled.DistanceTravelled'},
-                        'my_constant_prop':   {'class_name': 'oceantracker.particle_properties.constant_part_prop.ConstantParticleProperty',
-                                               'value' :100, 'variance': 10.},
+
                             }
     }
-from oceantracker.particle_properties.constant_part_prop import ConstantParticleProperty
+
 p1= deepcopy(demo_base_params)
 p1.update({'tracks_writer':{'time_steps_per_per_file':700}}
                                 )
@@ -72,6 +74,8 @@ p2['release_groups']={
             'points': deepcopy(poly_points),
             'pulse_size': 10, 'release_interval': 3 * 3600}
 }
+p2['particle_properties'] = {'my_constant_prop': {'class_name': 'oceantracker.particle_properties.load_carrying.ParticleLoad',
+                     'initial_value': 100, 'variance': 10.}}
 
 p2.update({'block_dry_cells': True,
         'tracks_writer':{'write_dry_cell_index': True,
@@ -151,6 +155,13 @@ p6['trajectory_modifiers']= {'settle_in+polygon':
              'probability_of_settlement': .1,
              'settlement_duration': 3.*3600}}
 p6.update({'output_file_base' :'demo06_reefstranding' ,'backtracking': True})
+p6['particle_statistics'] = {
+                    'polystats1' : {'class_name': 'oceantracker.particle_statistics.polygon_statistics.PolygonStats2D_timeBased',
+                    'update_interval': 1800, 'particle_property_list': ['water_depth'],
+                'use_release_group_polygons': True,
+                    'polygon_list':[ {'points':poly_points}]},
+
+            }
 params.append (p6)
 
 

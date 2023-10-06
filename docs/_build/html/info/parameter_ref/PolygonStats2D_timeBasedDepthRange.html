@@ -170,7 +170,11 @@
 </dd>
 </dl>
 </li>
-<li><p><code class="docutils literal notranslate"><span class="pre">polygon_list</span></code>:<strong>&lt;isrequired&gt;</strong></p></li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">polygon_list</span></code>:  <em>&lt;optional&gt;</em></dt><dd><p>Description: - List of dict with polygon cords and optional nmmes, min is  {“points”: [[2.,3.],….]}</p>
+</dd>
+</dl>
+</li>
 </ul>
 </div></blockquote>
 <p>polygon_list: still working on display  of lists of dict, eg nested polygon list</p>
@@ -211,6 +215,15 @@
 </dl>
 </li>
 <li><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">use_release_group_polygons</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'bool'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><p>Description: Omit polygon_list param,and use all polygon release polygons as statistics/counting polygons, useful for building polygon to polygon connectivity matrix.</p>
+<ul class="simple">
+<li><p>default: <code class="docutils literal notranslate"><span class="pre">False</span></code></p></li>
+<li><p>possible_values: <code class="docutils literal notranslate"><span class="pre">[True,</span> <span class="pre">False]</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl>
 <dt><code class="docutils literal notranslate"><span class="pre">user_note</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><ul class="simple">
 <li><p>default: <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
 </ul>
@@ -227,7 +240,7 @@
 </dl>
 </li>
 <li><dl>
-<dt><code class="docutils literal notranslate"><span class="pre">z_max</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'float'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><p>Description: Count only those particles with vertical positions &lt;= to this value</p>
+<dt><code class="docutils literal notranslate"><span class="pre">z_max</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'float'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><p>Description: Count only those particles with vertical position &lt;= to this value</p>
 <ul class="simple">
 <li><p>default: <code class="docutils literal notranslate"><span class="pre">1e+32</span></code></p></li>
 </ul>
@@ -235,7 +248,7 @@
 </dl>
 </li>
 <li><dl>
-<dt><code class="docutils literal notranslate"><span class="pre">z_min</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'float'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><p>Description: Count only those particles with vertical positions &gt;=  to this value</p>
+<dt><code class="docutils literal notranslate"><span class="pre">z_min</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'float'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><p>Description: Count only those particles with vertical position &gt;=  to this value</p>
 <ul class="simple">
 <li><p>default: <code class="docutils literal notranslate"><span class="pre">-1e+32</span></code></p></li>
 </ul>

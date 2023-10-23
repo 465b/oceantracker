@@ -5,13 +5,16 @@ import numpy as np
 from oceantracker import main
 
 
-
-
-
 #-----------------------------------------------    
 run_name = '22_11_01_depth_losses_v11'
 #-----------------------------------------------
 
+
+# v10
+# upgraded from ot v03 to v04
+
+# v11
+# reduced release pulse interval as buffer is overflowing
 
 input_dir = "/scratch/local1/hzg2/"
 output_dir = "/scratch/local1/output/"
@@ -19,19 +22,18 @@ output_dir = "/scratch/local1/output/"
 # output_dir = "/work/uh0296/u301513/ot_output/"
 
 # tweeked parameters:
-n_sub_steps = 60*6
+
 processors = 10
 
-max_time = 3600*24*30*12
+max_time = 3600*24*30*3
 max_particle = 2e5
 
 pulse_size = 1
-pulse_interval = 60 # every minute
+pulse_interval = 120
 
 threshold_to_cull = 10
 fraction_to_cull = 1
 
-sa_resolution = 0
 replicates = 9
 
 output_step_multiplier = 1 # hours between track recorded
@@ -46,7 +48,6 @@ release_polygon = [
         ])
     }
 ]
-
 
 observational_polygone = [
     {
@@ -292,7 +293,7 @@ params={
 
     "resuspension": {
         "class_name": "oceantracker.resuspension.resuspension.BasicResuspension",
-        "critical_friction_velocity": 0.005,
+        "critical_friction_velocity": 0.000,
         "friction_velocity_field_class_name": "oceantracker.fields.friction_velocity.FrictionVelocity"
     },
 

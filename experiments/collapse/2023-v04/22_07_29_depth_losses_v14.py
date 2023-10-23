@@ -5,13 +5,26 @@ import numpy as np
 from oceantracker import main
 
 
-
-
-
 #-----------------------------------------------    
-run_name = '22_11_01_depth_losses_v11'
+run_name = '22_11_01_depth_losses_v14'
 #-----------------------------------------------
 
+
+# v10
+# upgraded from ot v03 to v04
+
+# v11
+# reduced release pulse interval as buffer is overflowing
+
+# v12
+# full year instead of 3 months and buffer increase to find equilibrium pop.
+
+# v13
+# small demo version (1 month) with hourly output
+
+# v14
+# trying to add turbidity to the model 
+# reducing particles and model time to speed up testing
 
 input_dir = "/scratch/local1/hzg2/"
 output_dir = "/scratch/local1/output/"
@@ -19,22 +32,17 @@ output_dir = "/scratch/local1/output/"
 # output_dir = "/work/uh0296/u301513/ot_output/"
 
 # tweeked parameters:
-n_sub_steps = 60*6
-processors = 10
-
-max_time = 3600*24*30*12
-max_particle = 2e5
+max_time = 3600*24*30*3
+max_particle = 1e6
 
 pulse_size = 1
-pulse_interval = 60 # every minute
+pulse_interval = 3600
 
 threshold_to_cull = 10
 fraction_to_cull = 1
 
-sa_resolution = 0
-replicates = 9
 
-output_step_multiplier = 1 # hours between track recorded
+
 
 release_polygon = [
     {
@@ -46,7 +54,6 @@ release_polygon = [
         ])
     }
 ]
-
 
 observational_polygone = [
     {
@@ -263,6 +270,7 @@ params={
 		"field_variables": {
 			"water_depth": "depth",
 			"salinity": "salt",
+            "turbidity": "turbidity",
             # "A_Z": "diffusivity"
 		},
 	},
@@ -280,19 +288,34 @@ params={
     "particle_properties": {  
         "total_water_depth": {
             "class_name": "oceantracker.particle_properties.total_water_depth.TotalWaterDepth"
+        },
+        "illumination": {
+            'class_name': 'oceantracker.particle_properties.illumination.Illumination',
+            'name_of_turbidity_field': 'turbidity',
+            'name_of_irradiance_field': 'irradiance',
+            'c': 5,
         }
+
     },
-    # "fields": {
+    "fields": {
+        "irradiance": {
+            'class_name': 'oceantracker.fields.irradiance.Irradiance',
+            # 'name_of_field': 'turbidity',
+            'latitude': 53.5,
+            'longitude': 9.9,
+            'timezone': 'UTC',
+            'albedo': 0.1
+        }
     #     "VerticalGradient": {
     #         'class_name': 'oceantracker.fields.field_vertical_gradient.VerticalGradient',
     #         'name_of_field': 'A_Z',
     #         'name': 'A_Z_vertical_gradient'
     #     }                
-    # }, 
+    }, 
 
     "resuspension": {
         "class_name": "oceantracker.resuspension.resuspension.BasicResuspension",
-        "critical_friction_velocity": 0.005,
+        "critical_friction_velocity": 0.009,
         "friction_velocity_field_class_name": "oceantracker.fields.friction_velocity.FrictionVelocity"
     },
 
@@ -316,7 +339,7 @@ params={
     },
 
     "tracks_writer": {
-        "update_interval": int(12*3600),
+        "update_interval": int(1*3600),
         "write_dry_cell_index": True
     },
 

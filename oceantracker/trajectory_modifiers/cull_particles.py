@@ -67,7 +67,7 @@ class ParticleCullConcentration(CullParticles):
 
         super().initialize()  # set up using regular grid for  stats
 
-    def select_particles_to_cull(self, buffer_index, time, active):
+    def select_particles_to_cull(self, time, active):
         si = self.shared_info
         part_prop = si.classes['particle_properties']
         
@@ -75,21 +75,21 @@ class ParticleCullConcentration(CullParticles):
             #  cull fraction of those active with status high enough
             eligible_to_cull = part_prop['status'].compare_all_to_a_value('gt',
                 si.particle_status_flags[self.params['cull_status_greater_than']],
-                out=self.get_particle_index_buffer())
+                out=self.get_partID_buffer('B1'))
         else:
             eligible_to_cull = part_prop['status'].compare_all_to_a_value('eq',
                 si.particle_status_flags[self.params['cull_status_equal_to']],
-                out=self.get_particle_index_buffer())
+                out=self.get_partID_buffer('B1'))
 
         status_sel = particle_comparisons_util.random_selection(eligible_to_cull,
-            self.params['probability_of_culling'], self.get_particle_subset_buffer())
+            self.params['probability_of_culling'], self.get_partID_subset_buffer('B1'))
 
         if self.params['threshold_to_cull'] is None:
             self.add_warnings(['Warning: No threshold for concentration based culling'])
             salt_sel = []
         else:
             salt_sel = part_prop[self.params['concentration_field']].compare_all_to_a_value(
-                'gt', self.params['threshold_to_cull'],out = self.get_particle_index_buffer())
+                'gt', self.params['threshold_to_cull'],self.get_partID_subset_buffer('B1'))
         
         culled = np.intersect1d(salt_sel, status_sel)
         

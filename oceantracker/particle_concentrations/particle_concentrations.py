@@ -70,7 +70,7 @@ class ParticleConcentrationsDepthLayer(ParticleConcentrations2D):
     def select_particles_to_count(self):
         si= self.shared_info
         part_prop =  si.classes['particle_properties']
-        status_sel = part_prop['status'].compare_all_to_a_value('eq', si.particle_status_flags['moving'], out=self.get_particle_index_buffer())
+        status_sel =  part_prop['status'].compare_all_to_a_value('gteq', si.particle_status_flags['frozen'], out=self.get_partID_buffer('B1'))
         distance_from_surface = part_prop['tide'].data - part_prop['x'].data[:,2]
         layer_sel = np.where(distance_from_surface < 1)[0]
         return np.intersect1d(status_sel, layer_sel)

@@ -94,4 +94,56 @@ class ParticleCullConcentration(CullParticles):
         culled = np.intersect1d(salt_sel, status_sel)
         
         return culled
+    
+
+class IlluminationBasedLightLimitation(CullParticles):
+
+    def __init__(self):
+        super().__init__()
+        self.add_default_params({'required_illumination': PVC(30, float),
+                                 'illumination_part_prop_name': PVC('illumination', str)
+                                 })
+        
+    def select_particles_to_cull(self,time_sec, active):
+
+        si = self.shared_info
+        part_prop = self.shared_info.classes['particle_properties']
+
+        # slice for status
+        if self.params['cull_status_equal_to'] is None:
+            #  cull fraction of those active with status high enough
+            eligible_to_cull = part_prop['status'].compare_all_to_a_value('gt',
+                si.particle_status_flags[self.params['cull_status_greater_than']],
+                out=self.get_partID_buffer('B1'))
+        else:
+            eligible_to_cull = part_prop['status'].compare_all_to_a_value('eq',
+                si.particle_status_flags[self.params['cull_status_equal_to']],
+                out=self.get_partID_buffer('B1'))
+            
+        
+        # slice for light limitation
+        if self.params['required_illumination'] is None:
+            self.add_warnings(['Warning: No light limitation aka required light'])
+            light_sel = []
+        else:
+            light_sel = part_prop[self.params['illumination_part_prop_name']].compare_all_to_a_value(
+                'lt', self.params['required_illumination'],self.get_partID_subset_buffer('B1'))  
+
+        # combine slices
+        potentially_culled = np.intersect1d(light_sel, eligible_to_cull)
+
+        # select random subset of particles to cull
+        culled = particle_comparisons_util.random_selection(potentially_culled,
+            self.params['probability_of_culling'], self.get_partID_subset_buffer('B1'))
+        
+        return culled
+
+        
+
+        
+
+
+        # 
+    
+
 

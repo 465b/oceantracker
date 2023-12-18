@@ -73,7 +73,7 @@ class Irradiance(UserFieldBase):
             current_time = datetime.utcfromtimestamp(current_time)
     
             # get Global horizontal irradiance (W/m^2) assuming clear sky
-            ghi = location.get_clearsky(current_time, linke_turbidity=3)['ghi'][0]
+            ghi = location.get_clearsky(current_time, linke_turbidity=3)['ghi'].iloc[0]
             # account for water reflectivity
             subsurface_irradiance = (1-albedo)*ghi
             

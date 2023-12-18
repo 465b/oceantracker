@@ -63,6 +63,11 @@ class Buoyancy(ParticleProperty):
         
         # v = (2/9) * ((rho_p - rho_f) * g * radius**2) / mu
         buoyancy = - (2/9) * ((part_prop['density'].data[active] - 1000) * self.params['gravity'] * part_prop['radius'].data[active]**2) / self.params['mu'] 
+        # print(f'buoyancy based on 2/9: {buoyancy}')
+        
+        # v = \frac{g}{\nu} \frac{(\rho_s - \rho_w)}{\rho_w} \frac{d^2}{18}
+        buoyancy = (1/18) * self.params['gravity'] * ((part_prop['density'].data[active] - 1000) / 1000) * (2*part_prop['radius'].data[active])**2
+        # print(f'buoyancy based on 1/18: {buoyancy}')
 
         self.set_values(buoyancy, active)
 
@@ -110,12 +115,16 @@ class ParticleCollision(ParticleProperty):
         particle_per_liter = local_spm_concentration * self.info['particles_per_kg']
         # make particles_per_liter
         particle_per_m3 = particle_per_liter * 1000
-        cross_section =  np.pi * (self.params['spm_radius'] + part_prop['radius'].data[active])**2
-        avg_velocity = self.info['average_relative_velocity']
+        
+        collision_kernel = self._collision_kernel_based_on_Delichatsios1975(self.params['spm_radius'], part_prop['radius'].data[active], self.info['average_relative_velocity'])
+        # print(f'collision kernel by Delichatsios: {collision_kernel}')
+        
+        collision_kernel = self._collision_kernel_based_on_burd2013(self.params['spm_radius'], part_prop['radius'].data[active], 0.1)
+        # print(f'collision kernel by Burd: {collision_kernel}')
 
-        collision_frequency = particle_per_m3 * cross_section * avg_velocity
-        sicking_frequency = collision_frequency * self.params['stickyness']
-        avg_coagulations = collision_frequency*self.params['stickyness']*self.shared_info.solver_info['model_time_step']
+        collision_frequency = (1/2) * particle_per_m3 * collision_kernel
+        sticking_frequency = collision_frequency * self.params['stickyness']
+        avg_coagulations = sticking_frequency*self.shared_info.solver_info['model_time_step']
 
         # we do not de-coagulate currently
         # to avoid large massive particles we stop particles above 1mm from coagulating
@@ -165,4 +174,29 @@ class ParticleCollision(ParticleProperty):
         # Combined density
         combined_density = (collisions_count*mass_spm + mass_particle) / combined_volume
         return combined_density, combined_radius
+    
+    @staticmethod
+    def _collision_kernel_based_on_burd2013(spm_radius, test_particle_radius, shear_gradient):
+        """
+        Calculate the collision kernel based on Adrians Burd model.
+
+        Parameters:
+        radius_i (float): The radius of particle i.
+        radius_j (float): The radius of particle j.
+        shear_gradient (float): The shear gradient of the fluid.
+
+        Returns:
+        float: The collision kernel.
+        """
+
+        return (4/3) * shear_gradient * (spm_radius + test_particle_radius)**3
+        
+
+    @staticmethod
+    def _collision_kernel_based_on_Delichatsios1975(spm_radius, test_particle_radius, avg_velocity):
+        
+        cross_section =  np.pi * (spm_radius + test_particle_radius)**2
+        kernel = cross_section * avg_velocity
+        
+        return kernel
 

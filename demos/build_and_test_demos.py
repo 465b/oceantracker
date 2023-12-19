@@ -25,30 +25,28 @@ poly_points_large=[[1597682.1237, 5489972.7479],
                         [1597300, 5487000],
                        [1597682.1237, 5489972.7479]]
 
-
-#ot.run()
-#exit(1)
-
+import oceantracker.reader.generic_ncdf_reader
 demo_base_params={'output_file_base' : None,
   'add_date_to_run_output_dir': False,
+
    'time_step' : 900,
     'debug': True,
-    'reader': {"class_name": 'oceantracker.reader.generic_unstructured_reader.GenericUnstructuredReader',
+    'reader': {"class_name": 'oceantracker.reader.generic_ncdf_reader.GenericNCDFreader',
                 'input_dir': '.',
                 'file_mask': 'demoHindcast2D*.nc',
-                'search_sub_dirs': True,
                 'dimension_map': {'time': 'time', 'node': 'nodes'},
-                'grid_variables'  : {'time': 'time_sec', 'x':['east','north'],  'triangles': 'tri'},
-                'field_variables': {'water_velocity' : ['east_vel','north_vel'],'water_depth': 'depth','tide':'tide'},
+                'grid_variable_map'  : {'time': 'time_sec', 'x':['east','north'],  'triangles': 'tri'},
+                'field_variable_map': {'water_velocity' : ['east_vel','north_vel'],'water_depth': 'depth','tide':'tide'},
                 'time_buffer_size': 15,
                 'isodate_of_hindcast_time_zero': '2020-06-01'},
     'user_note':'test of notes',
+    'numba_caching': False,
     'dispersion_miss-spelt': {'A_H': .1},
     'dispersion': {'A_H': .1},
     #'pre_processing':{'my_polygons':{'class_name': 'oceantracker.pre_processing.read_geomerty.ReadCoordinates',
     #                                 'file_name':'demo_hindcast/test.geojson',
     #                                 'type':'polygon'}},
-    'tracks_writer': {'turn_on_write_particle_properties_list': ['n_cell'], 'write_dry_cell_index': True},
+    'tracks_writer': {'turn_on_write_particle_properties_list': ['n_cell'], 'write_dry_cell_flag': True},
     'release_groups': {'mypoints1':{'points': [[1594500, 5483000]], 'pulse_size': 200, 'release_interval': 0}
                                 },
     'particle_properties ': {
@@ -59,7 +57,7 @@ demo_base_params={'output_file_base' : None,
     }
 
 p1= deepcopy(demo_base_params)
-p1.update({'tracks_writer':{'time_steps_per_per_file':700}}
+p1.update({'tracks_writer':{'time_steps_per_per_file':700, 'update_interval': 900*5 }}
                                 )
 p1.update({'output_file_base' :'demo01_plot_tracks' ,'backtracking': True,
                             'time_step': 600})
@@ -78,7 +76,7 @@ p2['particle_properties'] = {'my_constant_prop': {'class_name': 'oceantracker.pa
                      'initial_value': 100, 'variance': 10.}}
 
 p2.update({'block_dry_cells': True,
-        'tracks_writer':{'write_dry_cell_index': True,
+        'tracks_writer':{'write_dry_cell_flag': True,
                                                }})
 p2.update({'output_file_base' :'demo02_animation' ,'time_step': 10*60})
 params.append(p2)
@@ -127,15 +125,13 @@ params.append (p4)
 
 # demo 5 parallel
 base_case = deepcopy(p2)
-
+del base_case['release_groups']
 base_case.update({'output_file_base' :'demo05_parallel',
             'processors': 2,
-           'advanced_settings':{ 'multiprocessing_case_start_delay' : 1.0}
           })
 case_list=[]
 for n in range(5):
-
-    case_list.append({ 'release_groups': deepcopy(p2['release_groups'])})
+    case_list.append({ 'release_groups': p2['release_groups']})
 
 params.append([base_case,case_list])
 
@@ -211,20 +207,7 @@ p8['trajectory_modifiers']={'part_spliting':
 p8.update({'output_file_base' :'demo08_particle_splitting',  })
 params.append (p8)
 
-# test polygon release overlying land
-p9 = deepcopy(p1)
-p9.update({'output_file_base' :'demo09_polygon_release_overlapping_land',  })
-p9['release_groups']={
-        'Poly1': {'class_name': 'oceantracker.release_groups.polygon_release.PolygonRelease',
-         'points': (np.asarray(poly_points_large) + np.asarray([[0,-3000]])).tolist(),
-         'pulse_size': 10, 'release_interval': 3 * 3600},
-    'Poly2':{'class_name': 'oceantracker.release_groups.polygon_release_water_depth_range.PolygonReleaseWaterDepthRange',
-            'min_water_depth': 30,
-            'points': (np.asarray(poly_points_large) + np.asarray([[-3000, 0]])).tolist(),
-            'pulse_size': 10, 'release_interval': 3 * 3600}
-        }
 
-params.append(p9)
 
 # test polygon release overlying land
 p10= deepcopy(p2)
@@ -245,11 +228,11 @@ params.append(p10)
 
 # case 50 schism basic
 schsim_base_params=\
-{'output_file_base' :'demo50_SCHISM_depthAver', 'debug': True,'time_step': 120,
+{'output_file_base' :'demo50_SCHISM_depthAver', 'debug': True,'time_step': 120, 'numba_caching': False,
  'reader': { #'class_name': 'oceantracker.reader.schism_reader.SCHISMSreaderNCDF',
                     'input_dir': 'demo_hindcast',
                              'file_mask': 'demoHindcastSchism3D.nc',
-                     'field_variables':{'water_temperature':'temp'}
+                     'load_fields':['water_temperature']
                           },
         'dispersion': {'A_H': .2, 'A_V': 0.001},
         'release_groups': {
@@ -272,12 +255,10 @@ schsim_base_params=\
                 }
 
 s50 = deepcopy(schsim_base_params)
-s50['run_as_depth_averaged'] =  True
 params.append (s50)
 
 # schsim 3D
 s56 = deepcopy(schsim_base_params)
-s56['reader'].update({'depth_average': False,'field_variables_to_depth_average' :[ 'water_velocity', 'salt', 'water_temperature']})
 
 s56['release_groups']={
             'P1':{'points': [[1594500, 5487000, -1], [1594500, 5483000, -1], [1598000, 5486100, -1]],
@@ -323,11 +304,11 @@ pg1= bc['release_groups']['P1']
 pg1.update({'pulse_size':10,'release_interval':0, 'points': [[1593000., 5484000.+2000, -1]] }) # 1 release only
 bc['release_groups']['P11']= pg1 # only point release
 
-
 params.append(s58)
 
-# schsim 3D, vertical section  with critical friction velocity
+# schsim 3D, vertical section  with critical friction velocity, A_z_profile
 s59 = deepcopy(s58)
+s59['use_A_Z_profile'] =True
 s59.update({'output_file_base' : 'demo59_crit_shear_resupension', 'backtracking': False})
 bc = s59
 bc['velocity_modifiers']['terminal_velocity']= {'class_name' : 'oceantracker.velocity_modifiers.terminal_velocity.TerminalVelocity', 'value': -0.002}
@@ -353,12 +334,28 @@ s61.update({'max_run_duration': 15*24*3600.,'output_file_base': 'demo61_concentr
 s61['write_tracks']= False
 s61['particle_concentrations']={'outfall_conc':{'class_name':'oceantracker.particle_concentrations.particle_concentrations.ParticleConcentrations2D',
                                                           'case_output_file_tag': 'siteA','update_interval': 1800}}
-s61['particle_properties']['total_water_depth']={'class_name': 'oceantracker.particle_properties.total_water_depth.TotalWaterDepth'}
 
 for rg in s61['release_groups'].values():
     rg.update({'pulse_size': 1000, 'release_interval': 3600})
 
 params.append(s61)
+
+
+# test polygon release overlying land
+p62 = deepcopy(schsim_base_params)
+p62.update({'output_file_base' :'demo62_polygon_release_overlapping_land',  })
+p62['release_groups']={
+        'Poly1': {'class_name': 'oceantracker.release_groups.polygon_release.PolygonRelease',
+         'points': (np.asarray(poly_points_large) + np.asarray([[0,-3000]])).tolist(),
+         'pulse_size': 10, 'release_interval': 3*3600},
+    'Poly2':{'class_name': 'oceantracker.release_groups.polygon_release_water_depth_range.PolygonReleaseWaterDepthRange',
+            'water_depth_min': 30,
+            'points': (np.asarray(poly_points_large) + np.asarray([[-3000, 0]])).tolist(),
+            'pulse_size': 10, 'release_interval': 3 * 3600}
+        }
+
+params.append(p62)
+
 # back tracking test
 p90= deepcopy(p2)
 
@@ -402,27 +399,7 @@ params.append(p91)
 # Sample data subset
 # https://www.seanoe.org/data/00751/86286/
 
-ROMS_params={'output_file_base' :'demo70_ROMS_reader', 'debug': True,
-                               'time_step': 1800,
- 'reader': {'class_name': 'oceantracker.reader.ROMS_reader.ROMsNativeReader',
-                    'input_dir': 'demo_hindcast',
-                     'file_mask': 'DopAnV2R3-ini2007_da_his.nc',
-                     'field_variables':{'water_temperature':'temp'}
-                          },
-            'open_boundary_type': 1,
-            'dispersion': {'A_H': .2, 'A_V': 0.001},
-            'release_groups': {
-                        'group1':{'points': [[616042, 4219971,-1],[616042, 4729971,-1],[616042, 4910000,-1]  ],
-                                'pulse_size': 10, 'release_interval': 1800}
-                            },
-                'fields' :[{'class_name' : 'oceantracker.fields.friction_velocity.FrictionVelocity'}],
-                'particle_properties':{
-                 'age_decay':{'class_name': 'oceantracker.particle_properties.age_decay.AgeDecay',
-                                                      'decay_time_scale': 1. * 3600 * 24} },
-                'resupension':{'critical_friction_velocity': .00}
-                }
 
-params.append(ROMS_params)
 
 def make_demo_python(demo_name):
     # write a simplified version of code to add to docs

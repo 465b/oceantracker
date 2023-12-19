@@ -12,7 +12,7 @@ import make_demo_plots
 import build_and_test_demos
 import numpy as np
 from oceantracker.post_processing.read_output_files import load_output_files
-from oceantracker.post_processing.read_output_files.load_output_files import load_stats_data, load_concentration_vars
+from oceantracker.post_processing.read_output_files.load_output_files import load_stats_data, load_concentration_data
 from oceantracker.post_processing.plotting.plot_statistics import plot_heat_map, animate_heat_map
 
 two_points= [[1594500, 5483000], [1598000, 5486100]]
@@ -30,6 +30,7 @@ if __name__ == "__main__":
     parser.add_argument('-testing', action='store_true')
     args = parser.parse_args()
 
+    np.random.seed(0)
 
     build_and_test_demos.build_demos()
 
@@ -68,6 +69,7 @@ if __name__ == "__main__":
             exit('runOTdemos.py: No demo file number ' + str(n))
 
         params = json_util.read_JSON(f[0])
+
         if type(params) is list:
             demo_name = params[0]['output_file_base']
             if params[0]['reader'] is not None:
@@ -75,6 +77,7 @@ if __name__ == "__main__":
             output_folder = path.join(params[0]['root_output_dir'], params[0]['output_file_base'])
             params[0]['root_output_dir'] = 'output'
         else:
+            params['use_random_seed'] = True
             demo_name = params['output_file_base']
             if params['reader'] is not None:
                 params['reader']['input_dir'] = path.join(path.dirname(__file__), 'demo_hindcast')
@@ -93,7 +96,7 @@ if __name__ == "__main__":
             ot.add_class('release_groups', name='my_point1', points=two_points,case=0)
             ot.add_class('release_groups', name='my_point1', points=two_points,case=1)
 
-            ot.add_class('dispersion', A_h=1)
+            ot.add_class('dispersion', A_H=1)
             ot.run()
 
             continue
@@ -149,20 +152,20 @@ if __name__ == "__main__":
 
         elif n == 61:
             #todo make conc plotting work
-            continue
+
             from oceantracker.post_processing.plotting.plot_statistics import animate_concentrations
 
-            c = load_concentration_vars(case_info_file_name, var_list=['particle_concentration', 'C'])
+            c = load_concentration_data(case_info_file_name)
 
             axis_lims = [1591000, 1601500, 5478500, 5491000]
 
-            animate_concentrations(c, data_to_plot=c['particle_concentration'], logscale=True,
+            animate_concentrations(c, plot_load=False, logscale=True,
                                    axis_lims=axis_lims, cmap='hot_r',
                                    heading='SCHISIM-3D, 2D concentrations in triangles, shading',
                                    movie_file=plot_output_file + '_shading.mp4' if plot_output_file is not None else None,
                                    fps=7, interval=20,
                                    vmin=0., vmax=1.0)
-            animate_concentrations(c, data_to_plot=c['particle_count'], logscale=True,
+            animate_concentrations(c, plot_load=True, logscale=True,
                                    axis_lims=axis_lims, cmap='hot_r', shading=False, interval=200,
                                    heading='SCHISIM-3D, 2D particle counts in triangles, noshading',
                                    fps=7,

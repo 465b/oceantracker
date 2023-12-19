@@ -1,5 +1,6 @@
 import numpy as np
 from numba import njit
+from oceantracker.util.numba_util import njitOT
 
 from oceantracker.util.parameter_checking import ParameterListChecker as PLC, ParamValueChecker as PVC
 
@@ -55,12 +56,10 @@ class GriddedStats2D_timeBased(_BaseParticleLocationStats):
 
     def set_up_spatial_bins(self,nc):
         si = self.shared_info
-        grid = si.classes['reader'].grid
         stats_grid= self.grid
         params= self.params
+        xlims= si.classes['field_group_manager'].get_grid_limits()
 
-        x = grid['x']
-        xlims= [np.amin(x[:, 0]), np.amax(x[:, 0]), np.amin(x[:, 1]), np.amax(x[:, 1])]
 
         # if not given choose grid center/bounds based on extent of the grid
 
@@ -152,7 +151,7 @@ class GriddedStats2D_timeBased(_BaseParticleLocationStats):
 
 
     @staticmethod
-    @njit
+    @njitOT
     def do_counts_and_summing_numba(group_ID, x, x_edges, y_edges, count, count_all_particles, prop_list, sum_prop_list, sel):
         # for time based heatmaps zero counts for one time slice
         count[:]=0
@@ -206,21 +205,18 @@ class GriddedStats2D_agedBased(GriddedStats2D_timeBased):
         si= self.shared_info
         stats_grid = self.grid
 
-        si.msg_logger.msg('When use aged binned particle stats, to get un biases stats., need to stop releasing particles "max_age_to_bin" '
-                           + ' or max("user_age_bin_edges")  before end of run, by setting  particle param "release_duration"', note=True)
-
         # ages to bin particle ages into,  equal bins in given range
         age_min = abs(self.params['min_age_to_bin'])
         age_max = abs(self.params['max_age_to_bin'])
 
         # check age order and length
-        if age_min >  si.solver_info['model_duration']:
+        if age_min >  si.run_info['model_duration']:
             si.msg_logger.msg(' parameter min_age_to_bin must be > duration of model run (min,max) = '
-                                    + str([age_min, age_max]) + ', duration=' + str(si.solver_info['model_duration']), fatal_error=True)
+                                    + str([age_min, age_max]) + ', duration=' + str(si.run_info['model_duration']), fatal_error=True)
 
         if age_max <= age_min:
             si.msg_logger.msg(' parameter min_age_to_bin must be <  max_age_to_bin  (min,max)= '
-                                    + str([age_min,age_max ]) + ', duration=' + str(si.solver_info['model_duration']),fatal_error=True)
+                                    + str([age_min,age_max ]) + ', duration=' + str(si.run_info['model_duration']),fatal_error=True)
 
         # arange requites one mere step beyong required max_age
         dage= abs(int(self.params['age_bin_size']))
@@ -264,7 +260,7 @@ class GriddedStats2D_agedBased(GriddedStats2D_timeBased):
 
 
     @staticmethod
-    @njit
+    @njitOT
     def do_counts_and_summing_numba(group_ID, x, x_edges, y_edges, count, count_all_particles, prop_list, sum_prop_list,
                                     age_bin_edges, age, active):
 

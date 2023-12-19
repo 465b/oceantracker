@@ -6,6 +6,7 @@ import oceantracker.particle_statistics.polygon_statistics as polygon_statistics
 from oceantracker.util.parameter_base_class import ParameterBaseClass
 from oceantracker.util.parameter_checking import ParamValueChecker as PVC
 from numba import njit
+from oceantracker.util.numba_util import njitOT
 
 class WaterDepthRangeStats(ParameterBaseClass):
     # methods to add depth range selection merge into basic stats via inheritance
@@ -13,7 +14,7 @@ class WaterDepthRangeStats(ParameterBaseClass):
         # set up info/attributes
         super().__init__()
         # set up info/attributes
-        self.add_default_params({'min_depth': PVC(-1.0e09, float), 'max_water_depth': PVC(1.0e09, float)})
+        self.add_default_params({'min_depth': PVC(-1.0e09, float), 'water_depth_max': PVC(1.0e09, float)})
 
     def check_requirements(self):
         self.check_class_required_fields_prop_etc(required_props_list=['water_depth'])
@@ -24,11 +25,11 @@ class WaterDepthRangeStats(ParameterBaseClass):
         part_prop= self.shared_info.classes['particle_properties']
 
 
-        sel= self.select_depth_range_status(part_prop['status'].used_buffer(),   part_prop['water_depth'].used_buffer(), self.params['min_depth'], self.params['max_water_depth'], out)
+        sel= self.select_depth_range_status(part_prop['status'].used_buffer(),   part_prop['water_depth'].used_buffer(), self.params['min_depth'], self.params['water_depth_max'], out)
         return sel
 
     @staticmethod
-    @njit
+    @njitOT
     def select_depth_range_status(status, depth,min_depth,max_depth, out):
         nfound = 0
         for n in range(status.shape[0]):

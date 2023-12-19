@@ -2,7 +2,7 @@
 from oceantracker.util.parameter_checking import ParamValueChecker as PVC
 import numpy as np
 from oceantracker.resuspension._base_resuspension import _BaseResuspension
-
+from oceantracker.util.numba_util import njitOT
 
 from numba import  njit
 
@@ -17,26 +17,20 @@ class BasicResuspension(_BaseResuspension):
         super().__init__()  # required in children to get parent defaults
         self.add_default_params({
                 'critical_friction_velocity': PVC(0., float, min=0., doc_str='Critical friction velocity, u_* in m/s defined in terms of bottom stress (this param is not the same as near seabed velocity)'),
-                'friction_velocity_field_class_name': PVC('oceantracker.fields.friction_velocity.FrictionVelocity', str)
                                  })
 
     # is 3D test of parent
     def check_requirements(self):
         self.check_class_required_fields_prop_etc(
-                        required_fields_list=['water_velocity'],
                         required_props_list=['status','water_velocity'],
                         requires3D=True)
 
     def initial_setup(self, **kwargs):
         si = self.shared_info
         info = self.info
-        info['number_resupended'] = 0
-        # add required field and particle property for resuspension
-        si.classes['field_group_manager'].create_field('friction_velocity', 'derived_from_reader_field',   {'class_name':self.params['friction_velocity_field_class_name']},
-                                                       crumbs='initializing resuspension class ')
-        si.classes['particle_group_manager'].create_particle_property('friction_velocity','from_fields', {}, crumbs='initializing resuspension class friction velocity')
+        pass
 
-    from oceantracker.fields.friction_velocity import FrictionVelocity
+   
     def select_particles_to_resupend(self, active):
         # compare to single critical value
         # todo add comparison to  particles critical value from distribution, add new particle property to hold  individual critical values
@@ -56,28 +50,27 @@ class BasicResuspension(_BaseResuspension):
         self.start_update_timer()
         si= self.shared_info
         info = self.info
-        info['resuspension_factor']= 2.0*0.4*si.z0*si.solver_info['model_time_step']/(1. - 2./np.pi)
-        info['min_resuspension_jump']  = np.sqrt(info['resuspension_factor']*self.params['critical_friction_velocity'])
+        info['resuspension_factor']= 2.0*0.4*si.z0*si.settings['time_step']/(1. - 2./np.pi)
+        info['min_resuspension_jump_not_used'] = np.sqrt(info['resuspension_factor']*self.params['critical_friction_velocity'])
 
-        # redsuspend those on bottom and friction velocity exceeds critical value
+        # resuspend those on bottom and friction velocity exceeds critical value
         part_prop = si.classes['particle_properties']
-        resupend = self.select_particles_to_resupend(active)
+        resuspend = self.select_particles_to_resupend(active)
 
-        self.resuspension_jump(part_prop['friction_velocity'].data, self.info['resuspension_factor'], part_prop['x'].data, resupend)
+        self.resuspension_jump(part_prop['friction_velocity'].data, info['resuspension_factor'], part_prop['x'].data, part_prop['water_depth'].data,si.z0, resuspend)
 
-        #  dont adjust resupension distance for terminal velocity,
-        #  Lynch (Particles in the Ocean Book, says dont adjust as a fall velocity  affects prior that particle resuspends)
+        #  don't adjust resupension distance for terminal velocity,
+        #  Lynch (Particles in the Ocean Book, says don't adjust as a fall velocity  affects prior that particle resuspends)
 
         # any z out of bounds will  be fixed by find_depth cell at start of next time step
-        self.info['number_resupended'] += resupend.shape[0]
-        part_prop['status'].set_values(si.particle_status_flags['moving'], resupend)
+        part_prop['status'].set_values(si.particle_status_flags['moving'], resuspend)
 
         self.stop_update_timer()
 
     @staticmethod
-    @njit
-    def resuspension_jump(friction_velocity, resuspension_factor, x, sel):
+    @njitOT
+    def resuspension_jump(friction_velocity, resuspension_factor, x, water_depth, z0, sel):
         # add entrainment jump up to particle z, Book: Lynch(2015) book, Particles in the coastal ocean  eq 9.26 and 9.28
         for n in sel:
-            x[n, 2] += np.sqrt(resuspension_factor*friction_velocity[n])*np.abs(np.random.randn())
+            x[n, 2] = -water_depth[n] + z0 + np.sqrt(resuspension_factor*friction_velocity[n])*np.abs(np.random.randn())
 

@@ -25,14 +25,14 @@ class LogPolygonEntryAndExit(_BaseEventLogger):
 
         super().initial_setup()  # set up using regular grid for  stats
         si = self.shared_info
-        if self.info['instanceID']  > 0 :
+        if self.info['instanceID'] > 0 :
             #todo why only 1
-            raise FatalError('LogPolygonEntryAndExit: can only have one instance')
+            si.msg_logher.msg('LogPolygonEntryAndExit: can only have one instance',fatal_error=True,exit_now=True )
 
         # add particle property to show which polygon particle is in, -1 = in no polygon
         particle = self.shared_info.classes['particle_group_manager']
-        particle.create_particle_property('event_polygon', 'manual_update',dict( initial_value=-1, dtype=np.int16))
-        particle.create_particle_property('current_polygon_for_event_logging','user',dict(class_name= 'oceantracker.particle_properties.inside_polygons.InsidePolygonsNonOverlapping2D',
+        particle.add_particle_property('event_polygon', 'manual_update',dict( initial_value=-1, dtype=np.int16))
+        particle.add_particle_property('current_polygon_for_event_logging','user',dict(class_name= 'oceantracker.particle_properties.inside_polygons.InsidePolygonsNonOverlapping2D',
                                                polygon_list=self.params['polygon_list'],  write=False))
 
         # set up output file to also write event polygon property

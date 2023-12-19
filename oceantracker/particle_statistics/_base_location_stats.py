@@ -7,6 +7,7 @@ from oceantracker.util.parameter_checking import  ParamValueChecker as PVC, Para
 from oceantracker.common_info_default_param_dict_templates import particle_info
 from numba.typed import List as NumbaList
 from numba import  njit
+from oceantracker.util.numba_util import njitOT
 
 from oceantracker.util import time_util
 class _BaseParticleLocationStats(ParameterBaseClass):
@@ -16,18 +17,18 @@ class _BaseParticleLocationStats(ParameterBaseClass):
         super().__init__()
         #todo add depth range for count
         self.add_default_params({ 'update_interval':       PVC(60*60.,float, doc_str='Time in seconds between calculating statistics', units='sec'),
-                                  'count_start_date': PVC(None, 'iso8601date',doc_str= 'Start particle counting from this date'),
-                                  'count_end_date': PVC(None, 'iso8601date', doc_str='Stop particle counting from this date'),
+                                  'count_start_date': PVC(None, 'iso8601date',doc_str= 'Start particle counting from this iso date-time'),
+                                  'count_end_date': PVC(None, 'iso8601date', doc_str='Stop particle counting from this iso date-time'),
                                   'role_output_file_tag' :           PVC('stats_base',str),
                                   'write':                      PVC(True,bool,doc_str='Write statistcs to disk'),
                                   'status_min': PVC('frozen', [str], possible_values=particle_info['status_keys_list'],
-                                                                 doc_str=' Count only those particles with status >= to thsi value'),
+                                                                 doc_str=' Count only those particles with status >= to this value'),
                                   'status_max': PVC('moving', [str], possible_values=particle_info['status_keys_list'],
                                                     doc_str=' Count only those particles with status  <= to this value'),
-                                  'min_z': PVC(None, float, doc_str=' Count only those particles with vertical position >=  to this value'),
-                                  'max_z': PVC( None, float,  doc_str='Count only those particles with vertical position <= to this value'),
-                                  'min_water_depth': PVC(None, float,doc_str='Count only those particles in water depths greater than this value'),
-                                  'max_water_depth': PVC(None, float, doc_str='Count only those particles in water depths less than this value'),
+                                  'z_min': PVC(None, float, doc_str=' Count only those particles with vertical position >=  to this value'),
+                                  'z_max': PVC( None, float,  doc_str='Count only those particles with vertical position <= to this value'),
+                                  'water_depth_min': PVC(None, float,doc_str='Count only those particles in water depths greater than this value'),
+                                  'water_depth_max': PVC(None, float, doc_str='Count only those particles in water depths less than this value'),
                                   'particle_property_list': PLC([], [str], make_list_unique=True, doc_str='Create statistics for these named particle properties, list = ["water_depth"], for statics on water depth at particle locations inside the counted regions') })
         self.sum_binned_part_prop = {}
         self.info['output_file'] = None
@@ -43,26 +44,32 @@ class _BaseParticleLocationStats(ParameterBaseClass):
         self.check_part_prop_list()
 
         if params['count_start_date'] is None:
-            info['start_time'] = si.solver_info['model_start_time']
+            info['start_time'] = si.run_info['model_start_time']
         else:
             info['start_time'] = time_util.isostr_to_seconds(params['count_start_date'])
 
         if params['count_end_date'] is None:
-            info['end_time'] = si.solver_info['model_end_time']
+            info['end_time'] = si.run_info['model_end_time']
         else:
             info['end_time'] = time_util.isostr_to_seconds(params['count_end_date'])
 
         info['status_range'] = np.asarray([si.particle_status_flags[params['status_min']], si.particle_status_flags[params['status_max']]])
 
         #set particle depth and water depth limits for counting particles
+
         f = 1.0E32
         info['z_range'] = np.asarray([-f, f])
-        if params['min_z'] is not None:  info['z_range'][0] = params['min_z']
-        if params['max_z'] is not None:  info['z_range'][1] = params['max_z']
+        if params['z_min'] is not None:  info['z_range'][0] = params['z_min']
+        if params['z_max'] is not None:  info['z_range'][1] = params['z_max']
+        if info['z_range'][0] > info['z_range'][1]:
+            si.msg_logger.msg(f'Particle statistics-"{self.info["name"]}", zmin > zmax, (zmin,zmax) =({info["z_range"][0]:.3e}, {info["z_range"][1]:.3e}) ', fatal_error=True,
+                              hint ='z=0 is mean water level, so z is mostly < 0')
 
         info['water_depth_range'] = np.asarray([-f, f])
-        if params['min_water_depth'] is not None:  info['water_depth_range'][0] = params['min_water_depth']
-        if params['max_water_depth'] is not None:  info['water_depth_range'][1] = params['max_water_depth']
+        if params['water_depth_min'] is not None:  info['water_depth_range'][0] = params['water_depth_min']
+        if params['water_depth_max'] is not None:  info['water_depth_range'][1] = params['water_depth_max']
+        if info['water_depth_range'][0]> info['water_depth_range'][1]:
+            si.msg_logger.msg(f'Particle statistics-"{self.info["name"]}", water_depth_min > water_depth_max, (water_depth_min,water_depth_max) =({info["water_depth_range"][0]:.3e}, {info["water_depth_range"][1]:.3e}) ', fatal_error=True)
 
     def check_part_prop_list(self):
         si = self.shared_info
@@ -104,7 +111,7 @@ class _BaseParticleLocationStats(ParameterBaseClass):
         nc.create_a_variable('time', ['time_dim'],  np.float64, description= 'time in seconds')
 
         # other output common to all types of stats
-        nc.create_a_variable('num_released', ['time_dim'], np.int64, description='total number released')
+        nc.create_a_variable('num_released_total', ['time_dim'], np.int32, description='total number released')
 
     def set_up_part_prop_lists(self):
         # set up list of part prop and sums to enable averaging of particle properties
@@ -149,17 +156,17 @@ class _BaseParticleLocationStats(ParameterBaseClass):
         info=self.info
 
         if params['count_start_date'] is None:
-            info['start_time'] = si.solver_info['model_start_time']
+            info['start_time'] = si.run_info['model_start_time']
         else:
             info['start_time'] = time_util.isostr_to_seconds(params['count_start_date'])
 
         if params['count_end_date'] is None:
-            info['end_time'] = si.solver_info['model_end_time']
+            info['end_time'] = si.run_info['model_end_time']
         else:
             info['end_time'] = time_util.isostr_to_seconds(params['count_end_date'])
 
         md= si.model_direction
-        out =   info['start_time'] * md <=  si.solver_info['current_model_time'] * md  <= info['end_time'] * md
+        out =   info['start_time'] * md <=  si.run_info['current_model_time'] * md  <= info['end_time'] * md
         return out
 
     def record_time_stats_last_recorded(self, t):   self .info['time_last_stats_recorded'] = t
@@ -167,7 +174,6 @@ class _BaseParticleLocationStats(ParameterBaseClass):
     # overload this method to subset indicies in out of particles to count
     def select_particles_to_count(self, out):
         return out
-
 
 
     def update(self, time_sec):
@@ -183,9 +189,9 @@ class _BaseParticleLocationStats(ParameterBaseClass):
         num_in_buffer = si.classes['particle_group_manager'].info['particles_in_buffer']
 
         # first select those to count based on status and z location
-        sel = self.sel_status_and_z(part_prop['status'].data, part_prop['x'].data,part_prop['water_depth'].data,
-                                    info['status_range'], info['z_range'],info['water_depth_range'],
-                                    num_in_buffer,  self.get_partID_buffer('B1'))
+        sel = self.sel_status_waterdepth_and_z(part_prop['status'].data, part_prop['x'].data, part_prop['water_depth'].data.ravel(),
+                                               info['status_range'], info['z_range'], info['water_depth_range'],
+                                               num_in_buffer, self.get_partID_buffer('B1'))
 
         # any overloaded sub-selection of particles given in child classes
         sel = self.select_particles_to_count(sel)
@@ -204,8 +210,8 @@ class _BaseParticleLocationStats(ParameterBaseClass):
         self.stop_update_timer()
 
     @staticmethod
-    @njit
-    def sel_status_and_z(status, x, water_depth, status_range, z_range, water_depth_range, num_in_buffer, out):
+    @njitOT
+    def sel_status_waterdepth_and_z(status, x, water_depth, status_range, z_range, water_depth_range, num_in_buffer, out):
         n_found = 0
         if x.shape[1] == 3:
             # 3D selection
@@ -224,8 +230,17 @@ class _BaseParticleLocationStats(ParameterBaseClass):
 
     def write_time_varying_stats(self, n, time):
         # write nth step in file
+        si = self.shared_info
         fh = self.nc.file_handle
         fh['time'][n] = time
+        release_groups = si.classes['release_groups']
+
+        # add up number released
+        num_released = 0
+        for rg in release_groups.values():
+            num_released += rg.info['number_released']
+        fh['num_released_total'][n] = num_released
+
         fh['count'][n, ...] = self.count_time_slice[:, ...]
         fh['count_all_particles'][n, ...] = self.count_all_particles_time_slice[:, ...]
 

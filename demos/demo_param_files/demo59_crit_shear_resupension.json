@@ -2,16 +2,11 @@
     "output_file_base": "demo59_crit_shear_resupension",
     "debug": true,
     "time_step": 120,
+    "numba_caching": false,
     "reader": {
         "input_dir": "E:\\H_Local_drive\\ParticleTracking\\oceantracker\\demos\\demo_hindcast",
         "file_mask": "demoHindcastSchism3D.nc",
-        "field_variables": {
-            "water_temperature": "temp"
-        },
-        "depth_average": false,
-        "field_variables_to_depth_average": [
-            "water_velocity",
-            "salt",
+        "load_fields": [
             "water_temperature"
         ]
     },
@@ -135,5 +130,6 @@
         "critical_friction_velocity": 0.005
     },
     "backtracking": false,
+    "use_A_Z_profile": true,
     "root_output_dir": "output"
 }

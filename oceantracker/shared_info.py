@@ -10,25 +10,27 @@ class SharedInfoClass(object):
     def __init__(self):
         self.reset()
         self.block_timers={}
+        for name in common_info.core_class_list: self.classes[name] = None
 
     def reset(self):
         self.classes = {}
         # fill in known user class and iterator names
-        for key in list(common_info.class_dicts.keys()):
+        for key in common_info.class_dicts_list:
             self.classes[key] = {}
 
-    def add_core_class(self, name, params, crumbs =''):
+    def add_core_class(self, name, params, crumbs ='',initialise=False):
 
         ml= self.msg_logger
         crumb_base = f' >>> adding core class type >> "{name}" '
 
         # make instance  and merge params
-        i = make_class_instance_from_params(name, params, ml, class_role_name=name,
+        i = make_class_instance_from_params(name, params, ml, default_classID=name,
                                             crumbs=crumb_base + crumbs )
         self.classes[name] = i
+        if initialise: i.initial_setup()
         return i
 
-    def create_class_dict_instance(self,name,class_role, group, params,  crumbs=''):
+    def create_class_dict_instance(self,name,class_role, group, params,  crumbs='', initialise=False,default_classID=None):
         # dynamically  get instance of class from string eg oceantracker.solver.Solver
         ml= self.msg_logger
 
@@ -37,16 +39,15 @@ class SharedInfoClass(object):
         crumb_base = f' >>> adding_class type >> "{class_role}"  (name=  "{name}" instance #{instanceID: 1d}), '
 
         # make instance  and merge params
-        i = make_class_instance_from_params(name, params, self.msg_logger,
-                                            crumbs= crumb_base + crumbs)
+        i = make_class_instance_from_params(name, params, self.msg_logger,   crumbs= crumb_base + crumbs,default_classID=default_classID)
 
-        if class_role not in common_info.class_dicts.keys() :
+        if class_role not in common_info.class_dicts_list :
             ml.msg(f'Class type = "{class_role}": name is not a known class_role=' + class_role ,
                    exception = True, crumbs =  crumb_base + crumbs)
 
         # now add to class lists and interators
 
-        i.info['group'] = group
+        i.info['type'] = group
 
         # needed for release group identification info etc, zero based
         i.info['instanceID'] =  instanceID
@@ -60,6 +61,7 @@ class SharedInfoClass(object):
 
         else:
             self.classes[class_role][name] = i
+        if initialise : i.initial_setup()
         return i
 
     def all_class_instance_pointers_iterator(self):
@@ -67,7 +69,7 @@ class SharedInfoClass(object):
         p = []
 
         for name, item in self.classes.items():
-           if name in common_info.class_dicts.keys():
+           if name in common_info.class_dicts_list:
                # set of classes
                if item is not None:
                     for key, i in item.items():

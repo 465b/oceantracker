@@ -3,6 +3,8 @@ from oceantracker.util.parameter_base_class import ParameterBaseClass
 from oceantracker.util import time_util
 from oceantracker.util.parameter_checking import ParamValueChecker as PVC, ParameterListChecker as PLC
 from numba import njit
+from oceantracker.util.numba_util import njitOT
+from oceantracker.common_info_default_param_dict_templates import large_float
 
 class PointRelease(ParameterBaseClass):
     # releases particles at fixed points, inside optional radius
@@ -28,9 +30,16 @@ class PointRelease(ParameterBaseClass):
                                  'user_release_group_name' : PVC(None,str,doc_str= 'User given name/label to attached to this release groups to make it easier to distinguish.'),
                                  'allow_release_in_dry_cells': PVC(False, bool,
                                               doc_str='Allow releases in cells which are currently dry, ie. either permanently dry or temporarily dry due to the tide.'),
-                                 'z_range': PLC([],[float, int], min_length=2, doc_str='z range = [zmin, zmax] to randomly release in 3D, overrides any given release z value'),
-                                  #Todo implement release group particle with different parameters, eg { 'oxygen' : {'decay_rate: 0.01, 'initial_value': 5.}
-                                'max_cycles_to_find_release_points': PVC(50, int, min=50, doc_str='Maximum number of cycles to search for acceptable release points, ie. inside domain, polygon etc '),
+                                 'z_range': PLC([],[float, int], min_length=2, obsolete='use z_min and/or z_max'),
+
+                                'z_min': PVC(-large_float, [float, int],doc_str='min/ deepest z value to release for to randomly release in 3D, overrides any given release z value'),
+                                'z_max': PVC( large_float, [float, int], doc_str='max/ highest z vale release for to randomly release in 3D, overrides any given release z value'),
+                                'release_offset_above_bottom': PVC(False, [float, int], min= 0., doc_str=' 3D release particles at fixed give height above the bottom at the release location ', units='m'),
+                                #'water_depth_min': PVC(None, float,doc_str='min water depth to release in, useful for releases with a depth rage, eg larvae from inter-tidal shellfish', units='m'),
+                                #'water_depth_max': PVC(None, float, doc_str='max water depth to release in', units='m'),
+
+            #Todo implement release group particle with different parameters, eg { 'oxygen' : {'decay_rate: 0.01, 'initial_value': 5.}
+                                'max_cycles_to_find_release_points': PVC(200, int, min=100, doc_str='Maximum number of cycles to search for acceptable release points, ie. inside domain, polygon etc '),
                                  })
         self.class_doc(description= 'Release particles at 1 or more given locations. Pulse_size particles are released every release_interval. All these particles are tagged as a single release_group.')
 
@@ -53,10 +62,8 @@ class PointRelease(ParameterBaseClass):
         si = self.shared_info
         ml = self.msg_logger
 
-        #todo for multiple readers, get  field group ot hold overlaping range
-        reader =  si.classes['reader']
-        hindcast_start = reader.info['file_info']['first_time']
-        hindcast_end   = reader.info['file_info']['last_time']
+        hindcast_start, hindcast_end  =  si.classes['field_group_manager'].get_hindcast_start_end_times()
+
         model_time_step = si.settings['time_step']
 
         self.info['release_info'] ={'first_release_date': None, 'last_release_date':None,
@@ -95,7 +102,7 @@ class PointRelease(ParameterBaseClass):
             time_end = hindcast_start if si.backtracking else hindcast_end
 
         # get time steps for release in a dow safe way
-        model_time_step = si.model_time_step
+        model_time_step = si.settings['time_step']
 
 
         # get release times within the hindcast
@@ -110,9 +117,9 @@ class PointRelease(ParameterBaseClass):
         release_info['release_times'] = release_info['release_times'][sel]
 
         if release_info['release_times'].size ==0:
-            ml.msg(f'No release times in range of hydro-model for release_group {info["instance_number"]:2d}, ',
+            ml.msg(f'No release times in range of hydro-model for release_group {info["instanceID"]:2d}, ',
                    fatal_error=True,
-                   hint=' Check hydro-model date range and release dates  ' , exit_now = True)
+                   hint=' Check hydro-model date range and release dates  ')
 
         # get time steps when released, used to determine when to release
         release_info['release_time_steps'] =  np.round(( release_info['release_times']- hindcast_start)/model_time_step).astype(np.int32)
@@ -133,31 +140,35 @@ class PointRelease(ParameterBaseClass):
         # index of release the  times to be released next
         release_info['index_of_next_release'] =  0
 
-    def release_locations(self):
+        if not   hindcast_start <= release_info['first_release_time'] <= hindcast_end :
+            ml.msg(f'Release group "{info["name"]}" >  start time {time_util.seconds_to_isostr(release_info["first_release_time"])}  is outside the range of hydro-model times for release_group instance #{info["instanceID"]:2d}, ',
+                   fatal_error=True,hint=f' Check release start time is in hydro-model  range of  {time_util.seconds_to_isostr(hindcast_start)}  to {time_util.seconds_to_isostr(hindcast_start)} ')
+
+    def release_locations(self,time_sec):
         # set up full set of release locations inside  polygons
         si = self.shared_info
-        grid = si.classes['reader'].grid
         info= self.info
+        params=self.params
 
         n_required = self.get_number_required()
 
-        x0           = np.full((0, info['points'].shape[1]), 0.)
-        n_cell_guess = np.full((0,), 0, dtype=np.int32)
+        x0           = np.full((0, info['points'].shape[1]), 0.,dtype=np.float64, order='C')
+        n_cell0 = np.full((0,), 0, dtype=np.int32)
         count = 0
         n_found = 0
 
         while x0.shape[0] < n_required:
             # get 2D release candidates
-            x = self.get_release_location_candidates()
+            x_guess = self.get_release_location_candidates()
 
-            x, n_cell, bc = self.check_potential_release_locations_in_bounds(x)
+            x_guess, n_cell_guess, bc = self.check_potential_release_locations_in_bounds(x_guess)
 
-            if x.shape[0] > 0:
-                x, n_cell = self.filter_release_points(x, n_cell,)
+            if x_guess.shape[0] > 0:
+                x_guess, n_cell_guess = self.filter_release_points(x_guess, n_cell_guess)
                 # if any ok then add to list
-                n_found += x.shape[0]
-                x0          = np.concatenate((x0, x), axis =0)
-                n_cell_guess= np.concatenate((n_cell_guess, n_cell))
+                n_found += x_guess.shape[0]
+                x0          = np.concatenate((x0, x_guess), axis =0)
+                n_cell0= np.concatenate((n_cell0, n_cell_guess,))
 
             # allow max_cycles_to_find_release_points cycles to find points
             count += 1
@@ -172,7 +183,7 @@ class PointRelease(ParameterBaseClass):
 
         # trim initial location and cell  to required number
         x0 = x0[:n_required, :]
-        n_cell_guess = n_cell_guess [:n_required]
+        n_cell0 = n_cell0[:n_required]
 
         n = x0.shape[0]
         IDrelease_group = self.info['instanceID']
@@ -182,40 +193,38 @@ class PointRelease(ParameterBaseClass):
 
         info['number_released'] += n  # count number released in this group
 
-        if si.hydro_model_is3D and (len(self.params['z_range']) > 0 or x0.shape[1] < 3):
+        if si.is3D_run:
 
-            if len(self.params['z_range']) == 0:  self.params['z_range']= [-1.0E30,1.0E30]
+            if params['z_min'] >= params['z_max']:
+                si.msg_logger.msg(f'Release group-"{self.info["name"]}", zmin >= zmax, (zmin,zmax) =({info["z_range"][0]:.3e}, {info["z_range"][1]:.3e}) ',fatal_error=True)
 
-            z = self.get_z_release_in_depth_range(np.asarray(self.params['z_range']), n_cell_guess,
-                                            grid['zlevel'], grid['bottom_cell_index'] , grid['triangles'],
-                                            si.classes['field_group_manager'].n_buffer)
-            x0 = np.hstack((x0[:, :2], z))
+            fgm = si.classes['field_group_manager']
+            water_depth = fgm.interp_named_field_at_given_locations_and_time('water_depth', x0, time_sec=None, n_cell=n_cell0)
+            tide  = fgm.interp_named_field_at_given_locations_and_time('tide', x0, time_sec=time_sec, n_cell=n_cell0)
+            if x0.shape[1] == 2:
+                # expand x0 to 3D if needed
+                x0 = np.concatenate((x0, np.zeros((x0.shape[0],1), dtype=x0.dtype)), axis=1)
 
-        return x0, IDrelease_group, IDpulse, user_release_groupID, n_cell_guess
+            x0 = self.get_z_release_in_depth_range(x0,params['z_min'],params['z_max'],  water_depth, tide)
+
+        return x0, IDrelease_group, IDpulse, user_release_groupID, n_cell0
 
     @staticmethod
-    @njit()
-    def get_z_release_in_depth_range(z_range, ncell, zlevel, bottom_cell_index ,triangles, nb):
-        # get release in range of top and bottom
-        nx = ncell.shape[0]
+    @njitOT
+    def get_z_release_in_depth_range(x,z_min, z_max, water_depth,tide):
+        # get random release within zrange within bounds of water depth and tide
 
         zr =  np.full((2,),0.)
-        z = np.full((nx,1),0.)
 
-        for n in range(nx):
+        for n in range(x.shape[0]):
             # get mean depth of triangle by summing
-            ztop, zbot = 0., 0.
-            for m in range(3):
-                node = triangles[ncell[n],m]
-                ztop += zlevel[nb[0], node, -1] # todo allow for slow time variation in z?
-                zbot += zlevel[nb[0], node, bottom_cell_index[node]]
 
-            zr[0] = max(zbot/3., z_range[0])
-            zr[1] = min(ztop/3., z_range[1])
+            z1  = max(water_depth[n], z_min)
+            z2 = min(tide[n], z_max)
+            a = np.random.uniform(z1, z2, size=1)[0]
+            x[n, 2] = np.random.uniform(z1, z2, size=1)[0]
 
-            z[n] = np.random.uniform(zr[0], zr[1], size=1)
-
-        return z
+        return x
 
 
 
@@ -245,18 +254,17 @@ class PointRelease(ParameterBaseClass):
     def check_potential_release_locations_in_bounds(self, x):
         si= self.shared_info
         # use KD tree to find points those outside model domain
+        fgm = si.classes['field_group_manager']
+        sel, n_cell, bc  = fgm.are_points_inside_domain(x)
 
-        sel, n_cell ,bc  = si.classes['interpolator'].are_points_inside_domain(x[:,:2])
-        grid = si.classes['reader'].grid
         # keep those inside domain
-
-
         x = x[sel, :]
         n_cell = n_cell[sel]
 
         # add keep only those in wet cells at this time
         if not self.params['allow_release_in_dry_cells']:
-            sel =grid['dry_cell_index'][n_cell] < 128 # those wet
+            # if not allowing dry cel release only keep those in wet cells
+            sel = ~fgm.are_dry_cells(n_cell)
             x = x[sel, :]
             n_cell = n_cell[sel]
 

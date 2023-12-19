@@ -40,16 +40,17 @@ event_loggers:
       - - 1597682.1237
         - 5489972.7479
       user_polygon_name: B
+numba_caching: false
 output_file_base: demo57_SCHISM_3D_lateralBoundaryTest
 particle_properties:
   age_decay:
     class_name: oceantracker.particle_properties.age_decay.AgeDecay
     decay_time_scale: 86400.0
 reader:
-  field_variables:
-    water_temperature: temp
   file_mask: demoHindcastSchism3D.nc
   input_dir: E:\H_Local_drive\ParticleTracking\oceantracker\demos\demo_hindcast
+  load_fields:
+  - water_temperature
 release_groups:
   P1:
     points:
@@ -59,5 +60,4 @@ release_groups:
     pulse_size: 20
     release_interval: 3600
 root_output_dir: output
-run_as_depth_averaged: true
 time_step: 120

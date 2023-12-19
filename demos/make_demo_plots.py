@@ -90,7 +90,7 @@ def demo07_inside_polygon_events(case_info_file_name,output_file=None):
                                     vmax=1,
                                     movie_file=output_file + '.mp4' if output_file is not None else None,
                                     fps=15,
-                                    polygon_list_to_plot=caseInfo['full_case_params']['role_dicts']['event_loggers']['in_out_poly']['polygon_list'],
+                                    polygon_list_to_plot=caseInfo['full_case_params']['class_dicts']['event_loggers']['in_out_poly']['polygon_list'],
                                     show_dry_cells=True, interval=30)
     return None
 
@@ -110,7 +110,7 @@ def demo08_particle_splitting(case_info_file_name,output_file=None):
                                 fps=15, back_ground_depth=True, show_dry_cells=True, interval=20)
     return None
 
-def demo09_polygon_release_overlapping_land(case_info_file_name,output_file=None):
+def demo62_polygon_release_overlapping_land(case_info_file_name,output_file=None):
     from oceantracker.post_processing.read_output_files.load_output_files import load_track_data, get_case_info_file_from_run_file
     from oceantracker.post_processing.plotting.plot_tracks import animate_particles
 
@@ -243,10 +243,10 @@ def demo60_SCHISM_3D_decaying_particle(case_info_file_name,output_file=None):
     return None
 
 def demo61_concentration_test(case_info_file_name,output_file=None):
-    from oceantracker.post_processing.read_output_files.load_output_files import load_concentration_vars, get_case_info_file_from_run_file
+    from oceantracker.post_processing.read_output_files.load_output_files import load_concentration_data, get_case_info_file_from_run_file
     from oceantracker.post_processing.plotting.plot_statistics import animate_concentrations
 
-    c = load_concentration_vars(case_info_file_name, var_list=['particle_concentration', 'C'])
+    c = load_concentration_data(case_info_file_name, var_list=['particle_concentration', 'C'])
 
     axis_lims = [1591000, 1601500, 5478500, 5491000]
 

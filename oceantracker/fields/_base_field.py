@@ -2,34 +2,39 @@ from oceantracker.util.parameter_base_class import ParameterBaseClass
 from oceantracker.util import basic_util
 import numpy as np
 from oceantracker.util.parameter_checking import ParamValueChecker as PVC, ParameterListChecker as PLC
-from copy import  copy
 
-class _BaseField(ParameterBaseClass):
+
+
+
+# make and access 4D fields from reader or custom fields with dims [ time,node,z, vector components]
+class ReaderField(ParameterBaseClass):
     def __init__(self):
         super().__init__()  # required in children to get parent defaults and merge with given params
-        self.add_default_params({'write_interp_particle_prop_to_tracks_file': PVC(True, bool),
-                               # 'create_particle_property_with_same_name': PVC( True, bool),
-                                 'is_time_varying': PVC(True, bool,is_required=True),
-                                 'is3D': PVC(True, bool,is_required=True ),
-                                  'num_components': PVC(None, int,is_required=True),
-                                  })
 
-    def initial_setup(self):
+        self.add_default_params(dict(
+                    time_varying= PVC(False, bool),
+                    is3D = PVC(False, bool),
+                    is_vector= PVC(False, bool),
+                    write_interp_particle_prop_to_tracks_file = PVC(True, bool),
+                    create_particle_property_with_same_name  = PVC(True, bool),
+                            ))
+        reader = None
+        interp = None
 
+    def initial_setup(self,grid, fields):
         si = self.shared_info
-        grid = si.classes['reader'].grid
-        # work out size from grid etc, tuple to garud against change
-        self.info['shape_in_file'] = tuple([si.classes['reader'].params['time_buffer_size'] if self.params['is_time_varying'] else 1,
-                                            grid['x'].shape[0],
-                                            grid['nz'] if self.params['is3D'] else 1,
-                                            self.params['num_components'] if self.params['num_components'] is not None else 1])
+        params= self.params
+        #todo attach reader to field
+        ncomp = 1
+        if params['is_vector']:
+            ncomp = 3 if params['is3D'] else 2
 
-        buffer_shape = tuple([si.classes['reader'].params['time_buffer_size'] if self.params['is_time_varying'] else 1,
-                                            grid['x'].shape[0],
-                                            grid['nz'] if self.params['is3D'] else 1,
-                                            self.params['num_components'] if self.params['num_components'] is not None else 1])
+        s= [grid['time'].size if params['time_varying'] else 1,
+            grid['x'].shape[0],
+            grid['nz'] if params['is3D'] else 1,
+             ncomp]
 
-        self.data = np.full(buffer_shape, 0, dtype=np.float32, order='c')  # all fields are float 32
+        self.data = np.full(s, 0., dtype=np.float32, order='c')  # all fields are float 32
 
     def is_time_varying(self): return self.data.shape[0] > 1
     def is3D(self): return  self.data.shape[2] > 1
@@ -44,12 +49,21 @@ class _BaseField(ParameterBaseClass):
             return self.data[nb,...]
         else:
             return self.data[:] # give whole
-    def update(self): pass
+    def update(self, fields,grid): pass
 
-class UserFieldBase(_BaseField):
+
+class CustomFieldBase(ReaderField):
     # same as above but update method is required
     def __init__(self):
         super().__init__()  # required in children to get parent defaults and merge with given params
 
-    def update(self, time_sec): basic_util.nopass('User fields must have update method')
+
+    def update(self,fields,grid, active): basic_util.nopass('User fields must have update method')
     # if buffer index None, this  allows update of non-time varying use fields
+
+
+
+
+
+
+

@@ -113,7 +113,8 @@ class ParamValueChecker(object):
         info = self.info
 
         if value is not None and info['obsolete'] is not None:
-            msg_logger.msg('Parameter  "' + crumb_trail + '" is obsolete- ' + info['obsolete'], warning=True)
+            msg_logger.msg(f'Parameter  "{crumb_trail}" is obsolete- "{info["obsolete"]}"', warning=True)
+            return  None
 
         if value is None:
             # check default exits
@@ -185,9 +186,8 @@ class ParameterListChecker(object):
     # todo do should default value be a PVC() instance, to get control over  possible values in list , max, min etc?
     def __init__(self, default_list, acceptable_types, is_required=False, can_be_empty_list= True, default_value=None,
                   fixed_len =None, min_length=None, max_length=None, doc_str=None, make_list_unique=None, obsolete = None,
-                 possible_values=None,
-                 ) :
-
+                 possible_values=None, units=None,
+                 ):
 
         self.info= dict(locals()) # get keyword args as dict
         self.info.pop('self') # dont want self param
@@ -201,12 +201,12 @@ class ParameterListChecker(object):
         info =self.info
         crumb_trail = crumbs + crumb_seperator + name
 
-        if info['obsolete'] is not None:
-            msg_logger.msg('Parameter "' + crumb_trail + '" is obsolete  - ' + info['obsolete'],warning=True)
-
+        if info['obsolete'] is not None and user_list is not None and len(user_list) > 0:
+            msg_logger.msg(f'List Parameter "{crumb_trail}" is obsolete  - "{info["obsolete"]}"', warning=True)
+            return None
 
         if user_list is not None and type(user_list) != list:
-            msg_logger.msg('ParameterListChecker: param "' + crumb_trail + '" must be a list ', fatal_error=True)
+            msg_logger.msg(f'ParameterListChecker: param "{crumb_trail}" must be a list, not type={str(type(user_list))} ', fatal_error=True)
 
         if self.info['is_required'] and user_list is None:
             msg_logger.msg('ParameterListChecker: param "' + crumb_trail + '" is required ', fatal_error=True)
@@ -222,13 +222,14 @@ class ParameterListChecker(object):
         ul = [] if user_list is None else deepcopy(user_list)
         dl = [] if info['default_list'] is None else deepcopy(info['default_list'])
 
-        # check if user and base param are lists
+         # check if user and base param are lists
         if type(ul) != list:
             msg_logger.msg('ParameterListChecker: param "' + crumb_trail + '" both base and case parameters must be a lists ', fatal_error=True)
 
         if info['fixed_len'] is None:
             complete_list = dl  + ul
-            if info['make_list_unique'] is not None and info['make_list_unique']: complete_list = list(set(complete_list)) # only keep unique list
+            if info['make_list_unique'] is not None and info['make_list_unique']:
+                complete_list = list(set(complete_list)) # only keep unique list
 
         elif info['fixed_len'] is not None:
             complete_list = info['fixed_len']*[None]

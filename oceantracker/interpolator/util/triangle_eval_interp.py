@@ -2,9 +2,8 @@ import numpy as np
 from numba import njit, float64, int32, float32, int8, int64, boolean, uint8
 from oceantracker.util import  basic_util
 from oceantracker.util.profiling_util import function_profiler
-
-
-@njit()
+from oceantracker.util.numba_util import njitOT
+@njitOT
 def time_independent_2Dfield(F_out, F_data, triangles, n_cell, bc_cords,  active):
     # do interpolation in place, ie write directly to F_interp for isActive particles
     # time independent  2D fields, eg water_depth
@@ -23,7 +22,7 @@ def time_independent_2Dfield(F_out, F_data, triangles, n_cell, bc_cords,  active
             for c in range(n_comp):
                 F_out[n, c] += bc * F[n_node, c]
 
-@njit()
+@njitOT
 def time_dependent_2Dfield(nb, fractional_time_steps, F_out, F_data, triangles, n_cell, bc_cords,  active):
     # do interpolation in place, ie write directly to F_interp for isActive particles
     # time dependent  fields from two time slices in hindcast
@@ -42,12 +41,12 @@ def time_dependent_2Dfield(nb, fractional_time_steps, F_out, F_data, triangles, 
             bc = bc_cords[n, m]
             # loop over vector components
             for c in range(n_comp):
-                F_out[n, c] += bc * (fractional_time_steps[1] * F1[n_node[m], c]
-                                   + fractional_time_steps[0] * F2[n_node[m], c])
+                F_out[n, c] += bc * (fractional_time_steps[0] * F1[n_node[m], c]
+                                   + fractional_time_steps[1] * F2[n_node[m], c])
 
 # do 3D interp evaluation
-@njit()
-def time_independent_3Dfield(F_out, F_data, grid, part_prop,  active, step_info):
+@njitOT
+def time_independent_3Dfield_LSC_grid(F_out, F_data, grid, part_prop, active, step_info):
     #  non-time dependent 3D linear interpolation in place, ie write directly to F_out for isActive particles
     # todo do not used yet?
     raise('time_independent_3Dfield not implented')
@@ -73,9 +72,41 @@ def time_independent_3Dfield(F_out, F_data, grid, part_prop,  active, step_info)
             for c in range(n_comp):
                 # add contributions from layer above and below particle, for each spatial component
                 F_out[n, c] += bc * (F[n_node, nz_below, c] * zf1 + F[n_node, nz_above, c] * zf)
+@njitOT
+def time_dependent_3Dfield_sigma_grid(nb,fractional_time_steps, F_data,
+                            triangles,
+                            n_cell, bc_cords, nz_cell, z_fraction,
+                            F_out, active):
+    #  time dependent 3D linear interpolation in place, ie write directly to F_out for isActive particles
+
+    n_comp = F_data.shape[3]  # time step of data is always [nb, node,z,comp] even in 2D
+
+    # create views to remove redundant dim at current and next time step, improves speed?
+    F1 = F_data[nb[0], :, :, :]
+    F2 = F_data[nb[1], :, :, :]
+
+    # loop over active particles and vector components
+    for n in active:
+
+        zf2 = z_fraction[n]
+        zf1 = 1. - zf2
+        nz = nz_cell[n]
+
+        # loop over each vertex in triangle
+        for i in range(n_comp): F_out[n, i] = 0. # zero out for summing
+
+        for m in range(3):
+            n_node = triangles[n_cell[n], m]
+            # loop over vector components
+            for c in range(n_comp):
+                # add contributions from layer above and below particle, for each spatial component at two time steps
+                F_out[n, c] += bc_cords[n, m] * (F1[n_node, nz, c] * zf1 + F1[n_node, nz + 1, c] * zf2)*fractional_time_steps[0]  \
+                            +  bc_cords[n, m] * (F2[n_node, nz, c] * zf1 + F2[n_node, nz + 1, c] * zf2)*fractional_time_steps[1]  # second time step
+
+
 #@function_profiler(__name__)
-@njit()
-def time_dependent_3Dfield(nb ,fractional_time_steps, F_data,
+@njitOT
+def time_dependent_3Dfield_LSC_grid(nb ,fractional_time_steps, F_data,
                             triangles,bottom_cell_index,
                             n_cell, bc_cords, nz_cell, z_fraction,
                             F_out, active):
@@ -105,64 +136,22 @@ def time_dependent_3Dfield(nb ,fractional_time_steps, F_data,
             # loop over vector components
             for c in range(n_comp):
                 # add contributions from layer above and below particle, for each spatial component at two time steps
-                F_out[n, c] +=     bc_cords[n, m] * (F1[n_node, nz_below, c] * zf1 + F1[n_node, nz_above, c] * zf)*fractional_time_steps[1]  \
-                                +  bc_cords[n, m] * (F2[n_node, nz_below, c] * zf1 + F2[n_node, nz_above, c] * zf)*fractional_time_steps[0]  # second time step
+                F_out[n, c] +=     bc_cords[n, m] * (F1[n_node, nz_below, c] * zf1 + F1[n_node, nz_above, c] * zf)*fractional_time_steps[0]  \
+                                +  bc_cords[n, m] * (F2[n_node, nz_below, c] * zf1 + F2[n_node, nz_above, c] * zf)*fractional_time_steps[1]  # second time step
 
-@njit
-def eval_water_velocity_3D(nb,fractional_time_steps, V_out, V_data,
-                           triangles,bottom_cell_index,
-                           n_cell,bc_cords,nz_cell,z_fraction, z_fraction_bottom_layer,
-                           active):
-    #  special case of interpolating water velocity with log layer in bottom cell, linear z interpolation at other depth cells
-
-    # create views to remove redundant dim at current and next time step, improves speed?
-    # nb is required buffer time step
-    v1, v2 = V_data[nb[0], :, :, :], V_data[nb[1], :, :, :]
-
-    # loop over active particles and vector components
-    for n in active:
-
-        for i in range(3): V_out[n, i] = 0. # zero out for summing
-
-        nz =nz_cell[n]
-
-        # if in bottom cell adjust fraction to larger value to give log layer interp
-        # first time step z_fraction[n, 10, m]
-        if z_fraction_bottom_layer[n] >= 0 :
-            zf = z_fraction_bottom_layer[n]
-        else:
-            # fraction =-00 is not on the bottom
-            zf = z_fraction[n]
-
-        zf1 = 1.0 - zf
-
-        # loop over each vertex in triangle
-        for m in range(3):
-            n_node = triangles[n_cell[n], m]
-
-            # for LSC grid need to get highest node of nz or bottom at each triangle vertex
-            nzb =  bottom_cell_index[n_node]  # bottom node at this vertex
-            nz_below = max(nzb, nz    )
-            nz_above = max(nzb, nz + 1)
-            # loop over vector components
-            for c in range(3):
-                # add contributions from layer above and below particle, for each spatial component at two time steps
-                V_out[n, c] +=  bc_cords[n, m] * (v1[n_node, nz_below, c] * zf1 + v1[n_node, nz_above, c] * zf) * fractional_time_steps[1] \
-                             +  bc_cords[n, m] * (v2[n_node, nz_below, c] * zf1 + v2[n_node, nz_above, c] * zf) * fractional_time_steps[0]   # second time step
-                pass
-
-@njit
-def update_dry_cell_index(is_dry_cell,dry_cell_index, current_buffer_steps,current_fractional_time_steps):
-    # up date 0-255 dry cell index, used to determine if cell dry at this time
+@njitOT
+def update_dry_cell_index(is_dry_cell,dry_cell_index, current_buffer_steps,fractional_time_steps):
+    # update 0-255 dry cell index, used to determine if cell dry at this time
     # uses  reader buffer locations and time step fractions within step info structure
+    # vals > 127 are dry, vals <= 127 are wet
     for n in range(dry_cell_index.size):
-        val  = current_fractional_time_steps[1]*is_dry_cell[current_buffer_steps[0], n]
-        val += current_fractional_time_steps[0]*is_dry_cell[current_buffer_steps[1], n]
+        val  = fractional_time_steps[0]*is_dry_cell[current_buffer_steps[0], n]
+        val += fractional_time_steps[1]*is_dry_cell[current_buffer_steps[1], n]
         dry_cell_index[n]  = int(255.*val)
 
 # below are development ideas
 #_______________________________________________
 
-# todo interpolate 3D feilds at free surface or bottom
+# todo interpolate 3D fields at free surface or bottom
 def interp_3Dfield_at_surfaces_time_indepenent(F_out, F_data, tri, n_cell, nz_bottom_cell, BCcord, active):
     basic_util.nopass('interp_3Dfield_at_surfaces_time_indepenent not yet implemented')

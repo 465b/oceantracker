@@ -1,6 +1,7 @@
 from  oceantracker.velocity_modifiers._base_velocity_modifer import VelocityModiferBase
 from oceantracker.util.parameter_checking import ParamValueChecker as PVC
 from numba import njit
+from oceantracker.util.numba_util import njitOT
 
 import numpy as np
 from datetime import datetime,timezone,timedelta
@@ -13,9 +14,9 @@ class TerminalVelocity(VelocityModiferBase):
         # set up info/attributes
         super().__init__()  # required in children to get parent defaults
         self.add_default_params({'value': PVC(0.,float, doc_str='Terminal velocity positive upwards, ie fall velocities ate negative'),
+                                 'mean': PVC(0., float, obsolete='use "value" parameter'),
                                  'variance': PVC(None, float, min=0., doc_str='variance of normal distribution of terminal velocity, used to give each particles its own terminal velocity from random normal distribution'),
                                  })
-
 
 
     def check_requirements(self):
@@ -27,13 +28,13 @@ class TerminalVelocity(VelocityModiferBase):
         si = self.shared_info
         particle= si.classes['particle_group_manager']
 
-        si.msg_logger.msg('When using a terminal velocity, ensure time step is small enough that vertical displacement is a small fraction of the water depth, ie vertical Courant number < 1',warning=True)
+        si.msg_logger.msg('When using a terminal velocity, ensure time step is small enough that vertical displacement is a small fraction of the water depth, ie vertical Courant number < 1',note=True)
 
         if self.params['variance'] is not None:
            # set up individual particle terminal velocties
-           particle.create_particle_property('terminal_velocity','user',dict(
-                                                          class_name='oceantracker.particle_properties.particle_parameter_from_normal_distribution.ParticleParameterFromNormalDistribution',
-                                             value=self.params['value'], variance=self.params['variance']))
+           particle.add_particle_property('terminal_velocity','user',dict(
+                                            class_name='oceantracker.particle_properties.particle_parameter_from_normal_distribution.ParticleParameterFromNormalDistribution',
+                                                    value=self.params['value'], variance=self.params['variance']))
 
     def update(self, time_sec, active):
         # modify vertical velocity, if backwards, make negative
@@ -48,13 +49,13 @@ class TerminalVelocity(VelocityModiferBase):
             self._add_individual_vertical_vel(velocity_modifier.data, part_prop['terminal_velocity'].data,  si.model_direction, active)
 
     @staticmethod
-    @njit
+    @njitOT
     def _add_constant_vertical_vel(v, w, sel):
         for n in sel:
             v[n, 2] += w
 
     @staticmethod
-    @njit
+    @njitOT
     def _add_individual_vertical_vel(v, w, model_dir, sel):
         for n in sel:
             v[n, 2] += w[n]*model_dir

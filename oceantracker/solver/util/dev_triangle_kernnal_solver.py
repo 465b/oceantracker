@@ -2,9 +2,9 @@ from numba import  njit , prange ,types as nbt
 import numpy as np
 from oceantracker.interpolator.util import triangle_interpolator_util as tri_interp_util
 from oceantracker.interpolator.util import triangle_eval_interp
+from oceantracker.util.numba_util import njitOT
 
-#@njit(parallel = True, nogil=True)
-@njit()
+@njitOT
 def RKsolver(time_sec,vel_field, grid, part_prop, interp_step_info, ksi, time_step,RK_order,  active):
     # integrated interploated hydro model
     # and any velocity_modifier applied, eg terminal velocity , random walk
@@ -64,10 +64,10 @@ def eval_water_velocity(xq, time_sec,vel_field, grid, part_prop, st, bc,  n, v_o
     # then evaluate velocity
     tri_interp_util._kernal_BCwalk_with_move_backs(xq, grid, part_prop, n, st, bc)
 
-    if st['is_3D_run']:
+    if st['is3D_run']:
         # vertical walk
         tri_interp_util._kernal_get_depth_cell_time_varying_Slayer(xq, grid, part_prop, st, n)
-        triangle_eval_interp._kernal_eval_water_velocity_3D(v_out, vel_field, grid, part_prop, st, n)
+        triangle_eval_interp._kernal_eval_water_velocity_3D_LSC_grid(v_out, vel_field, grid, part_prop, st, n)
     else:
         triangle_eval_interp._kernal_time_dependent_2Dfield(v_out, vel_field, grid, part_prop, st, n)
 

@@ -27,9 +27,8 @@ if __name__ == '__main__':
             'root_output_dir': 'F:\\OceanTrackerOuput\\Vims\\Jilian',
             'reader': {'class_name': 'oceantracker.reader.schism_reader.SCHISMSreaderNCDF',
                           'file_mask': 'schout_*.nc','input_dir': 'F:\\Hindcasts\\Hindcast_samples_tests\\VIMS\\Particle_ChesBay_Jilian_small',
-                          'depth_average': args.depthaverage,
                           'field_variables_to_depth_average': ['water_velocity'],
-                          'field_variables': {}, # fields to track at particle locations
+                          'load_fields': {}, # fields to track at particle locations
                           },
              'max_run_duration': 8. * 24 * 3600,
              'write_tracks': True,

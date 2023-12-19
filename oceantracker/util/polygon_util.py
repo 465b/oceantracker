@@ -5,6 +5,7 @@ from numba import njit, types as nbtypes
 import numpy as np
 import time
 import copy
+from oceantracker.util.numba_util import njitOT
 
 
 class InsidePolygon(object):
@@ -58,7 +59,7 @@ class InsidePolygon(object):
         # 2) recalculates inv_slope for intersection calc and bounding box
         # 3) form subgrid of bounding region with vaules =1 if polygon overlays  subgrid cell
         # assumes a closed polygon
-
+        #todo this can be much faster with numba?
         nv = vert.shape[0]
         self.line_bounds = np.zeros((nv,3,2),dtype=np.float64)
         xyb= np.zeros((2,2),dtype=np.float64)
@@ -120,7 +121,7 @@ class InsidePolygon(object):
             p= np.vstack((p,p[0,:]))
         return p
 
-    def _get_area(self):
+    def get_area(self):
         # area of closed polygon, by planimeter method?
         #todo move to own utility, use triangle util?
         x, y=self.points[:,0], self.points[:,1]
@@ -142,7 +143,7 @@ def make_inside_ray_tracing_indices(lb, slope_inv, bounds,sub_grid_x,sub_grid_y,
     sub_grid_dx = sub_grid_x[1] - sub_grid_x[0]
     sub_grid_dy = sub_grid_y[1] - sub_grid_y[0]
 
-    @njit()
+    @njitOT
     def inside_ray_tracing_indices(xq_vals, active, inside_IDs, outside_IDs):
         # finds if points indside polygon based on ray from point to +ve x
         # based on odd number of crossings of lines of polygon, resilt is in boolean working space, "inside"

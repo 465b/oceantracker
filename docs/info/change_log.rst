@@ -6,6 +6,33 @@ Change log
 Known issues
 __________________
 
+
+Version 0.4.1.000 2023-12-23
+_________________________
+
+Faster and simplified internal structure
+
+New features
+--------------------
+
+#. Most expensive step in 3D finding vertical cell is not 5 times faster, so net 2-3 times faster, as by default regrids  3D data to uniform Sigma grid, to speed vertical cell search by factor of 5. Original native vertical grid short vertical walk search still available.
+#. By default uses diffusivity vertical profile for A_Z in random walk if variable mapped to A_Z_profile is found in the hydro file
+#. Uses bottom stress to calculate friction velocity field if variable mapped to bottom_stress is found in the hydro file
+#. Floating particle trajectory  modifier, forces particles to follow free surface
+#. Now exits if any the release group start time is outside time range of hindcast
+
+
+Known breaking changes- ask for help if needed to transition
+______________________________________________________________
+
+#. reader param load_fields replaces 'field_variables' param, to load variables to names used internally. These internal names may be mapped to file variables in  new  'field_variable_map'. If a special variable, eg concentration field, no map is needed.
+
+Internal changes
+_________________
+
+#.
+
+
 Version 0.4 Major upgrade
 _________________________
 

@@ -8,6 +8,7 @@ dispersion:
 dispersion_miss-spelt:
   A_H: 0.1
 max_run_duration: 172800.0
+numba_caching: false
 output_file_base: demo90forward
 particle_properties:
   my_constant_prop:
@@ -22,18 +23,18 @@ particle_properties:
   distance_travelled:
     class_name: oceantracker.particle_properties.distance_travelled.DistanceTravelled
 reader:
-  class_name: oceantracker.reader.generic_unstructured_reader.GenericUnstructuredReader
+  class_name: oceantracker.reader.generic_ncdf_reader.GenericNCDFreader
   dimension_map:
     node: nodes
     time: time
-  field_variables:
+  field_variable_map:
     tide: tide
     water_depth: depth
     water_velocity:
     - east_vel
     - north_vel
   file_mask: demoHindcast2D*.nc
-  grid_variables:
+  grid_variable_map:
     time: time_sec
     triangles: tri
     x:
@@ -41,7 +42,6 @@ reader:
     - north
   input_dir: E:\H_Local_drive\ParticleTracking\oceantracker\demos\demo_hindcast
   isodate_of_hindcast_time_zero: '2020-06-01'
-  search_sub_dirs: true
   time_buffer_size: 2
 release_groups:
   P1:
@@ -57,5 +57,5 @@ release_groups:
 root_output_dir: output
 time_step: 60
 tracks_writer:
-  write_dry_cell_index: true
+  write_dry_cell_flag: true
 user_note: test of notes

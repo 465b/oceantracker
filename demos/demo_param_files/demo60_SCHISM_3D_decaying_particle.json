@@ -2,12 +2,13 @@
     "output_file_base": "demo60_SCHISM_3D_decaying_particle",
     "debug": true,
     "time_step": 120,
+    "numba_caching": false,
     "reader": {
         "input_dir": "E:\\H_Local_drive\\ParticleTracking\\oceantracker\\demos\\demo_hindcast",
         "file_mask": "demoHindcastSchism3D.nc",
-        "field_variables": {
-            "water_temperature": "temp"
-        }
+        "load_fields": [
+            "water_temperature"
+        ]
     },
     "dispersion": {
         "A_H": 0.2,

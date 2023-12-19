@@ -57,13 +57,12 @@ def get_params(datasource=1):
     params = \
         {'root_output_dir': root_output_dir, 'output_file_base': output_file_base, 'debug': True,
          'time_step': time_step,
-         'max_threads' : 5,
         'screen_output_time_interval':6*time_step,
          'max_run_duration': 6 *24*3600,  # 10 days
          'reader': {'input_dir': input_dir,
                     'file_mask': file_mask,
                     #'time_buffer_size': 3,
-                    'field_variables': {'water_temperature': 'temp'}
+                    'load_fields': ['water_temperature']
                     },
         'write_tracks': False,
         'dispersion': {'A_H': .2, 'A_V': 0.001},

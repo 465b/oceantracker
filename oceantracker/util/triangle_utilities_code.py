@@ -3,17 +3,18 @@ from numba import njit, prange
 from numba.typed import List as NumbaList
 from oceantracker.util.polygon_util import InsidePolygon
 from oceantracker.util import  basic_util
+from oceantracker.util.numba_util import njitOT
 
 # build node to cell map
-@njit()
-def build_node_to_cell_map(tri,x):
+@njitOT
+def build_node_to_triangle_map(tri, x):
     # build list  giving map from each node to list of cells which contain that node
 
     # make empty array with guess of how many triangles per node
     # using arrays faster than appending to lists
-    # need to exapnd array if needed to avios crash
+    # need to expand array if needed to aviod crash
     n_block = 10
-    empty_block = np.full((x.shape[0],n_block), 0, dtype=np.int32)
+    empty_block = np.full((x.shape[0],n_block), -1, dtype=np.int32)
     node_to_tri_map =empty_block.copy()
 
     tri_per_node = np.full((x.shape[0],), 0, dtype=np.int32)
@@ -22,7 +23,7 @@ def build_node_to_cell_map(tri,x):
     #  build a node to triangles map
 
     for nTri  in range(tri.shape[0]):
-        for m  in range(tri.shape[1]):
+        for m  in range(3):
             node = tri[nTri, m]
             tri_per_node[node] += 1
             max_cells_per_node = max(tri_per_node[node], max_cells_per_node)
@@ -31,14 +32,15 @@ def build_node_to_cell_map(tri,x):
             if tri_per_node[node] >= node_to_tri_map.shape[1]:
                 # add another block
                 node_to_tri_map = np.concatenate((node_to_tri_map, empty_block.copy()),axis=1)
+
             # log one more triangle for this node
             node_to_tri_map[node, tri_per_node[node]-1] = nTri
 
     return node_to_tri_map, tri_per_node
 
 # build adjacency matrix from node to triangles map
-@njit
-def build_adjacency_from_node_cell_map(node_to_tri_map,tri_per_node, tri):
+@njitOT
+def build_adjacency_from_node_tri_map(node_to_tri_map, tri_per_node, tri):
     # build adjacency matrix for use in triangle walk and as lateral boundary of model
     adjacency = np.full(tri.shape, -1, dtype=np.int32)
 
@@ -75,7 +77,7 @@ def get_boundary_triangles(adjacency_matrix):
 
 def build_grid_outlines(triangles, adjacency,is_boundary_triangle,node_to_tri_map,x):
 
-    @njit
+    @njitOT
     def build_edge_node_pairs(triangles, adjacency_matrix, boundary_tri):
 
         # find triangles with edges ( but not those with 3 edges, which are not connected to the domain)
@@ -91,7 +93,7 @@ def build_grid_outlines(triangles, adjacency,is_boundary_triangle,node_to_tri_ma
 
         return edge_node_pairs[:nfound,:]
 
-    @njit
+    @njitOT
     def join_segments(edge_node_pairs):
         # join segments into lines based on common nodes in edge pairs of nodes
         # todo this is slow try with exapanding numpy array
@@ -145,15 +147,23 @@ def build_grid_outlines(triangles, adjacency,is_boundary_triangle,node_to_tri_ma
     out= {'domain' : {},'islands':[]}
     len_seg = [len(l) for l in segs] # f
 
+    # split segments into  domain or island
+    # domain is line segment containing most easterly node in the trangulation
+    nodes=np.unique(triangles)
+    x_tri =  x[ nodes, 0]
+    domain_node= nodes[np.argmax( x_tri == x_tri.min())]
+
     for s in segs:
         nodes=np.asarray(s).astype(np.int32)
         points = x[s, :]
-        face_nodes= np.stack((nodes[:-1],nodes[1:]), axis=1)
+        #face_nodes= np.stack((nodes[:-1],nodes[1:]), axis=1)
+        #d = {'nodes': nodes, 'points': points, 'face_nodes': face_nodes}
+        d = {'nodes': nodes, 'points': points}
         # longest segment must be the domain
-        if max(len_seg) == len(s) :
-            out['domain'].update({'nodes': nodes, 'points': points, 'face_nodes': face_nodes})
+        if domain_node in nodes :
+            out['domain'].update(d)
         else:
-            out['islands'].append({'nodes': nodes, 'points': points, 'face_nodes': face_nodes})
+            out['islands'].append(d)
     return out
 
 def calcuate_triangle_areas(xy, tri):
@@ -164,7 +174,7 @@ def calcuate_triangle_areas(xy, tri):
 
 def convert_face_to_nodal_values(x, tri, face_data):
     # convert face values to nodal using inverse distance weight to face values of triangles surrounding each node
-    @njit
+    @njitOT
     def inverse_distance_weight_face_values(node_map,x,xtri, data):
         out = np.full((len(node_map[0]),), np.nan)
 
@@ -187,7 +197,7 @@ def convert_face_to_nodal_values(x, tri, face_data):
                     out[node] = np.nan
         return out
 
-    node_to_tri_map = build_node_to_cell_map(tri, x)
+    node_to_tri_map = build_node_to_triangle_map(tri, x)
     xtri = np.concatenate((np.mean(x[tri, 0], 1).reshape(-1, 1), np.mean(x[tri, 0], 1).reshape(-1,1)), axis=1)
 
     if face_data.size==1:
@@ -204,13 +214,9 @@ def split_quad_cells(triangles_and_quads,quad_cells_to_split):
     # find indices flagged by boolean for splitting
     # put split cell info next to each other which mayu speed accesing getting nodal data from memory due to caching
     if quad_cells_to_split is not None:
-        num_tri_quad=triangles_and_quads.shape[0]
-        num_to_split = np.sum(quad_cells_to_split)
-        triangles = np.full((num_tri_quad+num_to_split, 3),-1,dtype=np.int32)
-        triangles[:num_tri_quad,:] = triangles_and_quads[: ,:3] # those not split
-
-        qtri = triangles_and_quads[quad_cells_to_split, :]# simplex for those to split
-        triangles[num_tri_quad:, :] = qtri[:, [0, 2, 3]]
+        qtri = triangles_and_quads[quad_cells_to_split, :] # quad simplex for those to split
+        new_tri =  qtri[:, [0, 2, 3]] # build simplex for split triangles
+        triangles = np.concatenate((triangles_and_quads[:,:3],new_tri), axis=0)
     return triangles
 
 if __name__ == "__main__":
@@ -233,12 +239,12 @@ if __name__ == "__main__":
     msg.progress_marker('split quad cells', start_time=t0)
 
     t0 = perf_counter()
-    node_to_tri_map, tri_per_node = build_node_to_cell_map(tri,xy)
+    node_to_tri_map, tri_per_node = build_node_to_triangle_map(tri, xy)
     msg.progress_marker('split node_to_cell_map cells', start_time=t0)
 
 
     t0 = perf_counter()
-    adjacency = build_adjacency_from_node_cell_map(node_to_tri_map, tri_per_node, tri)
+    adjacency = build_adjacency_from_node_tri_map(node_to_tri_map, tri_per_node, tri)
     msg.progress_marker('build_adjacency_from_node_cell_map', start_time=t0)
 
     is_boundary_triangle = get_boundary_triangles(adjacency)

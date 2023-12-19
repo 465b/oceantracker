@@ -14,7 +14,7 @@ def get_case_info_file_from_run_file(runInfo_fileName_or_runInfoDict, ncase = 0,
     if type(runInfo_fileName_or_runInfoDict) is str:
        case_info_file_name = json_util.read_JSON(runInfo_fileName_or_runInfoDict)
     else:
-        run_case_info = runInfo_fileName_or_runInfoDict
+        case_info_file_name = runInfo_fileName_or_runInfoDict
 
     if run_case_info is None:
         # file not found
@@ -120,10 +120,10 @@ def _extract_useful_info(case_info, d):
 
     return d
 
-def load_concentration_vars(case_info_file_name, var_list=[], name= None):
+def load_concentration_data(case_info_file_name, name= None):
     case_info = read_case_info_file(case_info_file_name)
     nc_file_name= _get_role_dict_file_name(case_info, 'particle_concentrations', name)
-    d = read_ncdf_output_files.read_concentration_file(nc_file_name, var_list=var_list)
+    d = read_ncdf_output_files.read_concentration_file(nc_file_name)
     d['grid'] = load_grid(case_info_file_name)
     d =  _extract_useful_info(case_info, d)
     return d
@@ -157,7 +157,7 @@ def load_stats_data(case_info_file_name, name = None):
 
 
     d['info']= case_info['class_roles_info']['particle_statistics'][name]
-    d['params'] = case_info['full_case_params']['role_dicts']['particle_statistics'][name]
+    d['params'] = case_info['full_case_params']['class_dicts']['particle_statistics'][name]
 
     if 'release_group_centered_grids' in d['params'] and d['params']['release_group_centered_grids']:
         d['release_group_centered_grids'] = True
@@ -180,7 +180,7 @@ def load_residence_file(case_info_file_name=None,name=None, var_list=[]):
     nc_file_name =  _get_role_dict_file_name(case_info, 'particle_statistics', name)
     d = read_ncdf_output_files.read_residence_file(nc_file_name, var_list)
     d['info']= case_info['class_roles_info']['particle_statistics'][name]
-    d['params'] = case_info['full_case_params']['role_dicts']['particle_statistics'][name]
+    d['params'] = case_info['full_case_params']['class_dicts']['particle_statistics'][name]
 
     d = _extract_useful_info(case_info, d)
     d['grid'] = load_grid(case_info_file_name)

@@ -3,6 +3,7 @@ from oceantracker.util.parameter_checking import  ParamValueChecker as PVC, Para
 from oceantracker.common_info_default_param_dict_templates import default_polygon_dict_params
 from copy import  deepcopy
 from oceantracker.release_groups.polygon_release import PolygonRelease
+from oceantracker.util.numba_util import njitOT
 
 import numpy as np
 from numba import njit
@@ -16,7 +17,6 @@ class ResidentInPolygon(_BaseParticleLocationStats):
         self.add_default_params({'name_of_polygon_release_group':  PVC(None, str,is_required=True,
                                 doc_str='"name" parameter of polygon release group to count paticles for residence time , (release group "name"  must be set by user). Particles inside this release groups polygon are conted to be used to calculate its residence time'),
                                  'role_output_file_tag': PVC('residence', str),
-                                 'z_range': PLC([], [float, int], min_length=2, doc_str='z range = [zmin, zmax] count particles in this z range in 3D'),
                                  })
 
     def initial_setup(self, **kwargs):
@@ -50,7 +50,7 @@ class ResidentInPolygon(_BaseParticleLocationStats):
         # create resident in polygon for single release group
         particles = si.classes['particle_group_manager']
         self.info['inside_polygon_particle_prop'] = f'resident_in_polygon_for_onfly_stats_{self.info["instanceID"]:03d}'
-        particles.create_particle_property(self.info['inside_polygon_particle_prop'],'manual_update',dict(
+        particles.add_particle_property(self.info['inside_polygon_particle_prop'],'manual_update',dict(
                                                class_name= 'oceantracker.particle_properties.inside_polygons.InsidePolygonsNonOverlapping2D',
                                                polygon_list=[polygon],
                                                 write=False))
@@ -64,11 +64,6 @@ class ResidentInPolygon(_BaseParticleLocationStats):
         self.set_up_binned_variables(self.nc)
         self.set_up_part_prop_lists()
 
-        #todo move to base location stats, so all can use depth range
-        if len(self.params['z_range'])==0:
-            self.params['z_range'] = [-1.0e30, 1.0e30]
-
-        self.params['z_range']= np.asarray(self.params['z_range'])
 
     def check_requirements(self):
         si= self.shared_info
@@ -116,7 +111,7 @@ class ResidentInPolygon(_BaseParticleLocationStats):
                                     part_prop['IDrelease_group'].data,
                                     part_prop['IDpulse'].data,
                                     self.info['release_group_ID_to_count'],
-                                    self.params['z_range'],
+                                    self.info['z_range'],
                                     part_prop['x'].data,
                                     self.count_time_slice, self.count_all_particles_time_slice,
                                     self.prop_list, self.sum_prop_list, sel)
@@ -127,7 +122,7 @@ class ResidentInPolygon(_BaseParticleLocationStats):
         nc.write_a_new_variable('release_times', self.release_group_to_count.info['release_info']['release_times'],['pulse_dim'], dtype=np.float64,attributes={'times_pulses_released': ' times in seconds since 1970'})
 
     @staticmethod
-    @njit
+    @njitOT
     def do_counts_and_summing_numba(in_polgon,
                                     release_group_ID, pulse_ID, required_release_group,zrange, x, count,
                                     count_all_particles, prop_list, sum_prop_list, active):

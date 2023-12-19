@@ -15,7 +15,9 @@ class _BasePropertyInfo(ParameterBaseClass):
 
         self.add_default_params({   'description': PVC(None,str),
                                     'time_varying':PVC(True, bool),
-                                    'write': PVC(True, bool), 'vector_dim': PVC(1, int, min = 1 ), 'prop_dim3': PVC(1, int, min=1),
+                                    'write': PVC(True, bool),
+                                    'vector_dim': PVC(1, int, min = 1 ),
+                                    'prop_dim3': PVC(1, int, min=1),
                                     'dtype':PVC(np.float64, np.dtype),
                                     'initial_value':PVC(0.,float),
                                     'fill_value': PVC(None,[int,float]),
@@ -102,10 +104,17 @@ class ParticleProperty(_BasePropertyInfo):
     def set_values(self, values, active):
 
         if type(values) == np.ndarray:
-            if values.shape[0]  != active.shape[0] : raise Exception('set_values: shape of values must match number of indices to set')
+            if values.shape[0] != active.shape[0] : raise Exception('set_values: shape of values must match number of indices to set')
             particle_operations_util.set_values(self.data, values, active)
         else:
+            # scalar
             particle_operations_util.set_value(self.data, values, active)
+
+    def copy(self, prop_name, active):
+        # copy from named particle
+        si = self.shared_info
+        part_prop= si.classes['particle_properties']
+        particle_operations_util.copy(self.data, part_prop[prop_name].data, active)
 
     def fill_buffer(self,value):
         n_in_buffer = self.shared_info.classes['particle_group_manager'].info['particles_in_buffer']

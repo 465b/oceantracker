@@ -23,7 +23,7 @@ class GriddedStats2D_timeBased(_BaseParticleLocationStats):
         self.grid = {}
 
     def check_requirements(self):
-        self.check_class_required_fields_prop_etc(required_props_list=['x', 'status'], required_grid_var_list=['x'])
+        self.check_class_required_fields_prop_etc(required_props_list=['x', 'status'])
 
     def initial_setup(self):
         # set up regular grid for  stats
@@ -151,7 +151,7 @@ class GriddedStats2D_timeBased(_BaseParticleLocationStats):
 
 
     @staticmethod
-    @njitOT
+    @njit
     def do_counts_and_summing_numba(group_ID, x, x_edges, y_edges, count, count_all_particles, prop_list, sum_prop_list, sel):
         # for time based heatmaps zero counts for one time slice
         count[:]=0
@@ -260,7 +260,7 @@ class GriddedStats2D_agedBased(GriddedStats2D_timeBased):
 
 
     @staticmethod
-    @njitOT
+    @njit
     def do_counts_and_summing_numba(group_ID, x, x_edges, y_edges, count, count_all_particles, prop_list, sum_prop_list,
                                     age_bin_edges, age, active):
 

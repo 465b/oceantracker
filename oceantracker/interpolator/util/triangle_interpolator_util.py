@@ -26,7 +26,7 @@ search_outside_domain= int(cell_search_status_flags['outside_domain'])
 search_failed= int(cell_search_status_flags['failed'])
 
 #below is called by another numba function which will work out signature on first call
-@njitOT
+@njit
 def _get_single_BC_cord_numba(x, BCtransform, bc):
     # get BC cord of x for one triangle from DT transform matrix inverse, see scipy.spatial.Delaunay
     # also return index the smallest BC for walk and largest
@@ -46,7 +46,7 @@ def _get_single_BC_cord_numba(x, BCtransform, bc):
     return np.argmin(bc), np.argmax(bc)
 
 # ________ Barycentric triangle walk________
-@njitOT
+@njit
 def BCwalk(xq, tri_walk_AOS, dry_cell_index,
                 n_cell, cell_search_status,bc_cords,
                 walk_counts,
@@ -122,99 +122,19 @@ def BCwalk(xq, tri_walk_AOS, dry_cell_index,
         walk_counts[1] += n_steps  # steps taken
         walk_counts[2] = max(n_steps,  walk_counts[2])  # longest walk
 
-@njitOT
-def BCwalk_with_move_backsV1(xq,
-                           tri_walk_AOS, dry_cell_index,
-                           x_last_good, n_cell,n_cell_last_good,status,bc_cords,
-                            walk_counts,
-                           max_triangle_walk_steps, bc_walk_tol, open_boundary_type, block_dry_cells,
-                           active):
-    # Barycentric walk across triangles to find cells
 
-    bc = np.zeros((3,), dtype=np.float64) # working space
-    # shortcuts needed to use prange
-
-
-    # loop over active particles in place
-    for nn in prange(active.size):
-        n= active[nn]
-
-        if np.isnan(xq[n, 0]) or np.isnan(xq[n, 1]):
-            # if any is nan copy all and move on
-            _move_back(xq[n,:], x_last_good[n, :])
-            n_cell[n] = n_cell_last_good[n]
-            walk_counts[3] += 1  # count nans
-            continue
-
-        n_tri = n_cell[n]  # starting triangle
-        # do BC walk
-        n_steps = 0
-        move_back = False
-
-        while n_steps < max_triangle_walk_steps:
-            # update barcentric cords of xq
-
-            n_min, n_max = _get_single_BC_cord_numba(xq[n, :], tri_walk_AOS[n_tri]['bc_transform'], bc)
-
-            if bc[n_min] > -bc_walk_tol and bc[n_max] < 1. + bc_walk_tol:
-                # are now inside triangle, leave particle status as is
-                break  # with current n_tri as found cell
-
-            n_steps += 1
-            # move to neighbour triangle at face with smallest bc then test bc cord again
-            next_tri = tri_walk_AOS[n_tri]['adjacency'][n_min]  # n_min is the face num in  tri to move across
-
-            if next_tri < 0:
-                # if no new adjacent triangle, then are trying to exit domain at a boundary triangle,
-                # keep n_cell, bc  unchanged
-                if open_boundary_type > 0 and next_tri == -2:  # outside domain
-                    # leave x, bc, cell, location  unchanged as outside
-                    status[n] = status_outside_open_boundary
-                    break
-                else:  # n_tri == -1 outside domain and any future
-                    # solid boundary, so just move back
-                    move_back = True
-                    break
-
-            # check for dry cell
-            if block_dry_cells:  # is faster split into 2 ifs, not sure why
-                if dry_cell_index[next_tri] > 128:
-                    # treats dry cell like a lateral boundary,  move back and keep triangle the same
-                    move_back = True
-                    break
-
-            n_tri = next_tri
-
-        # not found in given number of search steps
-        if n_steps >= max_triangle_walk_steps:  # dont update cell
-            status[n] = status_cell_search_failed
-            # move_back = True# todo should it just move back, not retyr?do move back externally
-
-        if move_back:
-            # move back dont update
-            _move_back(xq[n,:], x_last_good[n, :])
-            n_cell[n] = n_cell_last_good[n]
-        else:
-            # update cell anc BC for new triangle
-            n_cell[n] = n_tri
-            for i in range(3): bc_cords[n, i] = bc[i]
-
-        walk_counts[0] += 1  # particles walked
-        walk_counts[1] += n_steps  # steps taken
-        walk_counts[2] = max(n_steps,  walk_counts[2])  # longest walk
-
-@njitOT
+@njit
 def _move_back(x, x_old):
     for i in range(x.shape[0]): x[i] = x_old[i]
 
-@njitOT
+@njit
 def calc_BC_cords_numba(x, n_cells, BCtransform, bc):
     # get BC cords of set of points x inside given cells and return in bc
 
     for n in range(x.shape[0]):
         _get_single_BC_cord_numba(x[n, :], BCtransform[n_cells[n], :, :], bc[n, :])
 
-@njitOT
+@njit
 def check_if_point_inside_triangle_connected_to_node(x, node, node_to_tri_map,tri_per_node, BCtransform, bc_walk_tol):
     # get BC cords of set of points x inside given cells and return in bc
     bc = np.zeros((3,), dtype=np.float64)  # working space
@@ -232,7 +152,7 @@ def check_if_point_inside_triangle_connected_to_node(x, node, node_to_tri_map,tr
                 continue
     return n_cell
 
-@njitOT
+@njit
 def get_BC_transform_matrix(points, simplices):
     # pre-build barycectric tranforms for 2D triangles based in scipy spatial qhull as used by scipy.Delauny
 
@@ -284,7 +204,7 @@ def get_BC_transform_matrix(points, simplices):
     return Tinvs
 
 
-@njitOT
+@njit
 def get_depth_cell_sigma_layers(xq,
                                 triangles, water_depth, tide, minimum_total_water_depth,
                                 sigma, sigma_map_nz,sigma_map_dz,
@@ -315,21 +235,10 @@ def get_depth_cell_sigma_layers(xq,
             z_top += bc_cords[n, m] * tide[current_buffer_steps[1], nodes[m], 0, 0] * fractional_time_steps[1]
 
         # clip z into range
-        if zq >= z_top :
-            # put just below the surface to force into top depth bin
-            zq = z_top
-        elif zq < z_bot:
-            zq = z_bot
+        zq = min(max(zq, z_bot), z_top)
 
-        twd = z_top - z_bot
-        if twd < minimum_total_water_depth:
-            # hydro models typically have min water depth to operate
-            zf = 0.
-            twd = minimum_total_water_depth
-        else:
-            zf = (zq - z_bot)/twd
-
-        z0f = z0/twd # z0 as fraction of water depth
+        twd = max(z_top - z_bot, minimum_total_water_depth)
+        zf = (zq - z_bot) / twd
 
         # get  nz from evenly space sigma map, but zf always < 1, due to above
         ns = int(zf * sigma_map_nz.size) # find fraction of length of map
@@ -338,9 +247,8 @@ def get_depth_cell_sigma_layers(xq,
         # get approx nz from map
         nz = sigma_map_nz[ns]
 
-        if zf > sigma[nz+1]:
-            # correct if sigma[nz+1]  < zf < sigma_map_nz[ns+1], for approx nz is above next sigma level
-            nz += 1
+        # sigma_map_nz rounds down, so correct if zf is above sigma[nz+1]  by adding 1, as nz  is 1 above approx nz
+        nz += zf > sigma[nz+1]  # faster branch-less add one
 
         # get fraction within the sigma layer
         z_fraction[n] = (zf - sigma[nz])/(sigma[nz+1]- sigma[nz])
@@ -352,6 +260,7 @@ def get_depth_cell_sigma_layers(xq,
         # extra work if in bottom cell
         z_fraction_water_velocity[n] = z_fraction[n]
         if nz == 0:
+            z0f = z0 / twd  # z0 as fraction of water depth
             # set status if on the bottom set status
             if zf < z0f:
                 status[n] = status_on_bottom
@@ -369,7 +278,7 @@ def get_depth_cell_sigma_layers(xq,
 
     pass
 
-@njitOT
+@njit
 def _eval_z_at_nz_cell(tf, nz_cell, zlevel1, zlevel2, nodes, nz_bottom_nodes, nz_top_cell, BCcord):
     # eval zlevel at particle location and depth cell, return z and nodes required for evaluation
     z = 0.
@@ -380,7 +289,7 @@ def _eval_z_at_nz_cell(tf, nz_cell, zlevel1, zlevel2, nodes, nz_bottom_nodes, nz
 
 
 
-@njitOT
+@njit
 def get_depth_cell_time_varying_Slayer_or_LSCgrid(xq,
                                                   triangles, zlevel, bottom_cell_index,
                                                   n_cell, status, bc_cords, nz_cell, z_fraction, z_fraction_water_velocity,

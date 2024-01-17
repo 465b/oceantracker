@@ -3,20 +3,19 @@ from copy import deepcopy
 from os import path, environ, remove
 from oceantracker.util.parameter_base_class import ParameterBaseClass
 from oceantracker.util.parameter_util import  make_class_instance_from_params
-from oceantracker.util.profiling_util import function_profiler
+
 from time import  perf_counter
 from oceantracker.util.messgage_logger import MessageLogger, GracefulError
 from oceantracker.util import profiling_util, get_versions_computer_info
 import numpy as np
 from oceantracker.util import time_util
-from numba import set_num_threads
 from oceantracker.util import json_util
 from datetime import datetime
 from time import sleep
 import traceback
 from oceantracker.util.parameter_checking import merge_params_with_defaults
 from oceantracker import common_info_default_param_dict_templates as common_info
-from oceantracker.util.numba_util import seed_numba_random
+# note do not import numba here as its enviroment  setting must ve done first, import done below
 
 class OceanTrackerCaseRunner(ParameterBaseClass):
     # this class runs a single case
@@ -61,18 +60,19 @@ class OceanTrackerCaseRunner(ParameterBaseClass):
         si.computer_info = get_versions_computer_info.get_computer_info()
 
 
-        # set numbas cache
-        os.environ['oceantracker_numba_caching'] =str( 1 if si.settings['numba_caching'] else 0)
+        # set numbas envionment varibles before first import
+        #environ['oceantracker_numba_caching'] =str( 1 if si.settings['numba_caching'] else 0)
+        environ['numba_function_cache_size'] = str(si.settings['numba_function_cache_size'])
 
-
-        #set_num_threads(max(1, si.settings['max_threads']))
-        #set_num_threads(5)
+        if si.settings['debug']:
+            # makes it easier to debug, particularly  in pycharm
+            environ['NUMBA_BOUNDSCHECK'] = '1'
+            environ['NUMBA_FULL_TRACEBACKS'] = '1'
 
         # set up profiling
         profiling_util.set_profile_mode(si.settings['profiler'])
 
         case_info_file = None
-        case_exception = None
         return_msgs = {'errors': si.msg_logger.errors_list, 'warnings': si.msg_logger.warnings_list, 'notes': si.msg_logger.notes_list}
         # case set up
         try:
@@ -117,7 +117,7 @@ class OceanTrackerCaseRunner(ParameterBaseClass):
             if si.settings['write_output_files']:
                 # write grid if first case
                 if si.caseID == 0:
-                    si.classes['field_group_manager'].write_hydro_model_grids()
+                    si.classes['field_group_manager'].write_hydro_model_grid()
 
                 case_info_file = si.output_file_base + '_caseInfo.json'
                 json_util.write_JSON(path.join(si.run_output_dir, case_info_file), case_info)
@@ -169,11 +169,6 @@ class OceanTrackerCaseRunner(ParameterBaseClass):
                                       + ' at ' + time_util.iso8601_str(datetime.now()))
         si.msg_logger.print_line()
 
-        if si.settings['use_random_seed']:
-            np.random.seed(0) # set numpy
-            seed_numba_random(0)
-            si.msg_logger.msg('Using numpy.random.seed(0), makes results reproducible (only use for testing developments give the same results!)',warning=True)
-
         # get short class names map
         # delay  start, which may avoid occasional lockup at start if many cases try to read same hindcast file at same time
         if si.settings['multiprocessing_case_start_delay'] is not None:
@@ -182,14 +177,14 @@ class OceanTrackerCaseRunner(ParameterBaseClass):
             sleep(delay)
             si.msg_logger.progress_marker('Starting after delay  of ' + str(delay) + ' sec')
 
-        # not sure if buffer is to small, but make bigger to 512 as default,  Numba default is  128, may slow code due to recompilations from too small buffer??
-        environ['numba_function_cache_size'] = str(si.settings['numba_function_cache_size'])
 
-        if si.settings['debug']:
-            # makes it easier to debug, particularly  in pycharm
-            environ['NUMBA_BOUNDSCHECK'] = '1'
-            environ['NUMBA_FULL_TRACEBACKS'] = '1'
-            si.msg_logger.msg('Running in debug mode',note=True)
+
+
+        if si.settings['use_random_seed']:
+            np.random.seed(0) # set numpy
+            from oceantracker.util.numba_util import seed_numba_random
+            seed_numba_random(0)
+            si.msg_logger.msg('Using numpy.random.seed(0), makes results reproducible (only use for testing developments give the same results!)',warning=True)
 
     #@function_profiler(__name__)
     def _do_a_run(self):
@@ -301,6 +296,7 @@ class OceanTrackerCaseRunner(ParameterBaseClass):
         # set up feilds
         fgm = si.add_core_class('field_group_manager', si.working_params['core_classes']['field_group_manager'], crumbs=f'adding core class "field_group_manager" ')
         fgm.initial_setup()  # needed here to add reader fields inside reader build
+        fgm.setup_dispersion_and_resuspension() # setup depends on what variables are in the hydro-files
 
         dispersion_params = si.working_params['core_classes']['dispersion']
         if  si.is3D_run:
@@ -323,14 +319,13 @@ class OceanTrackerCaseRunner(ParameterBaseClass):
         pgm = si.add_core_class('particle_group_manager', si.working_params['core_classes']['particle_group_manager'], crumbs=f'adding core class "particle_group_manager" ')
         pgm.initial_setup()  # needed here to add reader fields inside reader build
 
-        fgm.final_setup()  # set up particle properties associated with fields
+        fgm.final_setup()
+        # set up particle properties associated with fields etc
+        fgm.add_part_prop_from_fields_plus_book_keeping()
+        core_role_params = si.working_params['core_classes']
 
-        # make other core classes, eg.
-        core_role_params=si.working_params['core_classes']
-        for name in ['solver']:
-            si.add_core_class(name, core_role_params[name], crumbs=f'core class "{name}" ')
-
-
+        # make other core classes
+        si.add_core_class('solver', core_role_params['solver'], crumbs='core class solver ')
         if si.is3D_run:
             si.add_core_class('resuspension', core_role_params['resuspension'], crumbs= 'core class "resuspension" ')
 
@@ -342,7 +337,6 @@ class OceanTrackerCaseRunner(ParameterBaseClass):
         # set up start time and duration based on particle releases
         t0 = perf_counter()
         time_start, time_end = self._setup_particle_release_groups(si.working_params['class_dicts']['release_groups'])
-
 
         #clip times to maximum duration in shared and case params
         duration = abs(time_end - time_start)
@@ -388,20 +382,10 @@ class OceanTrackerCaseRunner(ParameterBaseClass):
         si= self.shared_info
 
         pgm = si.classes['particle_group_manager']
-        fgm = si.classes['field_group_manager']
-        # create prop particle properties derived from any field  reader ot user custom
-        t0= perf_counter()
-        for name, i in fgm.fields.items():
-            pgm.add_particle_property(name, 'from_fields', dict( vector_dim=i.get_number_components(), time_varying=True,
-                                                    write= True if i.params['write_interp_particle_prop_to_tracks_file'] else False))
-
-
-        si.msg_logger.progress_marker('created particle properties for custom fields and derived from fields ', start_time=t0)
 
         # any custom particle properties added by user
         for name, p in si.working_params['class_dicts']['particle_properties'].items():
             pgm.add_particle_property(name, 'user',p)
-
 
 
         # build and initialise other user classes, which may depend on custom particle props above or reader field, not sure if order matters
@@ -490,6 +474,30 @@ class OceanTrackerCaseRunner(ParameterBaseClass):
             l = f' {100*b[key]["time"]/elapsed_time_sec:5.1f}% {key} : calls {b[key]["calls"]:4d}, {time_util.seconds_to_pretty_duration_string(b[key]["time"])}'
             d['block_timings'].append(l)
         d['block_timings'].append(f'--- Total time {time_util.seconds_to_pretty_duration_string(elapsed_time_sec)}')
+
+        # get info about numba code
+        from oceantracker.util.numba_util import numba_func_info, find_simd_code
+        from oceantracker.util.module_importing_util import get_ref_from_string
+        ni= {}
+        ni_simid={}
+        for name, item in numba_func_info.items():
+            func=get_ref_from_string(name) # get reference to dispatch func from name
+            if func is not None:
+                simd_code = []
+                sig = func.signatures
+                # check for simd code
+                for n in range(len(sig)):
+                    simd_code.append(find_simd_code(func,n))
+            else:
+                simd_code = None
+                sig='nested code or not used, no signatures'
+
+            ni[name] = dict(signatures=sig,simd_code=simd_code)
+            if simd_code is not None:
+                ni_simid[name] =  ni[name]
+
+        d['numba_func_info'] = ni
+
         return d
 
     def close(self):

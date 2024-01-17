@@ -18,7 +18,8 @@ from oceantracker.util import triangle_utilities_code
 from oceantracker.util.triangle_utilities_code import split_quad_cells
 from oceantracker.fields._base_field import CustomFieldBase, ReaderField
 from oceantracker.reader.util import reader_util
-
+from pathlib import Path as pathlib_Path
+from oceantracker.common_info_default_param_dict_templates import node_types
 
 class _BaseReader(ParameterBaseClass):
 
@@ -65,11 +66,22 @@ class _BaseReader(ParameterBaseClass):
 
     def get_field_params(self,nc, name):   nopass()
 
+
+
     def read_zlevel_as_float32(self, nc, grid,fields, file_index, zlevel_buffer, buffer_index):   nopass()
 
     def read_dry_cell_data(self, nc,grid,fields,  file_index, is_dry_cell_buffer, buffer_index):   nopass()
 
     def set_up_uniform_sigma(self,nc, grid):nopass()
+
+    def get_file_list(self):
+
+        params = self.params
+        file_list = []
+        for fn in pathlib_Path(params['input_dir']).rglob(params['file_mask']):
+            file_list.append(path.abspath(fn))
+
+        return file_list
 
     # default setup
     def setup_water_velocity(self,nc,grid):
@@ -88,8 +100,6 @@ class _BaseReader(ParameterBaseClass):
     def preprocess_field_variable(self, nc, name,grid, data): return data
 
 
-
-
     # calculate dry cell flags, if any cell node is dry
     # not required but have defaults
     def read_bottom_cell_index_as_int32(self, nc, grid):
@@ -102,7 +112,11 @@ class _BaseReader(ParameterBaseClass):
         is_open_boundary_node = np.full((grid['x'].shape[0],), False)
         return is_open_boundary_node
 
-    def read_file_var_as_4D_nodal_values(self, nc, var_name, file_index=None): nopass()
+    def read_file_var_as_4D_nodal_values(self, nc, grid, var_name, file_index=None): nopass()
+    def read_field_var(self, nc, var_file_name, sel=None):
+        # read sel time steps of field variable
+        data = nc.read_a_variable(var_file_name, sel=sel)
+        return data, nc.all_var_dims(var_file_name)
 
     # optional methods
     #-------------------------------------
@@ -111,16 +125,14 @@ class _BaseReader(ParameterBaseClass):
 
     # -------------------------------------------------
     # core reader processes
-    def create_reader_field(self, nc, file_var_map):
-        nopass()
 
-    def initial_setup(self):
+    def initial_setup(self,file_info):
         # map variable internal names to names in NETCDF file
         # set update default value and vector variables map  based on given list
         si = self.shared_info
         ml = si.msg_logger
         info = self.info
-        self.info['file_info'] = si.working_params['file_info']  # add file_info to reader info
+        self.info['file_info'] = file_info  # add file_info to reader info
 
         # set up ring buffer  info
         bi = self.info['buffer_info']
@@ -170,6 +182,7 @@ class _BaseReader(ParameterBaseClass):
 
         return grid, is3D_hydro
 
+
     def sort_files_by_time(self, file_list, msg_logger):
         # get time sorted list of files matching mask
 
@@ -214,8 +227,7 @@ class _BaseReader(ParameterBaseClass):
         return fi
 
     def open_first_file(self):
-        si = self.shared_info
-        fi = si.working_params['file_info']
+        fi = self.info['file_info']
         nc = NetCDFhandler(fi['names'][0], 'r')
         return nc
 
@@ -306,9 +318,9 @@ class _BaseReader(ParameterBaseClass):
         # make island and domain nodes
         grid['node_type'] = np.zeros(grid['x'].shape[0], dtype=np.int8)
         for c in grid['grid_outline']['islands']:
-            grid['node_type'][c['nodes']] = 1
+            grid['node_type'][c['nodes']] = node_types['island_boundary']
 
-        grid['node_type'][grid['grid_outline']['domain']['nodes']] = 2
+        grid['node_type'][grid['grid_outline']['domain']['nodes']] = node_types['domain_boundary']
 
         t0 = perf_counter()
         grid['triangle_area'] = triangle_utilities_code.calcuate_triangle_areas(grid['x'], grid['triangles'])
@@ -318,9 +330,10 @@ class _BaseReader(ParameterBaseClass):
         # adjust node type and adjacent for open boundaries
         # todo define node and adjacent type values in dict, for single definition and case info output?
         is_open_boundary_node = self.read_open_boundary_data_as_boolean(grid)
-        grid['node_type'][is_open_boundary_node] = 3
+        grid['node_type'][is_open_boundary_node] = node_types['open_boundary']
 
         is_open_boundary_adjacent = reader_util.find_open_boundary_faces(grid['triangles'], grid['is_boundary_triangle'], grid['adjacency'], is_open_boundary_node)
+
         grid['adjacency'][is_open_boundary_adjacent] = -2
         grid['limits'] = np.asarray([np.min(grid['x'][:, 0]), np.max(grid['x'][:, 0]), np.min(grid['x'][:, 1]), np.max(grid['x'][:, 1])])
 
@@ -355,7 +368,6 @@ class _BaseReader(ParameterBaseClass):
         else:
             # native  vertical grid option, could be  Schisim LCS vertical grid
 
-
             grid['nz'] = self.number_hindcast_zlayers(nc)  # used to size field data arrays
             s = [self.params['time_buffer_size'], grid['x'].shape[0], grid['nz']]
             grid['zlevel'] = np.zeros(s, dtype=np.float32, order='c')
@@ -369,8 +381,8 @@ class _BaseReader(ParameterBaseClass):
 
         # build lookup map
         # setup lookup nz interval map of zfraction into with equal dz for finding vertical cell
-        # need to check if zq > ['sigma_map_z'][nz+1] to see if nz must be increased by 1 tp get sigma interval
-        dz = 0.66 * abs(np.diff(grid['sigma']).min())  # approx dz
+        # the smalest sigms later thickness is at the bottom
+        dz = 0.66 * abs(np.diff(grid['sigma'][:2]))  # smlated dz
         nz_map = int(np.ceil(1.0 / dz))  # number of cells in map
         grid['sigma_map_z'] = np.arange(nz_map) / (nz_map - 1)  # zlevels at the map intervals
         grid['sigma_map_dz'] = np.diff(grid['sigma_map_z']).mean()  # exact dz
@@ -451,7 +463,7 @@ class _BaseReader(ParameterBaseClass):
 
                 if not field.is_time_varying() or field.info['type'] != 'reader_field': continue
 
-                data = self.assemble_field_components(nc, name, field, file_index=file_index)
+                data = self.assemble_field_components(nc, grid, name, field, file_index=file_index)
                 data = self.preprocess_field_variable(nc, name,grid, data)  # in place tweaks, eg zero vel at bottom
 
                 junk = data
@@ -507,7 +519,7 @@ class _BaseReader(ParameterBaseClass):
         # record useful info/diagnostics
         bi['n_filled'] = total_read
 
-    def assemble_field_components(self, nc, name, field, file_index=None):
+    def assemble_field_components(self, nc, grid, name, field, file_index=None):
         # read scalar fields / join together the components which make vector from component list
 
         params = self.params
@@ -522,7 +534,7 @@ class _BaseReader(ParameterBaseClass):
 
         for var_name in var_names:
             if var_name is None: continue
-            data = self.read_file_var_as_4D_nodal_values(nc, var_name, file_index)
+            data = self.read_file_var_as_4D_nodal_values(nc, grid, var_name, file_index)
             comp_per_var = data.shape[3]
             m1 = m + comp_per_var
             # get view of where in buffer data is to be placed
@@ -569,6 +581,7 @@ class _BaseReader(ParameterBaseClass):
         # ring buffer mapping
         return nt_hindcast % self.info['buffer_info']['buffer_size']
 
+
     def are_time_steps_in_buffer(self, time_sec):
         # check if next two steps of remaining  hindcast time steps required to run  are in the buffer
         si = self.shared_info
@@ -580,10 +593,7 @@ class _BaseReader(ParameterBaseClass):
 
         return nt_hindcast in bi['time_steps_in_buffer'] and nt_hindcast + model_dir in bi['time_steps_in_buffer']
 
-    def _open_first_file(self, file_info):
-        file_name = file_info['names'][0]
-        nc = NetCDFhandler(file_name, 'r')
-        return nc
+
 
     def convert_lon_lat_to_meters_grid(self, x):
 
@@ -594,29 +604,6 @@ class _BaseReader(ParameterBaseClass):
             x_out = cord_transforms.WGS84_to_UTM(x, out=None)
         return x_out
 
-    def write_hydro_model_grid(self, grid):
-        # write a netcdf of the grid from first hindcast file
-        si = self.shared_info
-        output_files = si.output_files
-
-
-        # write grid file
-        output_files['grid'] = output_files['output_file_base'] + '_grid.nc'
-        nc = NetCDFhandler(path.join(output_files['run_output_dir'], output_files['grid']), 'w')
-        nc.write_global_attribute('index_note', ' all indices are zero based')
-        nc.write_global_attribute('created', str(datetime.now().isoformat()))
-
-        nc.write_a_new_variable('x', grid['x'], ('node_dim', 'vector2D'))
-        nc.write_a_new_variable('triangles', grid['triangles'], ('triangle_dim', 'vertex'))
-        nc.write_a_new_variable('triangle_area', grid['triangle_area'], ('triangle_dim',))
-        nc.write_a_new_variable('adjacency', grid['adjacency'], ('triangle_dim', 'vertex'))
-        nc.write_a_new_variable('node_type', grid['node_type'], ('node_dim',), attributes={'node_types': ' 0 = interior, 1 = island, 2=domain, 3=open boundary'})
-        nc.write_a_new_variable('is_boundary_triangle', grid['is_boundary_triangle'], ('triangle_dim',))
-        nc.write_a_new_variable('water_depth', si.classes['field_group_manager'].fields['water_depth'].data.ravel(), ('node_dim',))
-        nc.close()
-
-        output_files['grid_outline'] = output_files['output_file_base'] + '_grid_outline.json'
-        json_util.write_JSON(path.join(output_files['run_output_dir'], output_files['grid_outline']), grid['grid_outline'])
 
     def detect_lonlat_grid(self, xgrid):
         # look at range to see if too small to be meters grid

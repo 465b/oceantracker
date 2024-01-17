@@ -1,6 +1,5 @@
 
 from oceantracker.util.parameter_util import make_class_instance_from_params
-from oceantracker.util.module_importing_util import import_module_from_string
 from oceantracker import common_info_default_param_dict_templates as common_info
 from oceantracker.util.parameter_checking import merge_params_with_defaults
 from time import  perf_counter
@@ -10,7 +9,7 @@ class SharedInfoClass(object):
     def __init__(self):
         self.reset()
         self.block_timers={}
-        for name in common_info.core_class_list: self.classes[name] = None
+        self.classes ={}
 
     def reset(self):
         self.classes = {}
@@ -26,6 +25,7 @@ class SharedInfoClass(object):
         # make instance  and merge params
         i = make_class_instance_from_params(name, params, ml, default_classID=name,
                                             crumbs=crumb_base + crumbs )
+
         self.classes[name] = i
         if initialise: i.initial_setup()
         return i
@@ -56,12 +56,10 @@ class SharedInfoClass(object):
 
         if name in self.classes[class_role]:
             ml.msg('Class type"' + class_role + '" already has a class with name = "' + i.info['name']
-                         + '", "name" parameter must be unique',
-                         crumbs =    crumb_base + crumbs,  fatal_error=True)
-
+                         + '", "name" parameter must be unique',  crumbs =crumb_base + crumbs,  fatal_error=True)
         else:
             self.classes[class_role][name] = i
-        if initialise : i.initial_setup()
+        if initialise: i.initial_setup()
         return i
 
     def all_class_instance_pointers_iterator(self):

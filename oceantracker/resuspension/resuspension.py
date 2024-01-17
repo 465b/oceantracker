@@ -21,9 +21,7 @@ class BasicResuspension(_BaseResuspension):
 
     # is 3D test of parent
     def check_requirements(self):
-        self.check_class_required_fields_prop_etc(
-                        required_props_list=['status','water_velocity'],
-                        requires3D=True)
+        self.check_class_required_fields_prop_etc(requires3D=True)
 
     def initial_setup(self, **kwargs):
         si = self.shared_info
@@ -68,7 +66,7 @@ class BasicResuspension(_BaseResuspension):
         self.stop_update_timer()
 
     @staticmethod
-    @njitOT
+    @njit
     def resuspension_jump(friction_velocity, resuspension_factor, x, water_depth, z0, sel):
         # add entrainment jump up to particle z, Book: Lynch(2015) book, Particles in the coastal ocean  eq 9.26 and 9.28
         for n in sel:

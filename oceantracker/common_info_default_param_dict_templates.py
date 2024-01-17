@@ -33,8 +33,8 @@ shared_settings_defaults ={
                 #'max_threads':   PVC(None, int, min=1,doc_str='maximum number of processors used for threading to process particles in parallel'),
                 'max_warnings':        PVC(50,    int, min=0,doc_str='Number of warnings stored and written to output, useful in reducing file size when there are warnings at many time steps'),  # dont record more that this number of warnings, to keep caseInfo.json finite
                 'use_random_seed':  PVC(False,  bool,doc_str='Makes results reproducible, only use for testing developments give the same results!'),
-                'numba_caching' :  PVC(False,  bool,doc_str='Caches numba functions in file system, for faster start up, as it does not have to compile numba code each time'),
-                'numba_function_cache_size' :  PVC(2048, int, min=128, doc_str='Size of memory cache for compiled numba functions in kB?'),
+                #'numba_caching' :  PVC(False,  bool,doc_str='Caches numba functions in file system, for faster start up, as it does not have to compile numba code each time'),
+                'numba_function_cache_size' :  PVC(4048, int, min=128, doc_str='Size of memory cache for compiled numba functions in kB?'),
                 'multiprocessing_case_start_delay': PVC(None, float, min=0., doc_str='Delay start of each case run parallel, to reduce congestion reading first hydo-model file'),  # which large numbers of case, sometimes locks up at start al reading same file, so ad delay
                 'profiler': PVC('oceantracker', str, possible_values=available_profile_types,
                                                        doc_str='Default oceantracker profiler, writes timings of decorated methods/functions to run/case_info file use of other profilers in development and requires additional installed modules '),
@@ -94,6 +94,7 @@ class_dicts_list=[ # class dicts which replace lists
             'time_varying_info', # particle info,eg. time,or  tide at at tide gauge, core example is particle time
             ]
 
+
 default_polygon_dict_params = {'user_polygonID': PVC(0, int, min=0),
                 'name': PVC(None, str),
                 'points': PVC([], 'array', list_contains_type=float, is_required=True,
@@ -116,12 +117,17 @@ cell_search_status_flags = dict(ok =0, outside_domain=1 ,blocked_domain=-5, bloc
 
 # default reader classes used by auto dection of file type
 
-default_reader ={'schisim': 'oceantracker.reader.schism_reader.SCHISMSreaderNCDF',
+known_readers ={'schisim': 'oceantracker.reader.schism_reader.SCHISMreaderNCDF',
+                'schisim_v5':    'oceantracker.reader.schism_reader_v5.SCHISMreaderNCDFv5',
                  'fvcom': 'oceantracker.reader.FVCOM_reader.unstructured_FVCOM',
-                 'roms': 'oceantracker.reader.ROMS_reader.ROMsNativeReader'}
+                 'roms': 'oceantracker.reader.ROMS_reader.ROMsNativeReader',
+                 'generic': 'oceantracker.reader.generic_ncdf_reader.GenericNCDFreader'}
 
 
 large_float=1.0E32
+
+# node types for hydro model
+node_types= dict(interior = 0,island_boundary = 1, domain_boundary= 2, open_boundary=3)
 
 # TODO LIST
 # todo for version 0.41

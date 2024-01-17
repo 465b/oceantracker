@@ -34,7 +34,7 @@ from oceantracker import common_info_default_param_dict_templates as common_info
 
 # start with numba caching turned off
 from oceantracker.util import  numba_util
-numba_util.set_caching(False)
+#numba_util.set_caching(False)
 
 
 from oceantracker.util.parameter_checking import merge_params_with_defaults
@@ -213,7 +213,7 @@ class _OceanTrackerRunner(object):
         params = deepcopy(user_given_params)
 
         working_params = self._decompose_params(params, full_checks=full_checks)
-        working_params, reader_params = self._get_hindcast_file_info(working_params)
+        working_params = self._get_hindcast_file_info(working_params)
         working_params = self._setup_output_folders(params, working_params)
         self._write_raw_user_params(working_params['output_files'],user_given_params, case_list=case_list_params)
 
@@ -335,7 +335,8 @@ class _OceanTrackerRunner(object):
             working_params['caseID'] = n_case
             working_params['output_files'] = deepcopy(working_bc['output_files'])
             working_params['output_files']['output_file_base'] += '_C%03.0f' % (n_case)
-            working_params['file_info'] = working_bc['file_info']
+            working_params['reader_builder'] = working_bc['reader_builder']
+            working_params['nested_reader_builders'] = working_bc['nested_reader_builders']
 
             # now add to list to run
             working_case_list.append(deepcopy(working_params))
@@ -461,20 +462,32 @@ class _OceanTrackerRunner(object):
         if 'input_dir' not in reader_params or 'file_mask' not in reader_params:
             ml.msg('Reader class requires settings, "input_dir" and "file_mask" to read the hindcast',fatal_error=True, exit_now=True )
 
-        file_list = get_hydro_model_info.get_hydro_file_list(reader_params['input_dir'],reader_params['file_mask'], ml)
+        reader_params, file_list = get_hydro_model_info.find_file_format_and_file_list(reader_params, ml)
 
-        if 'class_name' not in reader_params:
-            # infer class name from netcdf files if possible
-            reader_params= get_hydro_model_info.check_fileformat(reader_params,file_list, ml)
 
-        reader = make_class_instance_from_params('reader', reader_params, ml,  default_classID='reader')
+        reader = make_class_instance_from_params('reader', reader_params, ml,  default_classID='reader', crumbs='primary reader>')
+
         ml.exit_if_prior_errors() # class name missing or missing required variables
-
-        working_params['file_info']  = reader.get_hindcast_files_info(file_list, ml) # get file lists
+        working_params['reader_builder']=dict(params=reader_params,
+                                              file_info= reader.get_hindcast_files_info(file_list, ml)
+                                              )
 
         ml.progress_marker('sorted hyrdo-model files in time order', start_time=t0)
 
-        return working_params, reader_params
+        # get file info for nested readers
+        working_params['nested_reader_builders']= {}
+        for name, params in working_params['class_dicts']['nested_readers'].items():
+            t0 = perf_counter()
+            nested_params, nested_file_list = get_hydro_model_info.find_file_format_and_file_list(params, ml)
+            nested_reader = make_class_instance_from_params('reader', nested_params, ml, default_classID='reader',crumbs=f'nested reader{name}>')
+
+            d= dict(params=nested_params,
+                    file_info= nested_reader.get_hindcast_files_info(nested_file_list, ml)
+                    )
+            working_params['nested_reader_builders'][name]=d
+            ml.progress_marker(f'sorted nested hyrdo-model files in time order{name}', start_time=t0)
+
+        return working_params
 
 
     def _setup_output_folders(self, user_given_params,working_params):

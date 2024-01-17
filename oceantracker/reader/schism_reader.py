@@ -7,8 +7,10 @@ import numpy as np
 from oceantracker.util.triangle_utilities_code import split_quad_cells
 import oceantracker.reader.util.hydromodel_grid_transforms as  hydromodel_grid_transforms
 from copy import deepcopy
+from oceantracker.util.ncdf_util import  NetCDFhandler
+from oceantracker.common_info_default_param_dict_templates import node_types
 
-class SCHISMSreaderNCDF(_BaseReader):
+class SCHISMreaderNCDF(_BaseReader):
 
     def __init__(self, shared_memory_info=None):
         super().__init__()  # required in children to get parent defaults and merge with give params
@@ -32,6 +34,13 @@ class SCHISMSreaderNCDF(_BaseReader):
                                    },
             'hgrid_file_name': PVC(None, str),
              })
+
+    def is_file_format(self,file_name):
+        # check if file matches this file format
+        nc = NetCDFhandler(file_name,'r')
+        is_file_type= nc.is_var('SCHISM_hgrid_node_x') and (nc.is_var('hvel') or nc.is_var('dahv'))
+        nc.close()
+        return is_file_type
 
     # Below are basic variable read methods for any new reader
     #---------------------------------------------------------
@@ -79,10 +88,8 @@ class SCHISMSreaderNCDF(_BaseReader):
     def number_hindcast_zlayers(self, nc): return nc.dim_size('nSCHISM_vgrid_layers')
 
     def read_zlevel_as_float32(self, nc, grid,fields, file_index, zlevel_buffer, buffer_index):
-        zlevel_buffer[buffer_index,...] = nc.read_a_variable('zcor', sel=file_index).astype(np.float32)
+        zlevel_buffer[buffer_index,...] = nc.read_a_variable(self.params['grid_variable_map']['zlevel'], sel=file_index).astype(np.float32)
 
-    def read_factional_zlevels(self, nc):
-        z_fractiosns = nc.read_a_variable('zcor').astype(np.float32)
 
     def read_time_sec_since_1970(self, nc, file_index=None):
         var_name=self.params['grid_variable_map']['time']
@@ -105,23 +112,16 @@ class SCHISMSreaderNCDF(_BaseReader):
         # work out if feild is 3D ,etc
         si = self.shared_info
         fmap = deepcopy(self.params['field_variable_map'])
+
         # if no field map given to use given name as field map
         if name not in fmap:  fmap[name] = name
-
 
         # make a list so all maps the same
         if type(fmap[name]) != list: fmap[name] =[fmap[name]]
 
-        # check all variables are in file
-        for n in fmap[name]:
-            if not nc.is_var(n):
-                si.msg_logger.msg(f'Can not find variable named {n} in hydro file', crumbs=crumbs+'> getting field parameters to set up field class',
-                              fatal_error=True, exit_now=True)
-
-
-        f_params = dict(time_varying = nc.is_var_dim(fmap[name] [0], 'time'),
-                        is3D = nc.is_var_dim(fmap[name] [0],'nSCHISM_vgrid_layers'),
-                        is_vector = nc.is_var_dim(fmap[name] [0],'two') or len(fmap[name] ) > 1
+        f_params = dict(time_varying = nc.is_var_dim(fmap[name][0], 'time'),
+                        is3D = nc.is_var_dim(fmap[name][0], 'nSCHISM_vgrid_layers'),
+                        is_vector = nc.is_var_dim(fmap[name][0], 'two') or len(fmap[name] ) > 1
                         )
         return f_params
 
@@ -135,21 +135,21 @@ class SCHISMSreaderNCDF(_BaseReader):
             vertical_grid_type = 'LSC'
         else:
             # Slayer grid, bottom cell index = zero
-            grid['bottom_cell_index'] = np.zeros((self.grid['x'].shape[0],),dtype=np.int32)
+            grid['bottom_cell_index'] = np.zeros((grid['x'].shape[0],),dtype=np.int32)
             grid['bottom_cell_index'] = 'Slayer'
         self.info['vertical_grid_type'] = vertical_grid_type
         return grid
 
 
-    def read_file_var_as_4D_nodal_values(self, nc, var_name, file_index=None):
+    def read_file_var_as_4D_nodal_values(self, nc, grid, var_name, file_index=None):
         # read variable into 4D ( time, node, depth, comp) format
         # assumes same variable order in the file
-        data = nc.read_a_variable(var_name, sel=file_index)
+        data, data_dims = self.read_field_var(nc , var_name, sel=file_index)
         # get 4d size
-        s = [data.shape[0] if nc.is_var_dim(var_name, 'time') else 1,
+        s = [data.shape[0] if 'time' in data_dims else 1,
              nc.dim_size('nSCHISM_hgrid_node'),
-             nc.dim_size('nSCHISM_vgrid_layers') if  nc.is_var_dim(var_name,'nSCHISM_vgrid_layers') else 1,
-             2  if  nc.is_var_dim(var_name,'two') else 1
+             nc.dim_size('nSCHISM_vgrid_layers') if 'nSCHISM_vgrid_layers' in data_dims else 1,
+             2  if  'two' in data_dims else 1
              ]
         return data.reshape(s)
 
@@ -164,22 +164,41 @@ class SCHISMSreaderNCDF(_BaseReader):
         # read z fractions into grid , for later use in vertical regridding, and set up the uniform sigma to be used
         si= self.shared_info
         # read first zlevel time step
-        zlevel = nc.read_a_variable('zcor', sel=0)
+        zlevel, zlevel_dims =self.read_field_var(nc, self.params['grid_variable_map']['zlevel'], sel=0)
 
         # use node with thinest top/bot layers as template for all sigma levels
-
         grid['zlevel_fractions'] = hydromodel_grid_transforms.convert_zlevels_to_fractions(zlevel, grid['bottom_cell_index'], si.z0)
-        node_min = hydromodel_grid_transforms.find_node_with_smallest_top_bot_layer(grid['zlevel_fractions'],grid['bottom_cell_index'])
+
+        # get profile with smallest bottom layer  tickness as basis for first sigma layer
+        node_thinest_bot_layer = hydromodel_grid_transforms.find_node_with_smallest_bot_layer(grid['zlevel_fractions'],grid['bottom_cell_index'])
         # use layer fractions from this node to give layer fractions everywhere
         # in LSC grid this requires stretching a bit to give same number max numb. of depth cells
-        nz_bottom = grid['bottom_cell_index'][node_min]
+        nz_bottom = grid['bottom_cell_index'][node_thinest_bot_layer]
 
         # stretch sigma out to same number of depth cells,
         # needed for LSC grid if node_min profile is not full number of cells
-        zf_model = grid['zlevel_fractions'][node_min, nz_bottom:]
+        zf_model = grid['zlevel_fractions'][node_thinest_bot_layer, nz_bottom:]
         nz = grid['zlevel_fractions'].shape[1]
         nz_fractions = nz - nz_bottom
         grid['sigma'] = np.interp(np.arange(nz) / nz, np.arange(nz_fractions) / nz_fractions, zf_model)
+
+        if False:
+            # debug plots sigma
+            from matplotlib import pyplot as plt
+            sel = np.arange(0, zlevel.shape[0], 100)
+            water_depth,junk = self.read_field_var(nc, self.params['field_variable_map']['water_depth'])
+            sel=sel[water_depth[sel]> 10]
+            index_frac = (np.arange(zlevel.shape[1])[np.newaxis,:] - grid['bottom_cell_index'][sel,np.newaxis]) / (zlevel.shape[1] - grid['bottom_cell_index'][sel,np.newaxis])
+            zlevel[zlevel < -1.0e4] = np.nan
+
+            #plt.plot(index_frac.T,zlevel[sel,:].T,'.')
+            #plt.show(block=True)
+            plt.plot(index_frac.T, grid['zlevel_fractions'][sel, :].T, lw=0.1)
+            plt.plot(index_frac.T,grid['zlevel_fractions'][sel, :].T, '.')
+
+            plt.show(block=True)
+
+            pass
 
         return grid
 
@@ -192,37 +211,12 @@ class SCHISMSreaderNCDF(_BaseReader):
     def read_open_boundary_data_as_boolean(self, grid):
         # make boolen of whether node is an open boundary node
         # read schisim  hgrid file for open boundary data
-        is_open_boundary_node = np.full((grid['x'].shape[0],), False)
 
-        if self.params['hgrid_file_name'] is None:
-            return is_open_boundary_node
+        if self.params['hgrid_file_name'] is None:    return  np.full((grid['x'].shape[0],), False)
 
-        with open(self.params['hgrid_file_name']) as f:
-            lines = f.readlines()
+        hgrid = read_hgrid_file(self.params['hgrid_file_name'])
 
-        vals = lines[1].split()
-        n_nodes = int(vals[0])
-        n_tri = int(vals[1])
-
-        n_line_open = n_nodes + n_tri + 3 - 1  # line with number of open boundaries
-        n_open = int(lines[n_line_open].split()[0])
-
-        if n_open > 0:
-
-            tri_open_bound_node_list = [[] for _ in range(grid['triangles'].shape[0])]
-            nl = n_line_open + 1
-            for n in range(n_open):
-                # get block of open node numbers
-                nl += 1  # move to line with number of nodes in this open boundary
-                n_nodes = int(lines[nl].split()[0])
-                nodes = []
-                for n in range(n_nodes):
-                    nl += 1
-                    l = lines[nl].strip('\n')
-                    nodes.append(int(l))
-                ob_nodes = np.asarray(nodes, dtype=np.int32) - 1
-
-                is_open_boundary_node[ob_nodes] = True  # get zero based node number
+        is_open_boundary_node = hgrid['node_type'] == 3
 
         return is_open_boundary_node
 
@@ -239,8 +233,6 @@ def decompose_lines(lines, dtype=np.float64):
         out[n,:] = np.asarray(vals)
 
     return  out
-
-
 
 def read_hgrid_file(file_name):
 
@@ -275,7 +267,7 @@ def read_hgrid_file(file_name):
             n_nodes =  int(lines[l0].split()[0])
             nodes = np.squeeze(decompose_lines(lines[l0+1: l0 + 1 + n_nodes],dtype=np.int32)) - 1
             d['open_boundary_node_segments'].append(nodes)
-            d['node_type'][nodes] = 2
+            d['node_type'][nodes] = 3
             l0 = l0 + nodes.size + 1
 
     # land boundaries

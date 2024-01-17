@@ -40,7 +40,7 @@ class _BaseWriter(ParameterBaseClass):
 
     def initial_setup(self):
         si= self.shared_info
-        grid = si.classes['field_group_manager'].grid
+
         params = self.params
 
         # find steps between wrtites, rounded to nearest model time step
@@ -52,6 +52,7 @@ class _BaseWriter(ParameterBaseClass):
         self.info['output_step_count'] = max(nt_step, 1)
 
         if si.settings['write_dry_cell_flag']:
+            grid = si.classes['field_group_manager'].grid
             self.add_dimension('triangle_dim', grid['triangles'].shape[0])
             self.add_new_variable('dry_cell_index', ['time_dim','triangle_dim'], attributes={'description': 'Time series of grid dry index 0-255'},
                                   dtype=np.uint8, chunking=[self.params['NCDF_time_chunk'],grid['triangles'].shape[0]])
@@ -152,7 +153,7 @@ class _BaseWriter(ParameterBaseClass):
         # write particle data at current time step, if none the a forced write
 
         si= self.shared_info
-        grid = si.classes['field_group_manager'].grid
+
         if si.run_info['time_steps_completed'] % self.info['output_step_count'] != 0: return
 
         # write time vary info , eg "time"
@@ -169,6 +170,8 @@ class _BaseWriter(ParameterBaseClass):
                 self.write_time_varying_particle_prop(name, d.data)
 
         if si.settings['write_dry_cell_flag']:
+            # wont run if nested grids
+            grid = si.classes['field_group_manager'].grid
             self.nc.file_handle.variables['dry_cell_index'][self.time_steps_written_to_current_file, : ] = grid['dry_cell_index'].reshape(1,-1)
 
         self.time_steps_written_to_current_file +=1 # time steps in current file

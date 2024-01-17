@@ -17,7 +17,7 @@ class TidalStranding(_BaseTrajectoryModifier):
 
     def check_requirements(self):
         si = self.shared_info
-        self.check_class_required_fields_prop_etc(required_grid_var_list=['dry_cell_index'])
+        self.check_class_required_fields_prop_etc()
 
 
     def update(self,grid, time_sec,sel):
@@ -32,7 +32,7 @@ class TidalStranding(_BaseTrajectoryModifier):
         pass
 
 
-@njitOT
+@njit
 def tidal_stranding_from_dry_cell_index(dry_cell_index, n_cell, sel, status):
     # look at all particles in buffer to check total water depth < water_depth_min
     #  use  0-255 dry cell index updated at each interpolation update

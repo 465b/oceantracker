@@ -37,12 +37,10 @@ class RandomWalk(_BaseTrajectoryModifer):
     # apply random walk
     def update(self,time_sec, active):
         # add up 2D/3D diffusion coeff as random walk done using velocity_modifier
-        #todo remove nb param,  when changed to using arbitary time step, not substeping
-
         si= self.shared_info
         part_prop = si.classes['particle_properties']
-        if si.settings['use_A_Z_profile']:
-            prop = si.classes['particle_properties']
+
+        if  si.is3D_run and si.settings['use_A_Z_profile'] and 'A_Z_profile' in part_prop:
             self._add_random_walk_velocity_modifier_AZ_profile(part_prop['A_Z_profile'].data, part_prop['A_Z_profile_vertical_gradient'].data,
                                                     self.info['random_walk_velocity'],
                                                     np.abs(si.settings['time_step']),
@@ -51,7 +49,7 @@ class RandomWalk(_BaseTrajectoryModifer):
             self._add_random_walk_velocity_modifier_constantAZ(self.info['random_walk_velocity'], active, part_prop['velocity_modifier'].data )
 
     @staticmethod
-    @njitOT
+    @njit
     #@guvectorize([(float64[:],int32[:],float64[:,:])],' (m), (l)->(n,m)') #, does not work needs n on LHS
     def _add_random_walk_velocity_modifier_constantAZ(random_walk_velocity, active, velocity_modifier):
         for n in active:
@@ -61,7 +59,7 @@ class RandomWalk(_BaseTrajectoryModifer):
 
 
     @staticmethod
-    @njitOT
+    @njit
     def _add_random_walk_velocity_modifier_AZ_profile(A_Z,A_Z_vertical_gradient,random_walk_velocity,timestep, active, velocity_modifier):
         # add vertical advection effect of dispersion to random walk, see Lynch Particles in the Coastal Ocean: Theory and Applications
         # this avoids particle accumulating in areas of high vertical gradient of A_Z, ie top and bottom

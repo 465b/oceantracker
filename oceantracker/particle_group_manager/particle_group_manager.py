@@ -53,6 +53,10 @@ class ParticleGroupManager(ParameterBaseClass):
                                       description='user given integer ID of release group'))
         self.add_particle_property('IDpulse','manual_update',dict(  dtype=np.int32, initial_value=-1, time_varying= False,
                                       description='ID of pulse particle was released within its release group, zero based'))
+        # ID used when nested grids only
+        self.add_particle_property('hydro_model_gridID', 'manual_update', dict(write=False, time_varying=True, dtype=np.int8, initial_value=-1,
+                                         description='ID for which grid, outer (ID=0) or nested (ID >0),  each particle resides in '))
+
         self.add_particle_property('time_released', 'manual_update',dict(time_varying= False, description='time (sec) each particle was released'))
         self.add_particle_property('x_last_good','manual_update',dict( write=True, vector_dim=nDim))  # location when last moving
 
@@ -84,8 +88,8 @@ class ParticleGroupManager(ParameterBaseClass):
             sel =  time_sec * si.model_direction >= ri['release_times'][ri['index_of_next_release']: ] * si.model_direction# any  puleses not release
             num_pulses= np.count_nonzero(sel)
             for n in range(num_pulses):
-                x0, IDrelease_group, IDpulse, user_release_groupID, n_cell_guess = g.release_locations(time_sec)
-                new_index = self.release_a_particle_group_pulse(time_sec, x0, IDrelease_group, IDpulse, user_release_groupID, n_cell_guess)
+                x0, IDrelease_group, IDpulse, user_release_groupID, n_cell_guess, bc_cords,hydro_model_gridID = g.get_release_locations(time_sec)
+                new_index = self.release_a_particle_group_pulse(time_sec, x0, IDrelease_group, IDpulse, user_release_groupID, n_cell_guess,bc_cords,hydro_model_gridID)
                 new_buffer_indices = np.concatenate((new_buffer_indices,new_index), dtype=np.int32)
                 ri['index_of_next_release'] += 1
             pass
@@ -120,7 +124,9 @@ class ParticleGroupManager(ParameterBaseClass):
             si.msg_logger.msgg(' Status of bad initial locations' + str(part_prop['status'].get_values(bad)),warning=True)
         return new_buffer_indices #indices of all new particles
 
-    def release_a_particle_group_pulse(self, t, x0, IDrelease_group, IDpulse, user_release_groupID, n_cell_guess):
+    def release_a_particle_group_pulse(self, t, x0,
+                                       IDrelease_group, IDpulse, user_release_groupID,
+                                       n_cell_guess,bc_cords, hydro_model_gridID):
         # release one pulse of particles from given group
         si = self.shared_info
 
@@ -154,6 +160,7 @@ class ParticleGroupManager(ParameterBaseClass):
 
         part_prop['n_cell'].set_values(n_cell_guess, new_buffer_indices)  # use x0's best guess  for starting point cell
         part_prop['n_cell_last_good'].set_values(n_cell_guess, new_buffer_indices)
+        part_prop['bc_cords'].set_values(bc_cords, new_buffer_indices)
 
         part_prop['status'].set_values(si.particle_status_flags['moving'], new_buffer_indices)  # set  status of released particles
 
@@ -165,6 +172,9 @@ class ParticleGroupManager(ParameterBaseClass):
         part_prop['user_release_groupID'].set_values(user_release_groupID, new_buffer_indices)  # ID of release location
         part_prop['IDrelease_group'].set_values(IDrelease_group, new_buffer_indices)  # ID of release location
         part_prop['IDpulse'].set_values(IDpulse, new_buffer_indices)  # gives a unique release ID, so that each pulse can be tracked
+        part_prop['hydro_model_gridID'].set_values(hydro_model_gridID, new_buffer_indices) # which of outer and nested grid particles are in
+
+
 
         # set interp memory properties if present
         info['particles_released'] += num_released # total released
@@ -264,17 +274,17 @@ class ParticleGroupManager(ParameterBaseClass):
         part_prop =si.classes['particle_properties']
 
         self.screen_msg= ''
-        #  calculate age particle property = t-time_released
+        #  calculate age core particle property = t-time_released
         particle_operations_util.set_value_and_add(part_prop['age'].used_buffer(), t,
                                                    part_prop['time_released'].used_buffer(), active, scale= -1.)
 
         # first interpolate to give particle properties from reader derived  fields
-        for key,i in si.classes['particle_properties'].items():
+        for name,i in si.classes['particle_properties'].items():
             if i.info['type'] == 'from_fields':
-                si.classes['field_group_manager'].interp_field_at_particle_locations(key, active)
+                si.classes['field_group_manager'].interp_field_at_particle_locations(name, active)
 
         # user/custom particle prop are updated after reader based prop. , as reader prop.  may be need for their update
-        for key, i in si.classes['particle_properties'].items():
+        for name, i in si.classes['particle_properties'].items():
             if i.info['type'] == 'user':
                 i.update(active)
         si.block_timer('Update particle properties',t0)

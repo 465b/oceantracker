@@ -15,8 +15,7 @@ class  ParticleConcentrations2D(_BaseTriangleProperties):
 
 
     def check_requirements(self):
-        self.check_class_required_fields_prop_etc(required_grid_var_list=['triangle_area', 'x'],
-                                                            required_props_list=['tide','water_depth'])
+        self.check_class_required_fields_prop_etc(required_props_list=['tide','water_depth'])
     def set_up_data_buffers(self):
         si = self.shared_info
         grid = si.classes['field_group_manager'].grid
@@ -72,7 +71,7 @@ class  ParticleConcentrations2D(_BaseTriangleProperties):
             self.info['time_last_stats_recorded'] = time_sec
 
     @staticmethod
-    @njitOT
+    @njit
     def calcuate_concentration2D(n_cell, tide, water_depth, age, triangle_area,particle_count, particle_concentration,
                                  load_concentration, initial_particle_load,load_decay_time_scale,
                                  sel_to_count):

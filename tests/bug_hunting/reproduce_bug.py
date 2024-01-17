@@ -217,7 +217,7 @@ params = {
         "processors": 1,
     },
     "reader": {
-        "class_name": "oceantracker.reader.schism_reader.SCHISMSreaderNCDF",
+        "class_name": "oceantracker.reader.schism_reader.SCHISMreaderNCDF",
         "depth_average": False,
         "file_mask": "NZfinite*.nc",
         "input_dir": input_dir,
@@ -247,7 +247,7 @@ params = {
         "tracks_writer": {
             "class_name": "oceantracker.tracks_writer.track_writer_compact.FlatTrackWriter",
             "output_step_writer": 3600,
-            "write_dry_cell_index": True
+            "write_dry_cell_flag": True
         },
         "particle_statistics": [
             {

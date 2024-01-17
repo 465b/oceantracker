@@ -67,6 +67,17 @@ class GenericNCDFreader(_BaseReader):
         self.info['field_variable_info'] = {}
         self.info['buffer_info'] ={}
 
+    def is_file_format(self,file_name):
+        # check if file matches this file format
+        nc = NetCDFhandler(file_name,'r')
+        gm = self.params['grid_variable_map']
+        fm  = self.params['field_variable_map']
+        dm = self.params['dimension_map']
+
+        is_file_type=  nc.is_dim(dm['time']) and nc.is_dim(dm['node']) and nc.is_var(gm['x'][0]) and nc.is_var(gm['x'][1]) and nc.is_var(fm['tide']) and nc.is_var(fm['water_depth'])
+        nc.close()
+        return is_file_type
+
     def get_field_params(self, nc, name, crumbs=''):
         # work out if feild is 3D ,etc
         fmap = deepcopy(self.params['field_variable_map'][name])
@@ -124,12 +135,6 @@ class GenericNCDFreader(_BaseReader):
 
         return fi
 
-    def open_first_file(self):
-        si = self.shared_info
-
-        fi= si.working_params['file_info']
-        nc = NetCDFhandler(fi['names'][0], 'r')
-        return nc
 
     def get_hindcast_files_info(self, file_list, msg_logger):
         # read through files to get start and finish times of each file
@@ -306,7 +311,7 @@ class GenericNCDFreader(_BaseReader):
         bottom_cell_index = self.read_bottom_cell_index_as_int32(nc).astype(np.int32)
         # use node with thinest top/bot layers as template for all sigma levels
 
-        node_min, grid['zlevel_fractions'] = hydromodel_grid_transforms.find_node_with_smallest_top_bot_layer(zlevel, bottom_cell_index, si.z0)
+        node_min, grid['zlevel_fractions'] = hydromodel_grid_transforms.find_node_with_smallest_bot_layer(zlevel, bottom_cell_index, si.z0)
 
         # use layer fractions from this node to give layer fractions everywhere
         # in LSC grid this requires stretching a bit to give same number max numb. of depth cells
@@ -322,7 +327,7 @@ class GenericNCDFreader(_BaseReader):
         return grid
 
 
-    def assemble_field_components(self,nc, name, field, file_index=None):
+    def assemble_field_components(self,nc, grid, name, field, file_index=None):
         # read scalar fields / join together the components which make vector from component list
         params = self.params
 
@@ -336,7 +341,7 @@ class GenericNCDFreader(_BaseReader):
 
         for var_name in var_names:
             if var_name is None: continue
-            data = self.read_file_var_as_4D_nodal_values(nc, var_name, file_index)
+            data = self.read_file_var_as_4D_nodal_values(nc, grid, var_name, file_index)
             comp_per_var = data.shape[3]
             m1 = m + comp_per_var
             # get view of where in buffer data is to be placed
@@ -344,7 +349,7 @@ class GenericNCDFreader(_BaseReader):
             m += comp_per_var
         return out
 
-    def read_file_var_as_4D_nodal_values(self,nc,var_name, file_index=None):
+    def read_file_var_as_4D_nodal_values(self,nc, grid, var_name, file_index=None):
         # read variable into 4D ( time, node, depth, comp) format
         # assumes same variable order in the file
         dm = self.params['dimension_map']
@@ -426,10 +431,6 @@ class GenericNCDFreader(_BaseReader):
 
         return  nt_hindcast in bi['time_steps_in_buffer'] and nt_hindcast + model_dir in bi['time_steps_in_buffer']
 
-    def _open_first_file(self,file_info):
-        file_name= file_info['names'][0]
-        nc =NetCDFhandler(file_name, 'r')
-        return nc
 
     def convert_lon_lat_to_meters_grid(self, x):
 

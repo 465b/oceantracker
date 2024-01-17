@@ -1,4 +1,3 @@
-from typing import Any
 from oceantracker.particle_properties._base_properties import ParticleProperty
 import numpy as np
 from oceantracker.util.parameter_checking import ParamValueChecker as PVC

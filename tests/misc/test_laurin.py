@@ -459,8 +459,9 @@ if __name__ == '__main__':
     
 
     args = parser.parse_args()
-    input_dir = 'F:\\Hindcasts\\Hindcast_samples_tests\\LaurinGermany'
-    output_dir = 'F:\\OceanTrackerOuput\\Laurin'
+    # input_dir = 'F:\\Hindcasts\\Hindcast_samples_tests\\LaurinGermany'
+    input_dir = '/scratch/local1/hzg/'
+    output_dir = '/scratch/local1/output/'
 
     x0 = [
         [502096, 5968781, -2],
@@ -487,7 +488,7 @@ if __name__ == '__main__':
         'max_run_duration': 7. * 24 * 3600,
         'write_tracks': True,
         'use_A_Z_profile': True,
-        'reader': {'class_name': 'oceantracker.reader.schism_reader.SCHISMSreaderNCDF',
+        'reader': {'class_name': 'oceantracker.reader.schism_reader.SCHISMreaderNCDF',
                    'file_mask': 'schout_*.nc', 'input_dir': input_dir,
                    'hgrid_file_name': path.join(input_dir, 'hgrid.gr3'),
                    # fields to track at particle locations
@@ -512,10 +513,10 @@ if __name__ == '__main__':
                 }
             },
         'dispersion': {
-                'class_name': 'oceantracker.dispersion.random_walk.RandomWalk',
-                #'class_name': 'oceantracker.dispersion.random_walk_varyingAz.RandomWalkVaryingAZ',
-                'A_H': 0.2,
-                'A_V': 0.001
+                # 'class_name': 'oceantracker.dispersion.random_walk.RandomWalk',
+                'class_name': 'oceantracker.dispersion.random_walk_varyingAz.RandomWalkVaryingAZ',
+                # 'A_H': 0.2,
+                # 'A_V': 0.001
             },
         'resuspension':  { 'critical_friction_velocity': .01  },
 

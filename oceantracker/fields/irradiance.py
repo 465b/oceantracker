@@ -1,14 +1,12 @@
-from oceantracker.particle_properties._base_properties import ParticleProperty
 from oceantracker.util.parameter_checking import ParamValueChecker as PVC
-from oceantracker.fields._base_field import UserFieldBase
-from oceantracker.util.parameter_checking import ParamValueChecker as PVC
+from oceantracker.fields._base_field import CustomFieldBase
 
 from numba import njit
 import numpy as np
 from datetime import datetime
 import pvlib
 
-class Irradiance(UserFieldBase):
+class Irradiance(CustomFieldBase):
     """
     Calculates irradiance just below the water surface.
     Assumes that model location is small enogh 
@@ -44,8 +42,8 @@ class Irradiance(UserFieldBase):
 
         # preparing irradiance data
         self.location = pvlib.location.Location(self.params['latitude'],
-                                                          self.params['longitude'],
-                                                          tz=self.params['timezone'])
+                                                self.params['longitude'],
+                                                tz=self.params['timezone'])
         
     def initial_value_at_birth(self, active):
         # initial age is zero

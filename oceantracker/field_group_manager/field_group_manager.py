@@ -58,13 +58,16 @@ class FieldGroupManager(ParameterBaseClass):
 
         # initialize user supplied custom fields calculated from other fields which may depend on reader fields, eg friction velocity from velocity
         for name, params in si.working_params['class_dicts']['fields'].items():
-            i = make_class_instance_from_params(name, params, si.msg_logger, crumbs=f'Adding "fields" from user params for field "{name}"')
-            i.initial_setup()
-            # if not time varying can update once at start from other non-time varying fields
-            if not i.is_time_varying(): i.update()
-            if name in self.fields:
-                si.msg_logger.msg(f'Custom field "{name}" is already a defined field ', hint='Use another unique name?', fatal_error= True, exit_now=True)
-            self.fields[name] = i
+
+            self.add_custom_field(name ,params , crumbs=f'adding custom field {name}')
+
+            # i = make_class_instance_from_params(name, params, si.msg_logger, crumbs=f'Adding "fields" from user params for field "{name}"')
+            # i.initial_setup(self.grid, self.fields)
+            # # if not time varying can update once at start from other non-time varying fields
+            # if not i.is_time_varying(): i.update(self.fields, self.grid)
+            # if name in self.fields:
+            #     si.msg_logger.msg(f'Custom field "{name}" is already a defined field ', hint='Use another unique name?', fatal_error= True, exit_now=True)
+            # self.fields[name] = i
         pass
 
 

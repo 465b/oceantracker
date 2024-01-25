@@ -22,7 +22,7 @@ class Irradiance(CustomFieldBase):
                     'longitude': PVC(0.0, float),
                     'timezone': PVC('UTC', str),
                     'albedo': PVC(0.1, float),
-                    'is_time_varying': PVC(True,bool),
+                    'time_varying': PVC(True,bool),
                     'num_components': PVC(1, int),
                     'is3D': PVC(False,bool)
                 }
@@ -37,8 +37,8 @@ class Irradiance(CustomFieldBase):
         #     )
     
         
-    def initial_setup(self):
-        super().initial_setup()
+    def initial_setup(self, grid, fields):
+        super().initial_setup(grid,fields)
 
         # preparing irradiance data
         self.location = pvlib.location.Location(self.params['latitude'],
@@ -53,10 +53,8 @@ class Irradiance(CustomFieldBase):
 
 
 
-    def update(self, buffer_index):
-        si = self.shared_info
-        grid = si.classes['reader'].grid
-        fields = si.classes['fields']
+    def update(self,fields,grid, buffer_index):
+        
         self.calc_illumination(buffer_index,grid,self.location,self.params['albedo'],self.data)
         # self.calc_fiction_velocity(buffer_index, grid['zlevel'], grid['bottom_cell_index'], si.z0, fields['water_velocity'].data , self.data)
 

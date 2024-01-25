@@ -23,14 +23,14 @@ class Illumination(ParticleProperty):
     def check_requirements(self):
 
         self.check_class_required_fields_prop_etc(
-            required_fields_list=[
-                'turbidity', 
-                'irradiance', 
-                'tide'
-            ],
-            required_props_list=[
-                'x'
-            ],
+            # required_fields_list=[
+            #     'turbidity', 
+            #     'irradiance', 
+            #     'tide'
+            # ],
+            # required_props_list=[
+            #     'x'
+            # ],
             requires3D=True
             )
     
@@ -100,7 +100,7 @@ class AverageIllumination(Illumination):
         """
         super().initial_setup()
 
-        self.info['time_steps_in_averaging_period'] = int(self.params['time_to_average'] / self.shared_info.solver_info['model_time_step'])
+        self.info['time_steps_in_averaging_period'] = int(self.params['time_to_average'] / self.shared_info.settings['time_step'])
 
 
     def update(self, active):

@@ -32,7 +32,7 @@ class StrandedDryout(ParticleProperty):
         stranded_particles = np.where(particle_status == stranded_flag)[0]
         # stranded_particles = active[stranded_particles]
 
-        dt = self.shared_info.model_time_step
+        dt = self.shared_info.settings['time_step']
         
         # add values to stranded particles
         particle_operations_util.add_value_to(self.data,dt,stranded_particles)

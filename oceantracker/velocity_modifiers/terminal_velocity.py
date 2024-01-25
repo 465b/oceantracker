@@ -5,7 +5,7 @@ from oceantracker.util.numba_util import njitOT
 
 import numpy as np
 from datetime import datetime,timezone,timedelta
-import astral.sun
+# import astral.sun
 
 class TerminalVelocity(VelocityModiferBase):
     # add terminal velocity to particle velocity  < 0 is downwards ie sinking

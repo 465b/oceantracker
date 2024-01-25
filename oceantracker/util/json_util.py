@@ -77,6 +77,9 @@ class MyEncoder(json.JSONEncoder):
             elif isinstance(obj,(np.int8, np.int16, np.int32,np.int64)):
                 # make single numpy int values
                 return int(obj)
+            elif isinstance(obj,(np.float16, np.float32,np.float64)):
+                # make single numpy int values
+                return float(obj)
             elif  type(obj) in [np.bool_,bool]:
                 # make single numpy int values
                 return int(obj)

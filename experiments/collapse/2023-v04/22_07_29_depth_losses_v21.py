@@ -56,7 +56,7 @@ output_dir = "/scratch/local1/output/"
 # output_dir = "/work/uh0296/u301513/ot_output/"
 
 # tweeked parameters:
-max_time = 3600*24*7
+max_time = 3600*24*30*12
 max_particle = 1e6
 
 pulse_size = 1
@@ -100,10 +100,21 @@ params={
 	"reader": {
 		"input_dir": input_dir,
 		"file_mask": "schout_*.nc",
+        "load_fields": [
+            "turbidity",
+            "spm_sum_of_all_classes",
+            "spm_very_fine_silt",
+            "spm_fine_silt",
+            "spm_medium_silt",
+            "spm_coarse_silt",
+            "spm_very_fine_sand",
+            "salinity"
+        ],
 		"field_variable_map": {
 			"water_depth": "depth",
 			"salinity": "salt",
             "turbidity": "spm_sum_of_all_classes",
+            "spm_sum_of_all_classes": "spm_sum_of_all_classes",
             "spm_very_fine_silt": "spm_very_fine_silt",
             "spm_fine_silt": "spm_fine_silt",
             "spm_medium_silt": "spm_medium_silt",
@@ -127,20 +138,20 @@ params={
     },
 
     "particle_properties": {  
-        # "total_water_depth": {
-        #     "class_name": "oceantracker.particle_properties.total_water_depth.TotalWaterDepth"
-        # },
-        # "dryout": {
-        #     "class_name": "oceantracker.particle_properties.stranded_dryout.StrandedDryout",
-        #     "max_time_stranded": 3600*24*1
-        # },
-        # "illumination": {
-        #     'class_name': 'oceantracker.particle_properties.illumination.AverageIllumination',
-        #     'name_of_turbidity_field': 'spm_sum_of_all_classes',
-        #     'name_of_irradiance_field': 'irradiance',
-        #     'c': 5,
-        #     'time_to_average': 24*3600
-        # },
+    # "total_water_depth": {
+    #     "class_name": "oceantracker.particle_properties.total_water_depth.TotalWaterDepth"
+    # },
+    "dryout": {
+        "class_name": "oceantracker.particle_properties.stranded_dryout.StrandedDryout",
+        "max_time_stranded": 3600*24*1
+    },
+    "illumination": {
+        'class_name': 'oceantracker.particle_properties.illumination.AverageIllumination',
+        'name_of_turbidity_field': 'spm_sum_of_all_classes',
+        'name_of_irradiance_field': 'irradiance',
+        'c': 5,
+        'time_to_average': 24*3600
+    },
         "density": {
             "class_name": "oceantracker.particle_properties.buoyancy.Density",
             "initial_value": 1000
@@ -162,21 +173,21 @@ params={
             "spm_density": 2650.
         }
     },
-    # "fields": {
-    #     "irradiance": {
-    #         'class_name': 'oceantracker.fields.irradiance.Irradiance',
-    #         'name_of_field': 'spm_sum_of_all_classes',
-    #         'latitude': 53.5,
-    #         'longitude': 9.9,
-    #         'timezone': 'UTC',
-    #         'albedo': 0.1
-    #     }
+    "fields": {
+        "irradiance": {
+            'class_name': 'oceantracker.fields.irradiance.Irradiance',
+            'name_of_field': 'spm_sum_of_all_classes',
+            'latitude': 53.5,
+            'longitude': 9.9,
+            'timezone': 'UTC',
+            'albedo': 0.1
+        },
     # #     "VerticalGradient": {
     # #         'class_name': 'oceantracker.fields.field_vertical_gradient.VerticalGradient',
     # #         'name_of_field': 'A_Z',
     # #         'name': 'A_Z_vertical_gradient'
     # #     }
-    # }, 
+    }, 
 
     "resuspension": {
         "critical_friction_velocity": 0.000

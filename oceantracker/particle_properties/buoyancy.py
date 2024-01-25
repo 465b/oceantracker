@@ -123,7 +123,7 @@ class ParticleCollision(ParticleProperty):
 
         collision_frequency = (1/2) * particle_per_m3 * collision_kernel
         sticking_frequency = collision_frequency * self.params['stickyness']
-        avg_coagulations = sticking_frequency*self.shared_info.solver_info['model_time_step']
+        avg_coagulations = sticking_frequency*self.shared_info.settings['time_step']
 
         # we do not de-coagulate currently
         # to avoid large massive particles we stop particles above 1mm from coagulating

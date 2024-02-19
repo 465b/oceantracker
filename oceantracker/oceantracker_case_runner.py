@@ -2,20 +2,23 @@ import os
 from copy import deepcopy
 from os import path, environ, remove
 from oceantracker.util.parameter_base_class import ParameterBaseClass
-from oceantracker.util.parameter_util import  make_class_instance_from_params
 
 from time import  perf_counter
 from oceantracker.util.messgage_logger import MessageLogger, GracefulError
 from oceantracker.util import profiling_util, get_versions_computer_info
 import numpy as np
-from oceantracker.util import time_util
+from oceantracker.util import time_util, numba_util
 from oceantracker.util import json_util
 from datetime import datetime
 from time import sleep
 import traceback
 from oceantracker.util.parameter_checking import merge_params_with_defaults
+from oceantracker.util.module_importing_util import ClassImporter
+from oceantracker.util.setup_util import config_numba_environment
 from oceantracker import common_info_default_param_dict_templates as common_info
 # note do not import numba here as its enviroment  setting must ve done first, import done below
+
+from oceantracker.util.package_util import get_all_parameter_classes
 
 class OceanTrackerCaseRunner(ParameterBaseClass):
     # this class runs a single case
@@ -28,46 +31,48 @@ class OceanTrackerCaseRunner(ParameterBaseClass):
         si=self.shared_info
         si.reset()  # clear out classes from class instance of SharedInfo if running series of mains
         d0 = datetime.now()
-        t0 = perf_counter()
-
+        t_start = perf_counter()
 
         # basic param shortcuts
+        si.caseID = working_params['caseID']
         si.working_params = working_params
+        si.settings = si.working_params['shared_settings']
 
         # merge shared and case setting ito one shared variable as distinction no longer important
-        si.settings = si.working_params['shared_settings']
         si.settings.update(si.working_params['case_settings'])
-
         si.output_files = si.working_params['output_files']
         si.run_output_dir = si.output_files['run_output_dir']
         si.output_file_base = si.output_files['output_file_base']
-        si.caseID = working_params['caseID']
 
         # set up message logging
         output_files = working_params['output_files']
         si.msg_logger = MessageLogger(f'C{si.caseID:03d}', si.settings['max_warnings'])
         output_files['case_log_file'], output_files['case_error_file'] = \
         si.msg_logger.set_up_files(output_files['run_output_dir'], output_files['output_file_base'] + '_caseLog')
+        si.msg_logger.print_line()
+        si.msg_logger.msg('Starting case number %3.0f, ' % si.caseID + ' '
+                                      + si.output_files['output_file_base']
+                                      + ' at ' + time_util.iso8601_str(datetime.now()))
+        si.msg_logger.print_line()
+
+        # setup class importer
+        t0=perf_counter()
+        si.class_importer = ClassImporter(path.dirname(__file__), msg_logger=si.msg_logger)
+        si.msg_logger.progress_marker('Scanned OceanTracker to build short name map to the full class_names', start_time=t0)
 
         # other useful shared values
         si.backtracking = si.settings['backtracking']
         si.model_direction = -1 if si.backtracking else 1
 
         si.write_output_files = si.settings['write_output_files']
-     
+
         si.z0 = si.settings['z0']
         si.minimum_total_water_depth = si.settings['minimum_total_water_depth']
         si.computer_info = get_versions_computer_info.get_computer_info()
 
+        # set numba config environment variables, before any import of numba,
+        config_numba_environment(si.settings)
 
-        # set numbas envionment varibles before first import
-        #environ['oceantracker_numba_caching'] =str( 1 if si.settings['numba_caching'] else 0)
-        environ['numba_function_cache_size'] = str(si.settings['numba_function_cache_size'])
-
-        if si.settings['debug']:
-            # makes it easier to debug, particularly  in pycharm
-            environ['NUMBA_BOUNDSCHECK'] = '1'
-            environ['NUMBA_FULL_TRACEBACKS'] = '1'
 
         # set up profiling
         profiling_util.set_profile_mode(si.settings['profiler'])
@@ -112,7 +117,7 @@ class OceanTrackerCaseRunner(ParameterBaseClass):
 
         try:
             self._do_a_run()
-            case_info = self._get_case_info(d0,t0)
+            case_info = self._get_case_info(d0,t_start)
 
             if si.settings['write_output_files']:
                 # write grid if first case
@@ -163,11 +168,7 @@ class OceanTrackerCaseRunner(ParameterBaseClass):
         # from single run case_runner_params
         si =self.shared_info
 
-        si.msg_logger.print_line()
-        si.msg_logger.msg('Starting case number %3.0f, ' % si.caseID + ' '
-                                      + si.output_files['output_file_base']
-                                      + ' at ' + time_util.iso8601_str(datetime.now()))
-        si.msg_logger.print_line()
+
 
         # get short class names map
         # delay  start, which may avoid occasional lockup at start if many cases try to read same hindcast file at same time
@@ -176,8 +177,6 @@ class OceanTrackerCaseRunner(ParameterBaseClass):
             si.msg_logger.progress_marker('Delaying start by  ' + str(delay) + ' sec')
             sleep(delay)
             si.msg_logger.progress_marker('Starting after delay  of ' + str(delay) + ' sec')
-
-
 
 
         if si.settings['use_random_seed']:
@@ -208,6 +207,7 @@ class OceanTrackerCaseRunner(ParameterBaseClass):
         # ------------------------------------------
         solver.solve()
         # ------------------------------------------
+        pass
 
     def _do_run_integrity_checks(self):
         si=self.shared_info
@@ -296,20 +296,23 @@ class OceanTrackerCaseRunner(ParameterBaseClass):
         # set up feilds
         fgm = si.add_core_class('field_group_manager', si.working_params['core_classes']['field_group_manager'], crumbs=f'adding core class "field_group_manager" ')
         fgm.initial_setup()  # needed here to add reader fields inside reader build
-        fgm.setup_dispersion_and_resuspension() # setup depends on what variables are in the hydro-files
+        fgm.setup_dispersion_and_resuspension() # setup files required for didpersion etc, depends on what variables are in the hydro-files
 
+        # set up dispersion ad resuspension calculation class
         dispersion_params = si.working_params['core_classes']['dispersion']
         if  si.is3D_run:
             if si.settings['use_A_Z_profile'] and fgm.info['has_A_Z_profile']:               # use profile of AZ
-
-               dispersion_params['class_name'] ='oceantracker.dispersion.random_walk_varyingAz.RandomWalkVaryingAZ'
+                si.add_core_class('dispersion', dispersion_params,
+                                  default_classID='dispersion_random_walk_varyingAz', initialise=True)
+            else: # constant random walk,  as default
+                si.add_core_class('dispersion', dispersion_params, default_classID='dispersion_random_walk', initialise=True)
 
             # resuspension only in 3D
-            si.add_core_class('resuspension', si.working_params['core_classes']['resuspension'], initialise=True)
-
-        # alawys add dispersion
-        si.add_core_class('dispersion', dispersion_params, initialise=True)
-       
+            si.add_core_class('resuspension', si.working_params['core_classes']['resuspension'],
+                              default_classID='resuspension_basic', initialise=True)
+        else:
+             # 2D constant random walk as default, no resupension
+            si.add_core_class('dispersion', dispersion_params, default_classID='dispersion_random_walk', initialise=True)
 
         if si.settings['write_tracks']:
             si.add_core_class('tracks_writer',si.working_params['core_classes']['tracks_writer'], initialise=True)
@@ -326,8 +329,6 @@ class OceanTrackerCaseRunner(ParameterBaseClass):
 
         # make other core classes
         si.add_core_class('solver', core_role_params['solver'], crumbs='core class solver ')
-        if si.is3D_run:
-            si.add_core_class('resuspension', core_role_params['resuspension'], crumbs= 'core class "resuspension" ')
 
 
         if  si.settings['time_step'] > fgm.get_hydo_model_time_step():
@@ -475,29 +476,23 @@ class OceanTrackerCaseRunner(ParameterBaseClass):
             d['block_timings'].append(l)
         d['block_timings'].append(f'--- Total time {time_util.seconds_to_pretty_duration_string(elapsed_time_sec)}')
 
-        # get info about numba code
-        from oceantracker.util.numba_util import numba_func_info, find_simd_code
-        from oceantracker.util.module_importing_util import get_ref_from_string
-        ni= {}
-        ni_simid={}
-        for name, item in numba_func_info.items():
-            func=get_ref_from_string(name) # get reference to dispatch func from name
-            if func is not None:
-                simd_code = []
-                sig = func.signatures
-                # check for simd code
-                for n in range(len(sig)):
-                    simd_code.append(find_simd_code(func,n))
-            else:
-                simd_code = None
-                sig='nested code or not used, no signatures'
 
-            ni[name] = dict(signatures=sig,simd_code=simd_code)
-            if simd_code is not None:
-                ni_simid[name] =  ni[name]
-
-        d['numba_func_info'] = ni
-
+        # check numba code for SIMD
+        if True:
+            from numba.core import config
+            d['numba_code_info'] = dict(signatures={},SMID_code = {},
+                                        config={key:val for key, val in config.__dict__.items()
+                                                    if not key.startswith('_') and type(val) in [None,int,str,float]
+                                                }
+                                        )
+            for name, func in  numba_util.numba_func_info.items():
+                if hasattr(func,'signatures') : # only code that has been compiled has a sig
+                    sig = func.signatures
+                    d['numba_code_info']['signatures'][name] = str(sig)
+                    d['numba_code_info']['SMID_code'][name] = []
+                    for nsig in range(len(sig)):
+                        d['numba_code_info']['SMID_code'][name].append(numba_util.count_simd_intructions(func, sig=nsig))
+                    pass
         return d
 
     def close(self):

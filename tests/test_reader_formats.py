@@ -7,7 +7,7 @@ import numpy as np
 import argparse
 
 
-def default_params(x0):
+def default_params():
     params = { 'user_note' : '',
         'debug' : True,
         'time_step': 3600,
@@ -18,7 +18,9 @@ def default_params(x0):
         'output_file_base': None,
         'root_output_dir': None,
         'regrid_z_to_uniform_sigma_levels': True,
-        'release_groups': {'P1': {'points': x0, 'pulse_size': 10, 'release_interval': 3600,'z_min':-1.}},
+        'particle_properties': {'part_decay':
+                                    {'class_name': 'AgeDecay', 'decay_time_scale': 1. * 3600 * 24}},
+        'release_groups': {'P1': {'points': [], 'pulse_size': 10, 'release_interval': 3600,'z_min':-1.}},
         'dispersion': {'A_H': 1.0, 'A_V': 0.001},
         'reader': {'file_mask':None,
                    'input_dir': None,
@@ -31,7 +33,7 @@ def default_params(x0):
 
 
 
-    params['velocity_modifiers'] = {'fall_vel': {'class_name': 'oceantracker.velocity_modifiers.terminal_velocity.TerminalVelocity', 'value':0.}}
+
 
     params['tracks_writer']= dict(turn_on_write_particle_properties_list=['n_cell','nz_cell','bc_cords'])
 
@@ -48,6 +50,13 @@ def get_case(n):
     reader_class = None
     pulse_size = 10
     open_boundary_type = 0
+    reader= None
+    is3D=True
+    water_depth_file = None
+    params= default_params()
+    show_grid = True
+  
+
     match n:
         case 100:
             root_input_dir = r'G:\Hindcasts_large\OceanNumNZ-2022-06-20\final_version\2022\01'
@@ -118,6 +127,20 @@ def get_case(n):
             title= 'Whangarei prelim test'
             time_step = 300.
 
+        case 152:
+            root_input_dir = r'G:\Hindcasts_large\2024_hauraki_gulf_auck_uni\2020'
+            output_file_base = 'test_Hauarki'
+            file_mask = 'schout*.nc'
+
+            x0 = [[-36.81612195216445, 174.82731398519584],
+                  [-37.070731274878, 175.39302783837365],
+                  [-36.4051733326401, 174.7771263023033],
+                  [-36.85502113978176, 174.6807647189683]
+                  ]
+            x0= cord_transforms.WGS84_to_UTM(np.flip(np.asarray(x0),axis=1)).tolist()
+            ax = None # Auck
+            title = 'test_ Hauarki'
+
         case 200:
             root_input_dir=r'F:\Hindcasts\colaborations\LakeSuperior\historical_sample\2022'
             x0 = [[439094.44415005075, 5265627.962025132, -10]]
@@ -133,6 +156,46 @@ def get_case(n):
             file_mask  =  'DopAnV2R3-ini2007_da_his.nc'
             output_file_base= 'ROMS'
             title = 'ROMS test'
+        case 400:
+
+            x0 =  [
+                #[-73.48272505246274, -173.7097571108972],
+                   [-70., -130],
+                [-69.52499266063822,-130],
+                [-70.5, -130],
+                [-71, -130],
+                [-71, -125],
+                [-71.3, -128.2],
+                [-71.46114498134901, 171.2627422568032],
+                  # [-76.,- 160.]
+                   ]
+
+            x0 = [       # [-73.48272505246274, -173.7097571108972],
+                [-72.,176],
+                [-70.72144746302578, 170.34],
+                [-73.55945050776178, 171.22711508577942],
+                [-74.55945050776178, 175.],
+                [-67., 169],
+                 ]
+
+            x0 = np.flip(np.asarray(x0), axis=1)
+            #x0[:,0] += -90. + 360 # todo hack to get ross sea right acros date line in utm transform
+            x0 = cord_transforms.WGS84_to_UTM(x0).tolist()
+
+
+            file_mask  =  'RossSea*.nc'
+            output_file_base= 'GLORYS'
+            title = 'GLORYS test'
+            root_input_dir = r'F:\Hindcasts\Hindcast_samples_tests\Glorys\Antartica'
+            reader = 'oceantracker.reader.dev.dev_ross_sea_GLORYS_reader.GLORYSreaderSurface'
+            is3D = False
+            show_grid = False
+            water_depth_file = r'F:\Hindcasts\Hindcast_samples_tests\Glorys\Ross_sea2D\static.nc'
+            open_boundary_type = 1
+            max_days = 90
+            time_step = 3600.
+            pulse_size = 5
+            params['particle_properties']['part_decay']['decay_time_scale']= 28*24*3600.
         case 1000:
             # nested schisim
             pulse_size = 1
@@ -164,21 +227,32 @@ def get_case(n):
 
             ))
 
-    params= default_params(x0)
+    params['release_groups']['P1']['points'] = x0
+
     params.update(note=title,output_file_base=output_file_base,
                   max_run_duration= max_days*24*3600, time_step= time_step, open_boundary_type=open_boundary_type)
     params['reader'].update(input_dir=root_input_dir, file_mask=file_mask, class_name=reader_class)
-    if params['reader']['class_name'] is  None:  del params['reader']['class_name']
+    if water_depth_file is not None:
+        params['reader']['water_depth_file'] = water_depth_file
+        params['reader']['load_fields'] = ['water_depth']
 
+    if params['reader']['class_name'] is  None:   del params['reader']['class_name']
+
+
+    if reader is not None:  params['reader']['class_name'] = reader
+
+    #params['display_grid_at start'] = True
     params['release_groups']['P1'].update(pulse_size=pulse_size)
-    params['velocity_modifiers']['fall_vel'].update(value=fall_vel)
+
+    if is3D:
+        params['velocity_modifiers'] = {'fall_vel': {'class_name': 'oceantracker.velocity_modifiers.terminal_velocity.TerminalVelocity', 'value': fall_vel}}
 
     if hgrid_file is not None:
         params['reader']['hgrid_file_name']= hgrid_file
 
     if nested_readers is not None: params['nested_readers']=nested_readers
-
-    return params, ax
+    plot_opt=dict(ax=ax,show_grid=show_grid)
+    return params, plot_opt
 
 
 if __name__ == '__main__':
@@ -187,9 +261,9 @@ if __name__ == '__main__':
     parser.add_argument('--test', default=None, type= int)
     parser.add_argument('-uniform', action='store_false')
     parser.add_argument('-noplots', action='store_true')
-    parser.add_argument('-norun', action='store_true')
+    parser.add_argument('-skip_run', action='store_true')
     parser.add_argument('-debug_plots', action='store_true')
-    parser.add_argument('-plot_file', action='store_true')
+    parser.add_argument('-save_plot', action='store_true')
     args = parser.parse_args()
 
     root_output_dir = r'F:\OceanTrackerOutput\test_reader_formats'
@@ -201,19 +275,19 @@ if __name__ == '__main__':
 
 
     for n in tests:
-        params, ax= get_case(n)
+        params, plot_opt= get_case(n)
         params.update( root_output_dir = root_output_dir,
                     regrid_z_to_uniform_sigma_levels = args.uniform,
                     debug_plots = args.debug_plots,
                     use_A_Z_profile = True
                     )
 
-        if not args.norun:
+        if not args.skip_run:
             caseInfoFile= run(params)
 
         else:
-            caseInfoFile= path.join(d['root_output_dir'], d['output_file_base'],
-                                    d['output_file_base']+'_caseInfo.json')
+            caseInfoFile= path.join(params['root_output_dir'],params['output_file_base'],
+                                    params['output_file_base']+'_caseInfo.json')
 
 
         # do plot
@@ -221,11 +295,24 @@ if __name__ == '__main__':
             track_data = load_output_files.load_track_data(caseInfoFile)
             if False:
                 plot_utilities.display_grid(track_data['grid'], ginput=3, axis_lims=None)
+            plot_base = path.join(params['root_output_dir'],params['output_file_base'],params['output_file_base'])
 
-            plot_file = path.join(params['root_output_dir'],params['user_note'].replace(' ','_') + '.mp4' ) if args.plot_file else None
+            plot_file = plot_base + '_tracks_01.mp4' if args.save_plot else None
 
+            plot_tracks.animate_particles(track_data, axis_lims=plot_opt['ax'],
+                                          title=params['user_note'], movie_file=plot_file, aspect_ratio=.9,
+                                          show_grid=plot_opt['show_grid'])
 
-            plot_tracks.animate_particles(track_data, axis_lims=ax, title=params['user_note'], movie_file=plot_file, show_grid=True)
+            plot_file = plot_base + '_decay_01.mp4' if args.save_plot else None
+            plot_tracks.animate_particles(track_data, axis_lims=plot_opt['ax'],
+                              title='Ross Sea',
+                              colour_using_data=track_data['part_decay'], part_color_map='hot_r',
+                              size_using_data=track_data['part_decay'],
+                              vmax=1.0, vmin=0,
+                              movie_file=plot_file,
+                              fps=24,
+                              aspect_ratio=.9,
+                              interval=20, show_dry_cells=False)
 
 
 

@@ -50,7 +50,7 @@ class  InterpTriangularNativeGrid_Slayer_and_LSCgrid(_BaseInterp):
         pgm.add_particle_property('n_cell_last_good', 'manual_update', dict(write=False, dtype=np.int32, initial_value=0))  # start with cell number guess of zero
         pgm.add_particle_property('cell_search_status', 'manual_update', dict(write=False, initial_value=cell_search_status_flags['ok'], dtype=np.int8))
 
-        pgm.add_particle_property('bc_cords', 'manual_update', dict(write=False, initial_value=0., vector_dim=3, dtype=np.float64))
+        pgm.add_particle_property('bc_cords', 'manual_update', dict(write=False, initial_value=0., vector_dim=3, dtype=np.float32))
 
         # BC walk info
         if si.is3D_run:
@@ -118,12 +118,11 @@ class  InterpTriangularNativeGrid_Slayer_and_LSCgrid(_BaseInterp):
             part_prop['n_cell'].copy('n_cell_last_good', sel)  # move back the cell
 
 
-
             # debug_util.plot_walk_step(xq, si.classes['reader'].grid, part_prop)
 
 
 
-    # @function_profiler(__name__)
+    #@function_profiler(__name__)
     def _interp_field2D(self,field_name, field_instance,grid, current_buffer_steps, fractional_time_steps,
                                 n_cell, bc_cords,  output, active):
         # interp reader field_name inplace to particle locations to same time and memory
@@ -136,17 +135,44 @@ class  InterpTriangularNativeGrid_Slayer_and_LSCgrid(_BaseInterp):
 
 
         if field_instance.is_time_varying():
-            triangle_eval_interp.time_dependent_2Dfield(current_buffer_steps, fractional_time_steps,basic_util.atLeast_Nby1(output),
-                                                   field_instance.data, triangles,
-                                                   n_cell, bc_cords,
-                                                   active)
+            self._time_dependent_2Dfield(current_buffer_steps, fractional_time_steps,output,
+                                                   field_instance, triangles,
+                                                   n_cell, bc_cords, active)
         else:
-            triangle_eval_interp.time_independent_2Dfield(basic_util.atLeast_Nby1(output),
-                                                 field_instance.data, triangles,
+            self._time_independent_2Dfield(output, field_instance, triangles,
                                                  n_cell, bc_cords,
                                                  active)
 
-    # @function_profiler(__name__)
+    def _time_independent_2Dfield(self,output, field_instance, triangles, n_cell, bc_cords, active):
+        data =  field_instance.data
+        if data.shape[3] ==1:
+            #scalar, eg water depth
+            triangle_eval_interp.time_independent_2Dfield_scalar(output,data, triangles, n_cell, bc_cords, active)
+        elif data.shape[3] == 2:
+                # vector, is this used?
+                triangle_eval_interp.time_independent_2Dfield_vector(output, data, triangles, n_cell, bc_cords, active)
+
+    def _time_dependent_2Dfield(self,current_buffer_steps, fractional_time_steps,output,
+                                                   field_instance, triangles,
+                                                   n_cell, bc_cords, active):
+        si = self.shared_info
+        data =  field_instance.data
+
+        if data.shape[3] ==1:
+            #scalar, eg water depth
+            triangle_eval_interp.time_dependent_2Dfield_scalar(current_buffer_steps, fractional_time_steps,output,
+                                                   data, triangles,
+                                                   n_cell, bc_cords, active)
+        elif data.shape[3] == 2:
+                # vector, eg 2D water velocity
+                triangle_eval_interp.time_dependent_2Dfield_vector(current_buffer_steps, fractional_time_steps,output,
+                                                   data, triangles,
+                                                   n_cell, bc_cords, active)
+        else:
+            si.msg_logger.msg(f'2D interpolation currently only works for scalar and vector fields "{field_instance.info["name"]}" has {data.shape[3]} components',
+                              fatal_error=True, exit_now=True)
+
+    #@function_profiler(__name__)
     def _interp_field3D(self, field_name, field_instance,grid, current_buffer_steps,fractional_time_steps,
                          n_cell,nz_cell,z_fraction, bc_cords,output,active):
         # interp reader field_name inplace to particle locations to same time and memory
@@ -168,15 +194,13 @@ class  InterpTriangularNativeGrid_Slayer_and_LSCgrid(_BaseInterp):
         else:
             z_fraction = part_prop['z_fraction'].data
 
-        info = self.info
 
         if field_instance.is_time_varying():
             if 'sigma' in grid:
-                triangle_eval_interp.time_dependent_3Dfield_sigma_grid(current_buffer_steps, fractional_time_steps,
-                                                    field_instance.data,
-                           triangles,
+                self._time_dependent_3Dfield_sigma_grid(current_buffer_steps, fractional_time_steps,
+                            field_instance, triangles,
                            n_cell, bc_cords, nz_cell, z_fraction,
-                           basic_util.atLeast_Nby1(output), active)
+                          output, active)
             else:
                 triangle_eval_interp.time_dependent_3Dfield_LSC_grid(current_buffer_steps, fractional_time_steps,
                                                                      field_instance.data,
@@ -188,7 +212,29 @@ class  InterpTriangularNativeGrid_Slayer_and_LSCgrid(_BaseInterp):
             # todo eval_interp3D_timeIndependent not implented for 3D non-time varying fields
             raise Exception('eval_field_interpolation_at_particle_locations : spatial interp using eval_interp3D_timeIndependent not implemented yet ')
 
-    # @function_profiler(__name__)
+    def _time_dependent_3Dfield_sigma_grid(self,current_buffer_steps, fractional_time_steps,
+                            field_instance,       triangles,
+                           n_cell, bc_cords, nz_cell, z_fraction,
+                           output, active):
+        si = self.shared_info
+
+        data = field_instance.data
+        if data.shape[3] == 1:            # scalar
+            triangle_eval_interp.time_dependent_3Dfield_scalar_sigma_grid(current_buffer_steps, fractional_time_steps,
+                                                           data, triangles,
+                                                           n_cell, bc_cords, nz_cell, z_fraction,
+                                                           output, active)
+        elif data.shape[3] == 3:
+            # scalar
+            triangle_eval_interp.time_dependent_3Dfield_vector_sigma_grid(current_buffer_steps, fractional_time_steps,
+                                                                          data, triangles,
+                                                                          n_cell, bc_cords, nz_cell, z_fraction,
+                                                                          output, active)
+        else:
+            si.msg_logger.msg(f'3D interpolation currently only works for scalar and vector fields "{field_instance.info["name"]}" has {data.shape[3]} components',
+                              fatal_error=True, exit_now=True)
+
+    #@function_profiler(__name__)
     def eval_field_interpolation_at_given_locations(self,field_name, field_instance,grid, reader, x,
                                                     current_buffer_steps, fractional_time_steps,time=None, output=None, n_cell=None):
         # in  evaluation of field interpolation at specific locations, ie not particle locations
@@ -233,10 +279,8 @@ class  InterpTriangularNativeGrid_Slayer_and_LSCgrid(_BaseInterp):
                                                             n_cell, bc_cords,
                                                             active)
             else:
-                triangle_eval_interp.time_independent_2Dfield(basic_util.atLeast_Nby1(output),
-                                                              field_instance.data, grid['triangles'],
-                                                              n_cell, bc_cords,
-                                                              active)
+                self._time_independent_2Dfield(output,field_instance, grid['triangles'],
+                                                    n_cell, bc_cords, active)
         return output
 
     
@@ -259,10 +303,11 @@ class  InterpTriangularNativeGrid_Slayer_and_LSCgrid(_BaseInterp):
         if 'sigma' in grid:
                 tri_interp_util.get_depth_cell_sigma_layers(xq,
                                         grid['triangles'],
+                                        #grid['water_depth_triangles'],
                                         fields['water_depth'].data.ravel(),
                                         fields['tide'].data,
                                         si.minimum_total_water_depth,
-                                        grid['sigma'], grid['sigma_map_nz_interval_with_sigma'],grid['sigma_map_dz'],
+                                        grid['sigma'], grid['sigma_map_nz_interval_with_sigma'],
                                         n_cell, status, bc_cords, nz_cell, z_fraction, z_fraction_water_velocity,
                                         current_buffer_steps, fractional_time_steps,
                                         active, si.z0)
@@ -309,8 +354,7 @@ class  InterpTriangularNativeGrid_Slayer_and_LSCgrid(_BaseInterp):
                 grid['tri_walk_AOS'], grid['dry_cell_index'],
                 n_cell, cell_search_status,bc_cords,
                 self.walk_counts,
-                params['max_search_steps'], params['bc_walk_tol'], open_boundary_type, si.settings['block_dry_cells'],
-                active)
+                params['max_search_steps'], params['bc_walk_tol'], open_boundary_type, si.settings['block_dry_cells'], active)
 
             sel = part_prop['cell_search_status'].find_subset_where(active, 'eq', cell_search_status_flags['failed'], out=self.get_partID_subset_buffer('B1'))
 
@@ -319,8 +363,14 @@ class  InterpTriangularNativeGrid_Slayer_and_LSCgrid(_BaseInterp):
             info['triangle_walks_retried'] += sel.size
             new_cell = self.initial_horizontal_cell(grid, xq[sel, :])
             part_prop['n_cell'].set_values(new_cell, sel)
+            tri_interp_util.BCwalk(
+                xq,
+                grid['tri_walk_AOS'], grid['dry_cell_index'],
+                n_cell, cell_search_status, bc_cords,
+                self.walk_counts,
+                params['max_search_steps'], params['bc_walk_tol'], open_boundary_type, si.settings['block_dry_cells'], sel)
 
-            self.find_hori_cell(grid, fields, xq, self.info['open_boundary_type'], sel)
+
             # recheck for additional failures
             sel = part_prop['cell_search_status'].find_subset_where(active, 'eq', cell_search_status_flags['failed'], out=self.get_partID_subset_buffer('B1'))
 

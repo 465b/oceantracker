@@ -1,6 +1,6 @@
 from oceantracker.util.parameter_base_class import ParameterBaseClass
 from oceantracker.util.parameter_checking import ParamValueChecker as PVC
-from oceantracker.util.parameter_util import make_class_instance_from_params
+
 from oceantracker.field_group_manager.util import  field_group_manager_util
 import numpy as np
 from oceantracker.util import time_util, ncdf_util, json_util
@@ -34,7 +34,12 @@ class FieldGroupManager(ParameterBaseClass):
 
     def initial_setup(self):
         si= self.shared_info
+
         self._setup_hydro_reader(si.working_params['reader_builder'])
+
+        #todo dev test code,
+        grid = self.grid
+        grid['water_depth_triangles'] = self.fields['water_depth'].data[0,grid['triangles'],0,0]
         self.set_up_interpolator()
 
 
@@ -46,30 +51,16 @@ class FieldGroupManager(ParameterBaseClass):
         self.info['has_open_boundary_nodes'] = np.any(self.grid['node_type'] == node_types['open_boundary'])
         self.info['open_boundary_type'] = si.settings['open_boundary_type']
 
-
         # add tidal stranding class
         si = self.shared_info
-        i = make_class_instance_from_params('tidal_stranding', si.working_params['core_classes']['tidal_stranding'], si.msg_logger,
-                                            default_classID='tidal_stranding',
-                                            crumbs=f'field Group Manager>setup_hydro_fields> tidal standing setup ')
-
+        i = si.class_importer.new_make_class_instance_from_params(si.working_params['core_classes']['tidal_stranding'],'tidal_stranding',                                                 default_classID='tidal_stranding',
+                                                crumbs=f'field Group Manager>setup_hydro_fields> tidal standing setup ')
         i.initial_setup()
         self.tidal_stranding = i
 
         # initialize user supplied custom fields calculated from other fields which may depend on reader fields, eg friction velocity from velocity
         for name, params in si.working_params['class_dicts']['fields'].items():
-
-            self.add_custom_field(name ,params , crumbs=f'adding custom field {name}')
-
-            # i = make_class_instance_from_params(name, params, si.msg_logger, crumbs=f'Adding "fields" from user params for field "{name}"')
-            # i.initial_setup(self.grid, self.fields)
-            # # if not time varying can update once at start from other non-time varying fields
-            # if not i.is_time_varying(): i.update(self.fields, self.grid)
-            # if name in self.fields:
-            #     si.msg_logger.msg(f'Custom field "{name}" is already a defined field ', hint='Use another unique name?', fatal_error= True, exit_now=True)
-            # self.fields[name] = i
-        pass
-
+            self.add_custom_field(name, params, crumbs=f'adding custom field {name}')
 
     def add_part_prop_from_fields_plus_book_keeping(self):
         si = self.shared_info
@@ -80,19 +71,19 @@ class FieldGroupManager(ParameterBaseClass):
         # add part prop for reader and custom fields
         for name, i in self.fields.items():
             if i.params['create_particle_property_with_same_name']:
-                pgm.add_particle_property(name, 'from_fields', dict(write=i.params['write_interp_particle_prop_to_tracks_file'],
-                                                                    vector_dim = i.get_number_components(),
-                                                                    time_varying=True, dtype=np.float32, initial_value=0.))
-
-
+                pgm.add_particle_property(name, 'from_fields', dict(
+                                            write=i.params['write_interp_particle_prop_to_tracks_file'],
+                                            vector_dim = i.get_number_components(),
+                                            time_varying=True, dtype=np.float64, initial_value=0.))
     def update_reader(self, time_sec):
         # check if all interpolators have the time steps they need
         si  = self.shared_info
-        t0 = perf_counter()
+
         reader = self.reader
         if not reader.are_time_steps_in_buffer(time_sec):
-                reader.fill_time_buffer(self.fields, self.grid, time_sec)  # get next steps into buffer if not in buffer
-        si.block_timer('Fill reader buffers',t0)
+            t0 = perf_counter()
+            reader.fill_time_buffer(self.fields, self.grid, time_sec)  # get next steps into buffer if not in buffer
+            si.block_timer('Fill reader buffers',t0)
 
     def update_tidal_stranding_status(self, time_sec, alive):
         self.tidal_stranding.update(self.grid, time_sec, alive)
@@ -249,9 +240,7 @@ class FieldGroupManager(ParameterBaseClass):
     def _setup_hydro_reader(self,reader_builder):
         si = self.shared_info
 
-        self.reader  = make_class_instance_from_params('reader', reader_builder['params'], si.msg_logger,
-                                            crumbs=f'field Group Manager>setup_hydro_fields> reader class  ')
-        #self.reader = si.add_core_class('reader', reader_params,   crumbs=f'field Group Manager>setup_hydro_fields> reader class  ', initialise=False)
+        self.reader  = si.class_importer.new_make_class_instance_from_params(reader_builder['params'],'reader',  crumbs=f'field Group Manager>setup_hydro_fields> reader class  ')
 
         reader = self.reader
         reader.initial_setup(reader_builder['file_info'])
@@ -260,8 +249,8 @@ class FieldGroupManager(ParameterBaseClass):
         self.info['buffer_info']= reader.info['buffer_info']
 
         nc = reader.open_first_file()
-        reader.info['variables'] = nc.variable_info  # note all variable names
-        self.info['variables'] = nc.variable_info # note all variable names
+        #reader.info['variables'] = nc.variable_info  # note all variable names
+        #self.info['variables'] = nc.variable_info # note all variable names
 
         self.grid, si.is3D_run   = reader.set_up_grid(nc)
         grid = self.grid
@@ -269,23 +258,28 @@ class FieldGroupManager(ParameterBaseClass):
 
         si.msg_logger.msg(f'Hydro files are "{"3D" if si.is3D_run else "2D"}"', note=True)
 
-        #make_class_instance_from_params('interpolator', params, ml, default_classID=name,  crumbs=crumb_base + crumbs)
-        # setup compulsory fields, plus others required
+        # setup request to load compulsory fields
+        reader.params['load_fields'] = list(set(['water_velocity'] + reader.params['load_fields']))
+        if si.is3D_run:
+            # request load of water depth and tide fields which are required  in 3D
+            reader.params['load_fields'] = list(set(['tide', 'water_depth'] + reader.params['load_fields']))
+        else:
+            # add tide and water depth if available which may be used in dry cell claculation
+            fm = reader.params['field_variable_map']
+            if nc.is_var(fm['tide']) and nc.is_var(fm['water_depth']):
+                reader.params['load_fields'] = list(set(['tide', 'water_depth'] + reader.params['load_fields']))
 
-        reader.params['load_fields'] = list(set(['tide','water_depth', 'water_velocity'] + reader.params['load_fields']))
-
+        # add file fields all reader
         for name in  reader.params['load_fields']:
             self.add_reader_field( name, nc)
-
-
 
         nc.close()
 
     def set_up_interpolator(self):
         si = self.shared_info
-        i = make_class_instance_from_params('interpolator', si.working_params['core_classes']['interpolator'],si.msg_logger,
-                                                    default_classID='interpolator',
-                                                    crumbs=f'field Group Manager>setup_hydro_fields> interpolator class  ')
+        i = si.class_importer.new_make_class_instance_from_params(si.working_params['core_classes']['interpolator'],'interpolator',
+                                                default_classID='interpolator',
+                                                crumbs=f'field Group Manager>setup_hydro_fields> interpolator class  ')
         i.initial_setup(self.grid)
         self.interpolator = i
 
@@ -299,23 +293,26 @@ class FieldGroupManager(ParameterBaseClass):
         nc = reader.open_first_file()
 
         # set up dispersion using vertical profiles of A_Z if available
-        has_A_Z_profile =si.is3D_run and si.settings['use_A_Z_profile'] and fmap['A_Z_profile'] is not None and nc.is_var(fmap['A_Z_profile'])
-        self._setup_dispersion(nc, has_A_Z_profile )
+        self._setup_dispersion(nc)
 
         # add resuspension based on friction velocity
         if si.is3D_run:
             # add friction velocity from botom stress or near seabed vel
-            has_bottom_stress = nc.is_var(fmap['bottom_stress'][0])
-            self._setup_resupension(nc,  has_bottom_stress)
+            self._setup_resupension(nc)
 
         nc.close()
 
-    def _setup_dispersion(self, nc, has_A_Z_profile):
+    def _setup_dispersion(self, nc):
         si = self.shared_info
         ml = si.msg_logger
         fmap = self.reader.params['field_variable_map']
 
-        if si.is3D_run and si.settings['use_A_Z_profile'] :
+        has_A_Z_profile = (si.is3D_run and si.settings['use_A_Z_profile'] \
+                            and 'A_Z_profile' in fmap \
+                            and (fmap['A_Z_profile'] is not None \
+                            and nc.is_var(fmap['A_Z_profile'])))
+
+        if has_A_Z_profile:
             self.add_reader_field( 'A_Z_profile',nc,write_interp_particle_prop_to_tracks_file=False)
             self.add_custom_field( 'A_Z_profile_vertical_gradient',  dict(name_of_field= 'A_Z_profile',write_interp_particle_prop_to_tracks_file=False),
                                    default_classID='field_A_Z_profile_vertical_gradient',
@@ -328,11 +325,15 @@ class FieldGroupManager(ParameterBaseClass):
 
         self.info['has_A_Z_profile'] = has_A_Z_profile
 
-    def _setup_resupension(self, nc, has_bottom_stress):
+    def _setup_resupension(self, nc):
         # get fields needed to calculate friction velocity field, needed for suspension
         si = self.shared_info
         ml = si.msg_logger
+        fmap = self.reader.params['field_variable_map']
 
+        has_bottom_stress = 'bottom_stress' in fmap \
+                                and fmap['bottom_stress'] is not None \
+                                and nc.is_var(fmap['bottom_stress'])
         if has_bottom_stress:
             self.add_reader_field('bottom_stress', nc,write_interp_particle_prop_to_tracks_file=False) # set up reading from file
             self.add_custom_field('friction_velocity',dict(write_interp_particle_prop_to_tracks_file=False), default_classID='field_friction_velocity_from_bottom_stress',
@@ -351,19 +352,28 @@ class FieldGroupManager(ParameterBaseClass):
         reader= self.reader
         field_params = reader.get_field_params(nc, name)
         field_params['write_interp_particle_prop_to_tracks_file'] =write_interp_particle_prop_to_tracks_file
-        i = make_class_instance_from_params(name, field_params, si.msg_logger,
-                                            default_classID='field_reader',
-                                            crumbs=f'Field Group Manager > adding reader field "{name}"')
+        i = si.class_importer.new_make_class_instance_from_params(field_params,'fields', name=name, default_classID='field_reader',
+                                                crumbs=f'Field Group Manager > adding reader field "{name}"')
         i.info['type'] = 'reader_field'
         i.initial_setup(self.grid, self.fields)
 
 
         # it not field map given then add a map based on name, so only works for scalars
-        if name not in reader.params['field_variable_map']:
+        fm = reader.params['field_variable_map']
+        if name not in fm:
             reader.params['field_variable_map'][name] = name
             si.msg_logger.msg(f'No field map given for variable named "{name}" in reader "load_fields" parameter, assuming hydro-files have variable with this name, which is a scalar variable',
-                         hint='if not a scalar, or need to use another name internally, then  then add a map to reader "field_variable_map parameter"', note=True )
+                         hint='if not a scalar, or need to use another name internally, then  then add a map to reader "field_variable_map parameter"',
+                         crumbs ='field_group_manager> adding reader fields',
+                              note=True )
 
+        # check if variables are in file
+        for file_var_name in fm[name] if type(fm[name]) == list else [fm[name]]:
+            if not nc.is_var(file_var_name):
+                si.msg_logger.msg(f'Cannot find field variable named "{file_var_name}" in hydro-file mapped to  field "{name}" ',
+                                hint=f'variable is not in file, currently variable map is = "{fm[name]}"',
+                                  fatal_error=True)
+        si.msg_logger.exit_if_prior_errors()
         # read data if not time varying
         if not i.is_time_varying():
             i.data[0, ...] = reader.assemble_field_components(nc, self.grid, name, i)
@@ -374,9 +384,8 @@ class FieldGroupManager(ParameterBaseClass):
         # class name given or default_classID specified to get from defaults in common_info
         si = self.shared_info
 
-        i = make_class_instance_from_params(name, params, si.msg_logger,
-                                            default_classID=default_classID,
-                                            crumbs=crumbs+ f'Field group manager > custom field setup > "{name}"')
+        i = si.class_importer.new_make_class_instance_from_params(params,'fields', name,   default_classID=default_classID,
+                                                crumbs=crumbs+ f'Field group manager > custom field setup > "{name}"')
         i.info['type'] = 'custom_field'
         i.initial_setup(self.grid, self.fields)
         self.fields[name] = i
@@ -418,7 +427,9 @@ class FieldGroupManager(ParameterBaseClass):
         nc.write_a_new_variable('adjacency', grid['adjacency'], ('triangle_dim', 'vertex'))
         nc.write_a_new_variable('node_type', grid['node_type'], ('node_dim',), attributes={'node_types': ' 0 = interior, 1 = island, 2=domain, 3=open boundary'})
         nc.write_a_new_variable('is_boundary_triangle', grid['is_boundary_triangle'], ('triangle_dim',))
-        nc.write_a_new_variable('water_depth', self.fields['water_depth'].data.ravel(), ('node_dim',))
+
+        if 'water_depth' in self.fields:
+            nc.write_a_new_variable('water_depth', self.fields['water_depth'].data.ravel(), ('node_dim',))
         nc.close()
 
         output_files['grid_outline'] = output_files['output_file_base'] + '_' + key + '_outline.json'

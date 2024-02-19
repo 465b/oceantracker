@@ -28,6 +28,7 @@ poly_points_large=[[1597682.1237, 5489972.7479],
 import oceantracker.reader.generic_ncdf_reader
 demo_base_params={'output_file_base' : None,
   'add_date_to_run_output_dir': False,
+    'numba_cache_code': True,
 
    'time_step' : 900,
     'debug': True,
@@ -50,8 +51,8 @@ demo_base_params={'output_file_base' : None,
     'release_groups': {'mypoints1':{'points': [[1594500, 5483000]], 'pulse_size': 200, 'release_interval': 0}
                                 },
     'particle_properties ': {
-                        'Oxygen': { 'class_name': 'oceantracker.particle_properties.age_decay.AgeDecay', 'decay_time_scale': 1. * 3600 * 24,'initial_value' : 20.},
-                        'distance_travelled':   {'class_name': 'oceantracker.particle_properties.distance_travelled.DistanceTravelled'},
+                        'Oxygen': { 'class_name': 'AgeDecay', 'decay_time_scale': 1. * 3600 * 24,'initial_value' : 20.},
+                        'distance_travelled':   {'class_name': 'DistanceTravelled'},
 
                             }
     }
@@ -68,12 +69,12 @@ p2= deepcopy(demo_base_params)
 p2['release_groups']={
     'point1':{'allow_release_in_dry_cells': True,'ppoint':1,
             'points': two_points, 'pulse_size': 10, 'release_interval': 3 * 3600},
-    'poly1':{'class_name': 'oceantracker.release_groups.polygon_release.PolygonRelease',
+    'poly1':{'class_name': 'PolygonRelease',
             'points': deepcopy(poly_points),
             'pulse_size': 10, 'release_interval': 3 * 3600}
 }
-p2['particle_properties'] = {'my_constant_prop': {'class_name': 'oceantracker.particle_properties.load_carrying.ParticleLoad',
-                     'initial_value': 100, 'variance': 10.}}
+p2['particle_properties'] = {'my_constant_prop': {'class_name': 'ParticleLoad',
+                     'initial_value': 100}}
 
 p2.update({'block_dry_cells': True,
         'tracks_writer':{'write_dry_cell_flag': True,
@@ -229,6 +230,7 @@ params.append(p10)
 # case 50 schism basic
 schsim_base_params=\
 {'output_file_base' :'demo50_SCHISM_depthAver', 'debug': True,'time_step': 120,
+            'numba_cache_code': True,
                 #'numba_caching': False,
         'reader': { #'class_name': 'oceantracker.reader.schism_reader.SCHISMreaderNCDF',
                     'input_dir': 'demo_hindcast',
@@ -286,8 +288,12 @@ params.append (s56)
 
 # schsim 3D, dont resupend lateral boundary test
 s57 = deepcopy(s50)
+s57.update(dict(use_A_Z_profile=True,use_random_seed= False))
 s57.update({'output_file_base' : 'demo57_SCHISM_3D_lateralBoundaryTest'})
-s57['dispersion'].update({'A_H':10})
+s57['dispersion'].update({'A_H':10,'A_V': 10})
+s57['velocity_modifiers']= {'terminal_velocity':
+                                {'class_name' : 'oceantracker.velocity_modifiers.terminal_velocity.TerminalVelocity', 'value': .000}
+                            }
 s57['release_groups']={
                 'P1':{'points': [[1599750, 5485600, -1]], 'pulse_size': 20, 'release_interval': 3600}
                              }

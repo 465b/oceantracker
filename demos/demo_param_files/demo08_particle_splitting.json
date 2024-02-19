@@ -1,6 +1,7 @@
 {
     "output_file_base": "demo08_particle_splitting",
     "add_date_to_run_output_dir": false,
+    "numba_cache_code": true,
     "time_step": 600,
     "debug": true,
     "reader": {
@@ -58,12 +59,12 @@
     },
     "particle_properties ": {
         "Oxygen": {
-            "class_name": "oceantracker.particle_properties.age_decay.AgeDecay",
+            "class_name": "AgeDecay",
             "decay_time_scale": 86400.0,
             "initial_value": 20.0
         },
         "distance_travelled": {
-            "class_name": "oceantracker.particle_properties.distance_travelled.DistanceTravelled"
+            "class_name": "DistanceTravelled"
         }
     },
     "particle_properties": {

@@ -43,6 +43,7 @@ event_loggers:
       - - 1597682.1237
         - 5489972.7479
       user_polygon_name: B
+numba_cache_code: true
 output_file_base: demo07_inside_polygon_events
 particle_properties:
   age_decay:
@@ -50,11 +51,11 @@ particle_properties:
     decay_time_scale: 86400.0
 'particle_properties ':
   Oxygen:
-    class_name: oceantracker.particle_properties.age_decay.AgeDecay
+    class_name: AgeDecay
     decay_time_scale: 86400.0
     initial_value: 20.0
   distance_travelled:
-    class_name: oceantracker.particle_properties.distance_travelled.DistanceTravelled
+    class_name: DistanceTravelled
 reader:
   class_name: oceantracker.reader.generic_ncdf_reader.GenericNCDFreader
   dimension_map:

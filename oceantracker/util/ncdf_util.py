@@ -154,7 +154,8 @@ class NetCDFhandler(object):
     def var_data(self, name):   return self.file_handle.variables[name][:]
 
     def all_var_names(self): return list(self.file_handle.variables.keys())
-    def all_var_dims(self,var):  return list(self.file_handle.variables[var].dimensions)
+    def all_var_dims(self,var):
+        return list(self.file_handle.variables[var].dimensions)
 
     def var_shape(self, var):  return self.file_handle.variables[var].shape
     def var_fill_value(self,var_name): return
@@ -194,3 +195,4 @@ class NetCDFhandler(object):
         self.file_handle.close()
         self.file_handle = None  # parallel pool cant pickle nc so void
 
+pass

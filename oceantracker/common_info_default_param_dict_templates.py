@@ -1,10 +1,10 @@
-from oceantracker.util.parameter_checking import ParamValueChecker as PVC
+from oceantracker.util.parameter_checking import ParamValueChecker as PVC, ParameterCoordsChecker as PCC
 from oceantracker.util.profiling_util import available_profile_types
 package_fancy_name= 'OceanTracker'
 import numpy as np
 from copy import deepcopy
 
-code_version = '0.4.1.000 2023-12-23'
+code_version = '0.4.1.303 2024-02-04'
 
 max_timedelta_in_seconds = 1000*365*24*3600
 
@@ -20,6 +20,7 @@ shared_settings_defaults ={
                 'backtracking':        PVC(False, bool, doc_str='Run model backwards in time'),
                'regrid_z_to_uniform_sigma_levels': PVC(True, bool, doc_str='much faster 3D runs by re-griding hydo-model fields in the z to uniform sigma levels on read, based on sigma most curve z_level profile. Some hydo-model are already uniform sigma, so this param is ignored, eg ROMS'),
                # 'debug_level':               PVC(0, int,min=0, max=10, doc_str='Gives  diferent levels of debug, in development'),
+                'display_grid_at start' : PVC(False, bool, doc_str='Pause during strat up to plot the grid for checking using matplotlib, clicking om image will print a coord'),
                 'dev_debug_plots': PVC(False, bool, doc_str='show any debug plot generated at give dbug_level, not for general use'),
                 'debug': PVC(False, bool, doc_str= 'more info on errors'),
                 'dev_debug_opt': PVC(0, int,doc_str= 'does extra checks given by integer, not for general use'),
@@ -33,12 +34,15 @@ shared_settings_defaults ={
                 #'max_threads':   PVC(None, int, min=1,doc_str='maximum number of processors used for threading to process particles in parallel'),
                 'max_warnings':        PVC(50,    int, min=0,doc_str='Number of warnings stored and written to output, useful in reducing file size when there are warnings at many time steps'),  # dont record more that this number of warnings, to keep caseInfo.json finite
                 'use_random_seed':  PVC(False,  bool,doc_str='Makes results reproducible, only use for testing developments give the same results!'),
-                #'numba_caching' :  PVC(False,  bool,doc_str='Caches numba functions in file system, for faster start up, as it does not have to compile numba code each time'),
-                'numba_function_cache_size' :  PVC(4048, int, min=128, doc_str='Size of memory cache for compiled numba functions in kB?'),
-                'multiprocessing_case_start_delay': PVC(None, float, min=0., doc_str='Delay start of each case run parallel, to reduce congestion reading first hydo-model file'),  # which large numbers of case, sometimes locks up at start al reading same file, so ad delay
+                'numba_function_cache_size' :  PVC(4048, int, min=128, doc_str='Size of memory cache for compiled numba functions in kB'),
+                'numba_cache_code': PVC(False, bool,  doc_str='Enable caching to disk of complied Numba code to speed start-up.? Ignore warning from numba "UserWarning: Inspection disabled for cached code..."'),
+    'multiprocessing_case_start_delay': PVC(None, float, min=0., doc_str='Delay start of each case run parallel, to reduce congestion reading first hydo-model file'),  # which large numbers of case, sometimes locks up at start al reading same file, so ad delay
                 'profiler': PVC('oceantracker', str, possible_values=available_profile_types,
                                                        doc_str='Default oceantracker profiler, writes timings of decorated methods/functions to run/case_info file use of other profilers in development and requires additional installed modules '),
                  }
+
+
+
 #  these setting can be different for each case
 case_settings_defaults ={
             'user_note': PVC('No user note', str,doc_str='Any run note to store in case info file'),
@@ -62,20 +66,40 @@ core_class_list=['reader',
                  'tidal_stranding',
                 'resuspension']
 
+class_dicts_list=[ # class dicts which replace lists
+            'pre_processing',
+            'release_groups' ,
+            'fields',  # user fields calculated from other fields  on reading
+            'particle_properties',  # user added particle properties, eg DistanceTraveled
+            'velocity_modifiers',  # user added velocity effects, eg TerminalVelocity
+            'trajectory_modifiers',  # change particle paths, eg. re-suspension
+            'particle_statistics',  # heat map inside polygon statistics calculated on the fly
+            'particle_concentrations',  # writes concentration of particles and other properties calculated on the fly.   files ,eg PolygonEntryExit
+            'nested_readers',
+            'event_loggers',  # writes events files ,eg PolygonEntryExit
+            # below still to be developed
+            # 'post_processing':      PDLdefaults({}), #todo after run post processing not implemented yet
+            'time_varying_info', # particle info,eg. time,or  tide at at tide gauge, core example is particle time
+            ]
+
 default_classes_dict = dict( solver= 'oceantracker.solver.solver.Solver',
+                        particle_properties='oceantracker.particle_properties._base_particle_properties.ParticleProperty',
+                        time_varying_info='oceantracker.time_varying_info._base_time_varying_info.TimeVaryingInfo',
                         field_group_manager='oceantracker.field_group_manager.field_group_manager.FieldGroupManager',
                         particle_group_manager= 'oceantracker.particle_group_manager.particle_group_manager.ParticleGroupManager',
                         tracks_writer = 'oceantracker.tracks_writer.track_writer_compact.CompactTracksWriter',
                         interpolator = 'oceantracker.interpolator.interp_triangle_native_grid.InterpTriangularNativeGrid_Slayer_and_LSCgrid',
-                        dispersion = 'oceantracker.dispersion.random_walk.RandomWalk',
-                        resuspension = 'oceantracker.resuspension.resuspension.BasicResuspension',
+                        dispersion_random_walk = 'oceantracker.dispersion.random_walk.RandomWalk',
+                        dispersion_random_walk_varyingAz ='oceantracker.dispersion.random_walk_varyingAz.RandomWalkVaryingAZ',
+                        resuspension_basic = 'oceantracker.resuspension.resuspension.BasicResuspension',
                         tidal_stranding = 'oceantracker.tidal_stranding.tidal_stranding.TidalStranding',
                         release_groups = 'oceantracker.release_groups.point_release.PointRelease',
                         field_reader='oceantracker.fields._base_field.ReaderField',
                         field_custom='oceantracker.fields._base_field.CustomField',
                         field_friction_velocity_from_bottom_stress='oceantracker.fields.friction_velocity.FrictionVelocityFromBottomStress',
                         field_friction_velocity_from_near_sea_bed_velocity='oceantracker.fields.friction_velocity.FrictionVelocityFromNearSeaBedVelocity',
-                        field_A_Z_profile_vertical_gradient='oceantracker.fields.field_vertical_gradient.VerticalGradient'
+                        field_A_Z_profile_vertical_gradient='oceantracker.fields.field_vertical_gradient.VerticalGradient',
+
                         )
 
 class_dicts_list=[ # class dicts which replace lists
@@ -97,8 +121,7 @@ class_dicts_list=[ # class dicts which replace lists
 
 default_polygon_dict_params = {'user_polygonID': PVC(0, int, min=0),
                 'name': PVC(None, str),
-                'points': PVC([], 'array', list_contains_type=float, is_required=True,
-                 doc_str='Points making up the polygon as, N by 2 or 3 list of locations where particles are released. eg for 2D ``[[25,10],[23,2],....]``, must be convertible into N by 2 or 3 numpy array')
+                'points': PCC( None,is_required=True, doc_str='Points making up the polygon as, N by 2 or 3 list of locations where particles are released. eg for 2D ``[[25,10],[23,2],....]``, must be convertible into N by 2 or 3 numpy array')
                                }
 
 particle_info = {'status_flags': {'unknown': -128, 'bad_cord': -20, 'cell_search_failed': -19,
@@ -126,8 +149,9 @@ known_readers ={'schisim': 'oceantracker.reader.schism_reader.SCHISMreaderNCDF',
 
 large_float=1.0E32
 
+
 # node types for hydro model
-node_types= dict(interior = 0,island_boundary = 1, domain_boundary= 2, open_boundary=3)
+node_types= dict(interior = 0,island_boundary = 1, domain_boundary= 2, open_boundary=3, land = 4)
 
 # TODO LIST
 # todo for version 0.41

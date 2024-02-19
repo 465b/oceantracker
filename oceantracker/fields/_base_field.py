@@ -34,7 +34,7 @@ class ReaderField(ParameterBaseClass):
             grid['nz'] if params['is3D'] else 1,
              ncomp]
 
-        self.data = np.full(s, 0., dtype=np.float32, order='c')  # all fields are float 32
+        self.data = np.full(s, 0., dtype=np.float32)  # all fields are float 32
 
     def is_time_varying(self): return self.data.shape[0] > 1
     def is3D(self): return  self.data.shape[2] > 1
@@ -57,9 +57,9 @@ class CustomFieldBase(ReaderField):
     def __init__(self):
         super().__init__()  # required in children to get parent defaults and merge with given params
 
-
-    def update(self,fields,grid, buffer_index=None): basic_util.nopass('User fields must have update method')
+    def update(self,fields,grid, buffer_index=None): basic_util.nopass(' Custom User fields must have update method')
     # if buffer index None, this  allows update of non-time varying use fields
+
 
 
 

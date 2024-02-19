@@ -16,11 +16,12 @@ from numba import njit
 from oceantracker.util.cord_transforms import WGS84_to_UTM
 from matplotlib import pyplot as plt, tri
 from oceantracker.reader.util.reader_util import append_split_cell_data
+from oceantracker.reader.util.hydromodel_grid_transforms import convert_regular_grid_to_triangles
 from oceantracker.util.triangle_utilities_code import split_quad_cells
 from oceantracker.util.numba_util import njitOT
 
 
-from oceantracker.util.basic_util import  is_substring_in_list
+
 
 from oceantracker.reader.util import reader_util
 from oceantracker.reader.util.hydromodel_grid_transforms import convert_layer_field_to_levels_from_fixed_depth_fractions
@@ -43,8 +44,8 @@ class ROMsNativeReader(_BaseReader):
                                                     'water_depth': PVC('h', str),
                                                     'tide': PVC('zeta', str),
                                                     'water_temperature': PVC('temp', str) ,
-                                                    'bottom_stress': PVC('not_known', str, doc_str='maps standard internal field name to file variable name'),
-                                                    'A_Z_profile': PVC('not_known', str, doc_str='maps standard internal field name to file variable name for turbulent eddy viscosity, used if present in files'),
+                                                    'bottom_stress': PVC(None, str, doc_str='maps standard internal field name to file variable name'),
+                                                    'A_Z_profile': PVC(None, str, doc_str='maps standard internal field name to file variable name for turbulent eddy viscosity, used if present in files'),
                                                     'water_velocity_depth_averaged':PLC(['ubar','vbar'], [str], fixed_len=2),
                                   }
                                   })
@@ -92,39 +93,20 @@ class ROMsNativeReader(_BaseReader):
         grid['lat_psi'] = nc.read_a_variable('lat_psi').astype(np.float64)
         grid['lon_psi'] = nc.read_a_variable('lon_psi').astype(np.float64)
 
-        grid['lon_lat'] =  np.stack((grid['lon_psi'],grid['lat_psi']),  axis=2)
-        s=   grid['lon_lat'].shape
-        grid['lon_lat']=   grid['lon_lat'].reshape(s[0]*s[1],s[2])
+        grid['lon_lat_grid'] =  np.stack((grid['lon_psi'],grid['lat_psi']),  axis=2)
+        s=   grid['lon_lat_grid'].shape
+        grid['lon_lat']=   grid['lon_lat_grid'].reshape(s[0]*s[1],s[2])
         grid['is_lon_lat'] = True
         grid['x'] = self.convert_lon_lat_to_meters_grid(grid['lon_lat'])
+
+        # get land mask
+
         return grid
 
     def read_triangles_as_int32(self, nc, grid):
         # build triangles from regular grid
-
+        grid = convert_regular_grid_to_triangles(grid, grid['psi_land_mask'] )
         # get nodes for each corner of quad
-        rows = np.arange(grid['psi_land_mask'].shape[0])
-        cols = np.arange(grid['psi_land_mask'].shape[1])
-
-        # get global node numbers for flattened grid in C order, row 1 should be 0, 1, 3 ....
-        # note rows are x, and cols y in ROMS which are Fortran ordered arrays
-        grid['psi_grid_node_numbers'] = cols.size*rows.reshape((-1, 1)) + cols.reshape((1,-1))
-
-        # get global node numbers of triangle nodes
-        n1 = grid['psi_grid_node_numbers'][:-1, :-1]
-        n2 = grid['psi_grid_node_numbers'][:-1, 1: ]
-        n3 = grid['psi_grid_node_numbers'][1: , 1: ]
-        n4 = grid['psi_grid_node_numbers'][1: , :-1]
-
-        # build Quad cellls
-        quad_cells =  np.stack((n1.flatten('C'), n2.flatten('C'), n3.flatten('C'), n4.flatten('C'))).T
-
-        # keep  quad cells with less than 3 land nodes
-        sel= np.sum(grid['psi_land_mask'].flatten('C')[quad_cells],axis=1) < 3
-        quad_cells = quad_cells[sel,:]
-
-        grid['quad_cells_to_split'] = np.arange(quad_cells.shape[0]).astype(np.int32)
-        grid['triangles'] = split_quad_cells(quad_cells, grid['quad_cells_to_split']).astype(np.int32)
 
         return grid
 
@@ -140,7 +122,7 @@ class ROMsNativeReader(_BaseReader):
                         )
         return f_params
 
-    def read_zlevel_as_float32(self, ncgrid,fields, file_index, zlevel_buffer, buffer_index):
+    def read_zlevel_as_float32(self, nc, grid,fields, file_index, zlevel_buffer, buffer_index):
         # calcuate zlevel from depth fractions, tide and water depth
         # FVCOM has fraction of depth < from free surface, with top value first in z dim of arrAy
         # todo check first value is the bottom or free surface+-??
@@ -278,7 +260,7 @@ class ROMsNativeReader(_BaseReader):
         ax2.scatter(grid['lon_psi'][sel],grid['lat_psi'][sel] ,  c='g', marker='.', s=4)
         plt.show()
 
-@njit
+@njitOT
 def u_grid_to_psi(data, mask):
     # data ins (time, row, col, depth),  mask is land  nodes
     # to convert to pis grid make mean of adajacet rows, but  use land masked values as zero
@@ -296,7 +278,7 @@ def u_grid_to_psi(data, mask):
                     out[nt, r, c, nd] = 0.5*(v1 + v2)
     return out
 
-@njit
+@njitOT
 def v_grid_to_psi(data, mask):
     # data ins (time, row, col, depth),  mask is land  nodes
     # to convert to pis grid make mean of adajacet rows, but  use land masked values as zero
@@ -314,7 +296,7 @@ def v_grid_to_psi(data, mask):
                     out[nt, r, c, nd] = 0.5*(v1 + v2)
     return out
 
-@njit
+@njitOT
 def rho_grid_to_psi(data, mask):
     # data ins (time, row, col, depth),  mask is land  nodes
     # to convert to psi grid make mean of adajacet rows andcolumns, but  use land masked values as zero

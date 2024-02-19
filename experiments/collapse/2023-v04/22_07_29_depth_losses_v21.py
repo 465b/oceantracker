@@ -48,6 +48,7 @@ run_name = '22_11_01_depth_losses_v21'
 
 # v21
 # using hzg3 containing montly averaged spm fields
+# 1month run with 60s output
 
 
 input_dir = "/scratch/local1/hzg3/"
@@ -56,7 +57,7 @@ output_dir = "/scratch/local1/output/"
 # output_dir = "/work/uh0296/u301513/ot_output/"
 
 # tweeked parameters:
-max_time = 3600*24*30*12
+max_time = 3600*24*14
 max_particle = 1e6
 
 pulse_size = 1
@@ -76,6 +77,7 @@ release_polygon = [
         ])
     }
 ]
+
 
 
 params={
@@ -158,21 +160,52 @@ params={
         },
         "radius": {
             "class_name": "oceantracker.particle_properties.buoyancy.Radius",
-            "initial_value": 0.0005
+            # "initial_value": 0.0005
+            "initial_value": 0.5e-4
         },
         "buoyancy": {
             "class_name": "oceantracker.particle_properties.buoyancy.Buoyancy",
             "gravity": 9.81,
-            "mu": 1e-3
+            "mu": 1e-6  # kinematic viscosity of the water
         },
+        # collision with particle classes:
         "collision_very_fine_silt": {
             "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
             "stickyness": 1e-2,
             "spm_field": "spm_very_fine_silt",
-            "spm_radius": 6e-6,
+            "spm_radius": 6e-6/2,
             "spm_density": 2650.
-        }
+        },
+        "collision_fine_silt": {
+            "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
+            "stickyness": 1e-2,
+            "spm_field": "spm_fine_silt",
+            "spm_radius": 12e-6/2,
+            "spm_density": 2650.
+        },
+        "collision_medium_silt": {
+            "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
+            "stickyness": 1e-2,
+            "spm_field": "spm_medium_silt",
+            "spm_radius": 24e-6/2,
+            "spm_density": 2650.
+        },
+        "collision_coarse_silt": {
+            "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
+            "stickyness": 1e-2,
+            "spm_field": "spm_coarse_silt",
+            "spm_radius": 47e-6/2,
+            "spm_density": 2650.
+        },
+        "collision_very_fine_sand": {
+            "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
+            "stickyness": 1e-2,
+            "spm_field": "spm_very_fine_sand",
+            "spm_radius": 94e-6/2,
+            "spm_density": 2650.
+        },
     },
+
     "fields": {
         "irradiance": {
             'class_name': 'oceantracker.fields.irradiance.Irradiance',

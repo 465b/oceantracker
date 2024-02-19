@@ -60,13 +60,17 @@ class Buoyancy(ParticleProperty):
         si = self.shared_info
         part_prop = si.classes['particle_properties']
         
+        # based on dynamic viscosty; assuming slow sinking
         # v = (2/9) * ((rho_p - rho_f) * g * radius**2) / mu
-        buoyancy = - (2/9) * ((part_prop['density'].data[active] - 1000) * self.params['gravity'] * part_prop['radius'].data[active]**2) / self.params['mu'] 
-        # print(f'buoyancy based on 2/9: {buoyancy}')
+        # buoyancy = - (2/9) * ((part_prop['density'].data[active] - 1000) * self.params['gravity'] * part_prop['radius'].data[active]**2) / self.params['mu'] 
         
+        # based on kinematic viscosty; assuming slow sinking
         # v = \frac{g}{\nu} \frac{(\rho_s - \rho_w)}{\rho_w} \frac{d^2}{18}
-        buoyancy = (1/18) * self.params['gravity'] * ((part_prop['density'].data[active] - 1000) / 1000) * (2*part_prop['radius'].data[active])**2
-        # print(f'buoyancy based on 1/18: {buoyancy}')
+        # buoyancy = (1/18) * self.params['gravity'] * ((part_prop['density'].data[active] - 1000) / 1000) * (2*part_prop['radius'].data[active])**2
+        # buoyancy = - (2/9) * self.params['gravity']/self.params['mu'] * ((part_prop['density'].data[active] - 1000) / 1000) * (part_prop['radius'].data[active])**2
+
+        # alpha * (1/18) * (9.81 * (radius*2)**2 * (density - 1000)) / (kinematic_viscosity * density)
+        buoyancy = - (0.25) * (9.81 * (part_prop['radius'].data[active]*2)**2 * (part_prop['density'].data[active] - 1000)) / (self.params['mu'] * part_prop['density'].data[active])
 
         self.set_values(buoyancy, active)
 
@@ -115,7 +119,7 @@ class ParticleCollision(ParticleProperty):
         # make particles_per_liter
         particle_per_m3 = particle_per_liter * 1000
         
-        collision_kernel = self._collision_kernel_based_on_Delichatsios1975(self.params['spm_radius'], part_prop['radius'].data[active], self.info['average_relative_velocity'])
+        # collision_kernel = self._collision_kernel_based_on_Delichatsios1975(self.params['spm_radius'], part_prop['radius'].data[active], self.info['average_relative_velocity'])
         # print(f'collision kernel by Delichatsios: {collision_kernel}')
         
         collision_kernel = self._collision_kernel_based_on_burd2013(self.params['spm_radius'], part_prop['radius'].data[active], 0.1)

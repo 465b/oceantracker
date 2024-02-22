@@ -93,7 +93,7 @@ params={
     "debug": False,
     # 'numba_caching': False,
     # "compact_mode": True,
-    "processors": 8,
+    "processors": 10,
     "replicates": 1,
 
     # "run_params":
@@ -226,11 +226,11 @@ params={
         "critical_friction_velocity": 0.000
     },
     
-    "velocity_modifiers": {
-        "buyoancy_based_terminal_velocity": {
-            "class_name": "oceantracker.velocity_modifiers.stokes_based_buoyancy.StokesBasedBuoyancy"
-        }
-    },
+    # "velocity_modifiers": {
+    #     "buyoancy_based_terminal_velocity": {
+    #         "class_name": "oceantracker.velocity_modifiers.stokes_based_buoyancy.StokesBasedBuoyancy"
+    #     }
+    # },
 
     "trajectory_modifiers": {
         "salinity_induced_mortality": {
@@ -336,6 +336,11 @@ for initial_size in initial_size_list:
                     "spm_density": 2650.
                 },
 
+            },
+            "velocity_modifiers": {
+                "buyoancy_based_terminal_velocity": {
+                "class_name": "oceantracker.velocity_modifiers.stokes_based_buoyancy.StokesBasedBuoyancy"
+                }
             }
         })
 

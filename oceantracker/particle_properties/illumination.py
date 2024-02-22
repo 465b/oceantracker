@@ -1,4 +1,4 @@
-from oceantracker.particle_properties._base_properties import ParticleProperty
+from oceantracker.particle_properties._base_particle_properties import ParticleProperty
 from oceantracker.util.parameter_checking import ParamValueChecker as PVC
 from oceantracker.particle_properties.util import particle_operations_util
 

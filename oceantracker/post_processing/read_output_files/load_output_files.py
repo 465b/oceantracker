@@ -60,7 +60,6 @@ def get_case_info_files_from_dir(dir_name, case = None):
         caseID.append(d['caseID'])
 
     # make a full list of cases from their caseID's,  which allows for any missing cases due to dead rund
-    print(caseID)
     case_files_out = (max(caseID)+1)*[None]
     for ID, c in zip(caseID, case_file_list):
         case_files_out[ID] = c

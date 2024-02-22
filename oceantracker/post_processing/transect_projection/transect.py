@@ -1,5 +1,5 @@
 import numpy as np
-from oceantracker.post_processing.read_output_files.load_output_files import load_particle_track_vars
+from oceantracker.post_processing.read_output_files.load_output_files import load_track_data
 from oceantracker.post_processing.read_output_files.load_output_files import get_case_info_files_from_dir
 from oceantracker.util.polygon_util import InsidePolygon
 
@@ -86,14 +86,14 @@ class Transect():
 
 
     def project_track_data(self,case_info_dir,n_case,
-                           var_list=None,nt_range=None,min_status=0):
+                           var_list=[],nt_range=None,min_status=0):
 
         case = get_case_info_files_from_dir(case_info_dir)[n_case]
 
         default_vars = ['x', 'time','status', 'IDrelease_group', 'IDpulse', 'x0','x_last_good']
         var_list = default_vars + var_list
         
-        track_data = load_particle_track_vars(case,var_list)
+        track_data = load_track_data(case,var_list)
 
         # This is supposed to take the track_data['x'] and transform 
 
@@ -247,6 +247,7 @@ class Transect():
 
             A = section['plane'].vertices[0,:2]
             B = section['plane'].vertices[1,:2]
+    
 
             # alpha as a measure how far "downstream" from A
             alpha_1 = ((x1 - A)/(B-A))[0]

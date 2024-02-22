@@ -1,7 +1,7 @@
 import numpy as np
-from oceantracker.user_trajectory_modifiers._trajectory_modifers_base import _BaseTrajectoryModifier
-from oceantracker.util.polygonUtil import  InsidePolygon
-from oceantracker.util.parameterObject import ParamDictValueChecker as PVC
+from oceantracker.trajectory_modifiers._base_trajectory_modifers import _BaseTrajectoryModifier
+from oceantracker.util.polygon_util import InsidePolygon
+from oceantracker.util.parameter_checking import ParamValueChecker as PVC
 
 class cull_in_polygon(_BaseTrajectoryModifier):
     # fallows particles to freeze if inside a polygon

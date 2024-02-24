@@ -7,7 +7,7 @@ from oceantracker import main
 
 
 #-----------------------------------------------    
-run_name = '22_11_01_depth_losses_v23'
+run_name = '22_11_01_depth_losses_v27'
 #-----------------------------------------------
 
 
@@ -57,24 +57,37 @@ run_name = '22_11_01_depth_losses_v23'
 # v23
 # small fixing and debugging run
 
+# v24
+# disabling dyn dispersion
+# showed unusual horizontal aggregation behaviour
+# at max turbidity zone and bathymetric jump
 
-input_dir = "/scratch/local1/hzg3/"
+# v25
+# releasing all at once to make them easier to compare
+# to the retention experiment
+
+# v26
+# changing the input dir to the old non-spm version
+# to make sure its not the dataset thats causing the issue
+
+# 27
+# disable regridding
+
+
+input_dir = "/scratch/local1/hzg/"
 output_dir = "/scratch/local1/output/"
-# input_dir = "/work/uh0296/u301513/hzg_data/"
+# input_dir = "/work/uh0296/u301513/hzg_data/"z
 # output_dir = "/work/uh0296/u301513/ot_output/"
 
 # tweeked parameters:
 max_time = 3600*24*365
 max_particle = 1e6
 
-initial_size_list = np.linspace(1e-6,1e-4,3)
-stickiness_list = np.linspace(1e-3,1e-1,3)
+# initial_size_list = np.linspace(1e-6,1e-4,3)
+# stickiness_list = np.linspace(1e-3,1e-1,3)
 
-pulse_size = 1
-pulse_interval = 3600*24
-
-threshold_to_cull = 10
-fraction_to_cull = 1
+pulse_size = 10
+pulse_interval = 3600
 
 
 release_polygon = [
@@ -99,6 +112,7 @@ params={
     "processors": 10,
     "replicates": 1,
 
+    "regrid_z_to_uniform_sigma_levels": False,
     # "run_params":
     "write_tracks": True,
     "max_run_duration": max_time,
@@ -113,25 +127,25 @@ params={
 		"input_dir": input_dir,
 		"file_mask": "schout_*.nc",
         "load_fields": [
-            "turbidity",
-            "spm_sum_of_all_classes",
-            "spm_very_fine_silt",
-            "spm_fine_silt",
-            "spm_medium_silt",
-            "spm_coarse_silt",
-            "spm_very_fine_sand",
+            # "turbidity",
+            # "spm_sum_of_all_classes",
+            # "spm_very_fine_silt",
+            # "spm_fine_silt",
+            # "spm_medium_silt",
+            # "spm_coarse_silt",
+            # "spm_very_fine_sand",
             "salinity"
         ],
 		"field_variable_map": {
 			"water_depth": "depth",
 			"salinity": "salt",
-            "turbidity": "spm_sum_of_all_classes",
-            "spm_sum_of_all_classes": "spm_sum_of_all_classes",
-            "spm_very_fine_silt": "spm_very_fine_silt",
-            "spm_fine_silt": "spm_fine_silt",
-            "spm_medium_silt": "spm_medium_silt",
-            "spm_coarse_silt": "spm_coarse_silt",
-            "spm_very_fine_sand": "spm_very_fine_sand",
+            # "turbidity": "spm_sum_of_all_classes",
+            # "spm_sum_of_all_classes": "spm_sum_of_all_classes",
+            # "spm_very_fine_silt": "spm_very_fine_silt",
+            # "spm_fine_silt": "spm_fine_silt",
+            # "spm_medium_silt": "spm_medium_silt",
+            # "spm_coarse_silt": "spm_coarse_silt",
+            # "spm_very_fine_sand": "spm_very_fine_sand",
             "A_Z_profile": "diffusivity"
 		},
         # "field_variables_to_depth_average": [
@@ -146,22 +160,21 @@ params={
     "dispersion": {
         'class_name': 'oceantracker.dispersion.random_walk_varyingAz.RandomWalkVaryingAZ',
         "A_H": 0.1,
-        # "A_V": 0.001
     },
 
     "particle_properties": {  
 
         "dryout": {
             "class_name": "oceantracker.particle_properties.stranded_dryout.StrandedDryout",
-            "max_time_stranded": 3600*24*1
+            "max_time_stranded": 3600*24*7
         },
-        "illumination": {
-            'class_name': 'oceantracker.particle_properties.illumination.AverageIllumination',
-            'name_of_turbidity_field': 'spm_sum_of_all_classes',
-            'name_of_irradiance_field': 'irradiance',
-            'c': 5,
-            'time_to_average': 24*3600
-        },
+        # "illumination": {
+        #     'class_name': 'oceantracker.particle_properties.illumination.AverageIllumination',
+        #     'name_of_turbidity_field': 'spm_sum_of_all_classes',
+        #     'name_of_irradiance_field': 'irradiance',
+        #     'c': 5,
+        #     'time_to_average': 24*3600
+        # },
         # "density": {
         #     "class_name": "oceantracker.particle_properties.buoyancy.Density",
         #     "initial_value": 1000
@@ -214,19 +227,19 @@ params={
         # },
     },
 
-    "fields": {
-        "irradiance": {
-            'class_name': 'oceantracker.fields.irradiance.Irradiance',
-            'name_of_field': 'spm_sum_of_all_classes',
-            'latitude': 53.5,
-            'longitude': 9.9,
-            'timezone': 'UTC',
-            'albedo': 0.1
-        },
-    }, 
+    # "fields": {
+    #     "irradiance": {
+    #         'class_name': 'oceantracker.fields.irradiance.Irradiance',
+    #         'name_of_field': 'spm_sum_of_all_classes',
+    #         'latitude': 53.5,
+    #         'longitude': 9.9,
+    #         'timezone': 'UTC',
+    #         'albedo': 0.1
+    #     },
+    # }, 
 
     "resuspension": {
-        "critical_friction_velocity": 0.000
+        "critical_friction_velocity": 0.009
     },
     
     # "velocity_modifiers": {
@@ -240,8 +253,8 @@ params={
             "class_name": "oceantracker.trajectory_modifiers.cull_particles.ParticleCullConcentration",
             "cull_interval": 3600*24,
             "cull_status_greater_than": "dead",
-            "threshold_to_cull": threshold_to_cull,
-            "probability_of_culling": fraction_to_cull,
+            "threshold_to_cull": 20,
+            "probability_of_culling":  0.005,
             "concentration_field": "salinity"
         },
         # "light_starvation_induced_mortality": {
@@ -263,7 +276,7 @@ params={
     },
 
     "tracks_writer": {
-        "update_interval": int(3600*24),
+        "update_interval": int(3600*12),
     },
 
     # 'particle_concentrations': {
@@ -278,74 +291,74 @@ params={
     # },
 }
 
-initial_size_list = np.linspace(1e-6,1e-4,3)
-stickiness_list = np.linspace(1e-3,1e-1,3)
+# initial_size_list = np.linspace(1e-6,1e-4,3)
+# stickiness_list = np.linspace(1e-3,1e-1,3)
 
 case_list = []
 
-# reference case - no collision, neutral buoyancy
+# # reference case - no collision, neutral buoyancy
 case_list.append({})
 
-for initial_size in initial_size_list:
-    for stickiness in stickiness_list:
-        case_list.append({
-            "particle_properties": {
-                "density": {
-                    "class_name": "oceantracker.particle_properties.buoyancy.Density",
-                    "initial_value": 1000
-                },
-                "buoyancy": {
-                    "class_name": "oceantracker.particle_properties.buoyancy.Buoyancy",
-                    "gravity": 9.81,
-                    "mu": 1e-6  # kinematic viscosity of the water
-                },
-                "radius": {
-                    "class_name": "oceantracker.particle_properties.buoyancy.Radius",
-                    "initial_value": initial_size
-                },
-                "collision_very_fine_silt": {
-                    "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
-                    "stickyness": stickiness,
-                    "spm_field": "spm_very_fine_silt",
-                    "spm_radius": 6e-6/2,
-                    "spm_density": 2650.
-                },
-                "collision_fine_silt": {
-                    "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
-                    "stickyness": stickiness,
-                    "spm_field": "spm_fine_silt",
-                    "spm_radius": 12e-6/2,
-                    "spm_density": 2650.
-                },
-                "collision_medium_silt": {
-                    "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
-                    "stickyness": stickiness,
-                    "spm_field": "spm_medium_silt",
-                    "spm_radius": 24e-6/2,
-                    "spm_density": 2650.
-                },
-                "collision_coarse_silt": {
-                    "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
-                    "stickyness": stickiness,
-                    "spm_field": "spm_coarse_silt",
-                    "spm_radius": 47e-6/2,
-                    "spm_density": 2650.
-                },
-                "collision_very_fine_sand": {
-                    "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
-                    "stickyness": stickiness,
-                    "spm_field": "spm_very_fine_sand",
-                    "spm_radius": 94e-6/2,
-                    "spm_density": 2650.
-                },
+# for initial_size in initial_size_list:
+#     for stickiness in stickiness_list:
+#         case_list.append({
+#             "particle_properties": {
+#                 "density": {
+#                     "class_name": "oceantracker.particle_properties.buoyancy.Density",
+#                     "initial_value": 1000
+#                 },
+#                 "buoyancy": {
+#                     "class_name": "oceantracker.particle_properties.buoyancy.Buoyancy",
+#                     "gravity": 9.81,
+#                     "mu": 1e-6  # kinematic viscosity of the water
+#                 },
+#                 "radius": {
+#                     "class_name": "oceantracker.particle_properties.buoyancy.Radius",
+#                     "initial_value": initial_size
+#                 },
+#                 "collision_very_fine_silt": {
+#                     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
+#                     "stickyness": stickiness,
+#                     "spm_field": "spm_very_fine_silt",
+#                     "spm_radius": 6e-6/2,
+#                     "spm_density": 2650.
+#                 },
+#                 "collision_fine_silt": {
+#                     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
+#                     "stickyness": stickiness,
+#                     "spm_field": "spm_fine_silt",
+#                     "spm_radius": 12e-6/2,
+#                     "spm_density": 2650.
+#                 },
+#                 "collision_medium_silt": {
+#                     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
+#                     "stickyness": stickiness,
+#                     "spm_field": "spm_medium_silt",
+#                     "spm_radius": 24e-6/2,
+#                     "spm_density": 2650.
+#                 },
+#                 "collision_coarse_silt": {
+#                     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
+#                     "stickyness": stickiness,
+#                     "spm_field": "spm_coarse_silt",
+#                     "spm_radius": 47e-6/2,
+#                     "spm_density": 2650.
+#                 },
+#                 "collision_very_fine_sand": {
+#                     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
+#                     "stickyness": stickiness,
+#                     "spm_field": "spm_very_fine_sand",
+#                     "spm_radius": 94e-6/2,
+#                     "spm_density": 2650.
+#                 },
 
-            },
-            "velocity_modifiers": {
-                "buyoancy_based_terminal_velocity": {
-                "class_name": "oceantracker.velocity_modifiers.stokes_based_buoyancy.StokesBasedBuoyancy"
-                }
-            }
-        })
+#             },
+#             "velocity_modifiers": {
+#                 "buyoancy_based_terminal_velocity": {
+#                 "class_name": "oceantracker.velocity_modifiers.stokes_based_buoyancy.StokesBasedBuoyancy"
+#                 }
+#             }
+#         })
 
 
 
@@ -356,31 +369,31 @@ case_info_files= main.run_parallel(params, case_list)
         
 # quick fix to yet another bug in ross's HEAD
 
-import os
+# import os
 
-def modify_json_files(folder_path):
-    # Loop through all files in the folder
-    for filename in os.listdir(folder_path):
-        if filename.endswith('.json'):
-            filepath = os.path.join(folder_path, filename)
+# def modify_json_files(folder_path):
+#     # Loop through all files in the folder
+#     for filename in os.listdir(folder_path):
+#         if filename.endswith('.json'):
+#             filepath = os.path.join(folder_path, filename)
 
-            # Read the content of the file
-            with open(filepath, 'r') as file:
-                filedata = file.read()
+#             # Read the content of the file
+#             with open(filepath, 'r') as file:
+#                 filedata = file.read()
 
-            # Replace the target string
-            target_string = '"solver": null\n    },'
-            replacement_string = '"solver": null,\n        "grid": "22_11_01_depth_losses_v23_C000_grid.nc",\n        "grid_outline": "22_11_01_depth_losses_v23_C000_grid_outline.json"\n    },'
-            if target_string in filedata:
-                filedata = filedata.replace(target_string, replacement_string)
+#             # Replace the target string
+#             target_string = '"solver": null\n    },'
+#             replacement_string = '"solver": null,\n        "grid": "22_11_01_depth_losses_v23_C000_grid.nc",\n        "grid_outline": "22_11_01_depth_losses_v23_C000_grid_outline.json"\n    },'
+#             if target_string in filedata:
+#                 filedata = filedata.replace(target_string, replacement_string)
 
-                # Write the modified content back to the file
-                with open(filepath, 'w') as file:
-                    file.write(filedata)
-            else:
-                print(f"No target string found in {filename}")
+#                 # Write the modified content back to the file
+#                 with open(filepath, 'w') as file:
+#                     file.write(filedata)
+#             else:
+#                 print(f"No target string found in {filename}")
 
-# Replace 'your_folder_path' with the path to the folder containing your JSON files
-modify_json_files(os.path.join(params['root_output_dir'],params['output_file_base']))
+# # Replace 'your_folder_path' with the path to the folder containing your JSON files
+# modify_json_files(os.path.join(params['root_output_dir'],params['output_file_base']))
 
 

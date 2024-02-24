@@ -7,7 +7,7 @@ from oceantracker import main
 
 
 #-----------------------------------------------    
-run_name = '22_11_01_depth_losses_v23'
+run_name = '22_11_01_depth_losses_v2'
 #-----------------------------------------------
 
 
@@ -53,9 +53,6 @@ run_name = '22_11_01_depth_losses_v23'
 # v22
 # testing new multi case run
 # SA for initial particle size and stickiness
-
-# v23
-# small fixing and debugging run
 
 
 input_dir = "/scratch/local1/hzg3/"

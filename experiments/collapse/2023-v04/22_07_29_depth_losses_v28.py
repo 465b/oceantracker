@@ -1,13 +1,11 @@
 #%% 
-import os
-os.environ['oceantracker_numba_caching'] = '0'
 
 import numpy as np
 from oceantracker import main
 
 
 #-----------------------------------------------    
-run_name = '22_11_01_depth_losses_v23'
+run_name = '22_11_01_depth_losses_v28'
 #-----------------------------------------------
 
 
@@ -57,6 +55,9 @@ run_name = '22_11_01_depth_losses_v23'
 # v23
 # small fixing and debugging run
 
+# v28 based on v23 after identifying a bug in regridding
+
+
 
 input_dir = "/scratch/local1/hzg3/"
 output_dir = "/scratch/local1/output/"
@@ -64,18 +65,6 @@ output_dir = "/scratch/local1/output/"
 # output_dir = "/work/uh0296/u301513/ot_output/"
 
 # tweeked parameters:
-max_time = 3600*24*365
-max_particle = 1e6
-
-initial_size_list = np.linspace(1e-6,1e-4,3)
-stickiness_list = np.linspace(1e-3,1e-1,3)
-
-pulse_size = 1
-pulse_interval = 3600*24
-
-threshold_to_cull = 10
-fraction_to_cull = 1
-
 
 release_polygon = [
     {
@@ -89,20 +78,21 @@ release_polygon = [
 ]
 
 
-
 params={
     "root_output_dir": output_dir,
     "output_file_base": run_name,
     "debug": False,
     # 'numba_caching': False,
     # "compact_mode": True,
-    "processors": 10,
+    "processors": 6,
     "replicates": 1,
 
-    # "run_params":
+    "regrid_z_to_uniform_sigma_levels": False,
+
+    # "run_params":tm
     "write_tracks": True,
-    "max_run_duration": max_time,
-    "max_particles": int(max_particle),
+    "max_run_duration": 3600*24*365,
+    "max_particles": int(1e6),
     "open_boundary_type": 0,
     "block_dry_cells": True,
     "time_step": 60,
@@ -134,9 +124,6 @@ params={
             "spm_very_fine_sand": "spm_very_fine_sand",
             "A_Z_profile": "diffusivity"
 		},
-        # "field_variables_to_depth_average": [
-        #     "water_velocity",
-        # ]
 	},
 
     "solver": {
@@ -226,7 +213,7 @@ params={
     }, 
 
     "resuspension": {
-        "critical_friction_velocity": 0.000
+        "critical_friction_velocity": 0.009
     },
     
     # "velocity_modifiers": {
@@ -240,8 +227,8 @@ params={
             "class_name": "oceantracker.trajectory_modifiers.cull_particles.ParticleCullConcentration",
             "cull_interval": 3600*24,
             "cull_status_greater_than": "dead",
-            "threshold_to_cull": threshold_to_cull,
-            "probability_of_culling": fraction_to_cull,
+            "threshold_to_cull": 20,
+            "probability_of_culling": 0.005,
             "concentration_field": "salinity"
         },
         # "light_starvation_induced_mortality": {
@@ -257,11 +244,10 @@ params={
         "poly1": {
             "class_name": "oceantracker.release_groups.polygon_release.PolygonRelease",
             "points": release_polygon[0]['points'],
-            "pulse_size": int(pulse_size),
-            "release_interval": pulse_interval
+            "pulse_size": 1,
+            "release_interval": 60*15
         }
     },
-
     "tracks_writer": {
         "update_interval": int(3600*24),
     },
@@ -279,7 +265,11 @@ params={
 }
 
 initial_size_list = np.linspace(1e-6,1e-4,3)
-stickiness_list = np.linspace(1e-3,1e-1,3)
+stickiness_list = np.linspace(1e-4,1e-2,3)
+
+#prepand 0 stickiness and initial size of 1e-5
+initial_size_list = np.insert(initial_size_list, 0, 1e-5)
+stickiness_list = np.insert(stickiness_list, 0, 0)
 
 case_list = []
 
@@ -353,34 +343,3 @@ for initial_size in initial_size_list:
 #%%
 # runInfo = main.run(params)
 case_info_files= main.run_parallel(params, case_list)
-        
-# quick fix to yet another bug in ross's HEAD
-
-import os
-
-def modify_json_files(folder_path):
-    # Loop through all files in the folder
-    for filename in os.listdir(folder_path):
-        if filename.endswith('.json'):
-            filepath = os.path.join(folder_path, filename)
-
-            # Read the content of the file
-            with open(filepath, 'r') as file:
-                filedata = file.read()
-
-            # Replace the target string
-            target_string = '"solver": null\n    },'
-            replacement_string = '"solver": null,\n        "grid": "22_11_01_depth_losses_v23_C000_grid.nc",\n        "grid_outline": "22_11_01_depth_losses_v23_C000_grid_outline.json"\n    },'
-            if target_string in filedata:
-                filedata = filedata.replace(target_string, replacement_string)
-
-                # Write the modified content back to the file
-                with open(filepath, 'w') as file:
-                    file.write(filedata)
-            else:
-                print(f"No target string found in {filename}")
-
-# Replace 'your_folder_path' with the path to the folder containing your JSON files
-modify_json_files(os.path.join(params['root_output_dir'],params['output_file_base']))
-
-

@@ -5,7 +5,7 @@ from oceantracker import main
 
 
 #-----------------------------------------------    
-run_name = '22_11_01_depth_losses_v28'
+run_name = '22_11_01_depth_losses_v29'
 #-----------------------------------------------
 
 
@@ -55,8 +55,14 @@ run_name = '22_11_01_depth_losses_v28'
 # v23
 # small fixing and debugging run
 
-# v28 based on v23 after identifying a bug in regridding
+# v28
+# based on v23 after identifying a bug in regridding
 
+# v29
+# added the grid workaround again. has not been fixed as assumed
+# also removed emtpy case from case list 
+# removed unnecessary fields from the output
+# increased output to hourly and chunked files to 24h
 
 
 input_dir = "/scratch/local1/hzg3/"
@@ -91,7 +97,7 @@ params={
 
     # "run_params":tm
     "write_tracks": True,
-    "max_run_duration": 3600*24*365,
+    "max_run_duration": 3600*24*28,
     "max_particles": int(1e6),
     "open_boundary_type": 0,
     "block_dry_cells": True,
@@ -249,7 +255,54 @@ params={
         }
     },
     "tracks_writer": {
-        "update_interval": int(3600*24),
+        "update_interval": int(3600*1),
+        "turn_off_write_particle_properties_list": [
+                    "water_velocity",
+                    "particle_velocity",
+                    "velocity_modifier"
+
+                    # "dry_cell_index",
+                    # "particles_written_per_time_step",
+                    # "particle_ID",
+                    # "write_step_index",
+                    # "time_step_range",
+                    # "time",
+                    # "num_part_released_so_far",
+                    # "x",
+                    # "status",
+                    # "age",
+                    # "ID",
+                    # "IDrelease_group",
+                    # "user_release_groupID",
+                    # "IDpulse",
+                    # "time_released",
+                    # "x_last_good",
+                    "turbidity",
+                    "spm_very_fine_sand",
+                    "spm_very_fine_silt",
+                    # "tide",
+                    "water_depth",
+                    "spm_medium_silt",
+                    # "salinity",
+                    "spm_coarse_silt",
+                    "spm_fine_silt",
+                    "spm_sum_of_all_classes",
+                    "irradiance",
+                    "density",
+                    "buoyancy",
+                    "radius",
+                    "collision_very_fine_silt",
+                    "collision_fine_silt",
+                    "collision_medium_silt",
+                    "collision_coarse_silt",
+                    "collision_very_fine_sand",
+                    # "dryout",
+                    # "illumination",
+                    "release_points",
+                    "number_of_release_points",
+                    "is_polygon_release",                    
+                ],
+        # "time_steps_per_per_file": 24,
     },
 
     # 'particle_concentrations': {
@@ -360,7 +413,7 @@ def modify_json_files(folder_path):
 
             # Replace the target string
             target_string = '"solver": null\n    },'
-            replacement_string = '"solver": null,\n        "grid": "22_11_01_depth_losses_v23_C000_grid.nc",\n        "grid_outline": "22_11_01_depth_losses_v23_C000_grid_outline.json"\n    },'
+            replacement_string = '"solver": null,\n        "grid": "22_11_01_depth_losses_v29_C000_grid.nc",\n        "grid_outline": "22_11_01_depth_losses_v29_C000_grid_outline.json"\n    },'
             if target_string in filedata:
                 filedata = filedata.replace(target_string, replacement_string)
 

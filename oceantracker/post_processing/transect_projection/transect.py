@@ -85,15 +85,7 @@ class Transect():
         self.build_basis_transform_matrix()
 
 
-    def project_track_data(self,case_info_dir,n_case,
-                           var_list=[],nt_range=None,min_status=0):
-
-        case = get_case_info_files_from_dir(case_info_dir)[n_case]
-
-        default_vars = ['x', 'time','status', 'IDrelease_group', 'IDpulse', 'x0','x_last_good']
-        var_list = default_vars + var_list
-        
-        track_data = load_track_data(case,var_list)
+    def project_track_data(self, track_data,time_slice=None,min_status=0):
 
         # This is supposed to take the track_data['x'] and transform 
 
@@ -103,6 +95,10 @@ class Transect():
         # np.nan all the dead/deselected particles
         sel = track_data['status'][:, :] < min_status
         x[sel] = np.nan
+
+        if time_slice is not None:
+            slice = slice_tracks_by_iso8601(track_data, time_slice[0], time_slice[1])
+            x = x[slice]
 
         transect_track_data = np.zeros_like(x)*np.nan
 
@@ -286,3 +282,21 @@ class Transect():
         sign = np.sign(np.linalg.det(np.swapaxes(np.stack((a,b)),0,1)))
 
         return sign*rad
+
+
+def slice_tracks_by_iso8601(tracks, lower_threshold_iso8601, upper_threshold_iso8601):
+    """
+    Assumes two iso8601 strings as inputs
+    """
+
+    # generate datetime from threshold
+    lower_threshold_datetime = datetime.datetime.fromisoformat(lower_threshold_iso8601)
+    upper_threshold_datetime = datetime.datetime.fromisoformat(upper_threshold_iso8601)
+
+    # tracks['time'] from posix to datetime 
+    model_time_datetime = tracks['time'].astype('datetime64[s]').astype(datetime.datetime)
+
+    # slice the tracks by datetime
+    slice = np.logical_and(model_time_datetime >= lower_threshold_datetime, model_time_datetime <= upper_threshold_datetime)
+
+    return slice

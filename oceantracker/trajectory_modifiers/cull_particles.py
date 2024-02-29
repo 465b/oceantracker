@@ -92,6 +92,8 @@ class ParticleCullConcentration(CullParticles):
                 'gt', self.params['threshold_to_cull'],self.get_partID_subset_buffer('B1'))
         
         culled = np.intersect1d(salt_sel, status_sel)
+
+        part_prop['cause_of_death'].culled_by['salinity'].update(culled)
         
         return culled
     
@@ -135,6 +137,8 @@ class IlluminationBasedLightLimitation(CullParticles):
         # select random subset of particles to cull
         culled = particle_comparisons_util.random_selection(potentially_culled,
             self.params['probability_of_culling'], self.get_partID_subset_buffer('B1'))
+
+        part_prop['cause_of_death'].culled_by['illumination'].update(culled)
         
         return culled
 

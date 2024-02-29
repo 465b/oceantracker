@@ -77,7 +77,7 @@ class CompactTracksWriter(_BaseWriter):
         nc = self.nc
         si = self.shared_info
         nWrite = self.time_steps_written_to_current_file
-        self.sel_alive = si.classes['particle_properties']['status'].compare_all_to_a_value('gt', si.particle_status_flags['dead'], out= self.get_partID_buffer('B1'))
+        self.sel_alive = si.classes['particle_properties']['status'].compare_all_to_a_value('gteq', si.particle_status_flags['dead'], out= self.get_partID_buffer('B1'))
 
         n_file = self.info['time_particle_steps_written']
         self.file_index = [n_file, n_file + self.sel_alive.shape[0]]

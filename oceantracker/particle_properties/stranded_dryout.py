@@ -46,3 +46,5 @@ class StrandedDryout(ParticleProperty):
         # set particles that are above the threshold to dead
         dried_out = active[np.where(self.data[active] > self.params['max_time_stranded'])]
         particle_properties['status'].set_values(dead_flag, dried_out)
+
+        particle_properties['cause_of_death'].culled_by['dryout'].update(dried_out)

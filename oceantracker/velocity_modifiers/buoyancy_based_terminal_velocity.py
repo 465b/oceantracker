@@ -5,9 +5,8 @@ from numba import njit
 import numpy as np
 
 
-class StokesBasedBuoyancy(TerminalVelocity):
+class BuoyancyBasedTerminalVelocity(TerminalVelocity):
     
-
     def __init__(self):
         super().__init__()
         # self.add_default_params({})
@@ -16,6 +15,7 @@ class StokesBasedBuoyancy(TerminalVelocity):
     def check_requirements(self):
         super().check_requirements()
         self.check_class_required_fields_prop_etc(requires3D=True, required_props_list=['buoyancy'])
+
 
     def update(self, time_sec, active):
         # modify vertical velocity, if backwards, make negative

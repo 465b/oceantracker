@@ -37,7 +37,7 @@ class Radius(ParticleProperty):
         pass
 
 
-class Buoyancy(ParticleProperty):
+class StokesBasedBuoyancy(ParticleProperty):
 
     def __init__(self):
         super().__init__()
@@ -75,6 +75,33 @@ class Buoyancy(ParticleProperty):
         self.set_values(buoyancy, active)
 
 
+class PowerLawBasedBuoyancy(ParticleProperty):
+
+    def __init__(self):
+        super().__init__()
+        self.add_default_params({
+            'initial_value': PVC(0, float,doc_str='Particle property at the time of release'),
+            'a': PVC(1, float, doc_str='scaling constant'),        
+            'k': PVC(3, float, doc_str='exponential constant'),
+        })
+        self.class_doc(description='Particle buoyancy in m/s')
+
+    def check_requirements(self):
+        self.check_class_required_fields_prop_etc(required_props_list=['density', 'radius'])
+  
+
+    def initial_value_at_birth(self, new_part_IDs):
+        self.set_values(self.params['initial_value'], new_part_IDs) # sets this properties values
+
+    def update(self,active):
+        # manually updated
+        si = self.shared_info
+        part_prop = si.classes['particle_properties']
+        
+        buoyancy = - self.params['a'] * (part_prop['radius'].data[active]**-self.params['k']) # m/d to m/s
+
+        self.set_values(buoyancy, active)
+
 class ParticleCollision(ParticleProperty):
     
     def __init__(self):
@@ -99,6 +126,15 @@ class ParticleCollision(ParticleProperty):
         vertical_dispersion = 0
 
         self.info['average_relative_velocity'] = np.sqrt(horizontal_dispersion**2 + vertical_dispersion**2)*0.798
+
+        # calculate fractal properties based on Stemmann et al (2004) presented in Adrian Burds paper 
+        self.radius_unit_particle_m = 1e-6  
+        self.particle_fractal_dimension = 2.33
+
+        alpha_fractal = (4/3 * np.pi) ** (-1 / self.particle_fractal_dimension) * self.radius_unit_particle_m ** (1 - 3 / self.particle_fractal_dimension)
+        self.alpha_fractal = alpha_fractal * np.sqrt(0.6)
+        self.beta_fractal = 1. / self.particle_fractal_dimension
+
 
     def initial_value_at_birth(self, new_part_IDs):
         self.set_values(0, new_part_IDs) # sets this properties values
@@ -144,7 +180,7 @@ class ParticleCollision(ParticleProperty):
         self.set_values(previous_collision_count + number_of_sticky_collisions, active)
 
         # adjust radius and density
-        new_density, new_radius = self._combine_density(
+        new_density, new_radius = self._combine_density_fractal(
             self.params['spm_radius'],
             part_prop['radius'].data[active],
             self.params['spm_density'],
@@ -156,8 +192,7 @@ class ParticleCollision(ParticleProperty):
         part_prop['density'].set_values(new_density, active)
 
 
-    @staticmethod
-    def _combine_density(radius_spm, radius_particle, density_spm, density_b, collisions_count):
+    def _combine_density_spherical(self, radius_spm, radius_particle, density_spm, density_b, collisions_count):
         """
         Calculates the density of the combined sphere formed by merging
         two spheres with radii a and b and densities density_a and density_b.
@@ -177,7 +212,37 @@ class ParticleCollision(ParticleProperty):
         # Combined density
         combined_density = (collisions_count*mass_spm + mass_particle) / combined_volume
         return combined_density, combined_radius
+
     
+    def _combine_density_fractal(self, radius_spm, radius_particle, density_spm, density_b, collisions_count):
+        """
+        Calculates the density of the combined sphere formed by merging
+        two spheres with radii a and b and densities density_a and density_b.
+        """
+        # Volumes of the original spheres
+        volume_spm = (4/3) * np.pi * radius_spm**3
+        volume_particle = (4/3) * np.pi * radius_particle**3
+
+        # Masses of the original spheres
+        mass_spm = density_spm * volume_spm
+        mass_particle = density_b * volume_particle
+
+        """
+        Calculate the radius of a fractal particle.
+        Partly based on Stemmann et al (2004).
+        """
+        alpha = self.alpha_fractal 
+        beta = self.beta_fractal
+
+        combined_volume =  alpha * (collisions_count*volume_spm + volume_particle)** beta
+        combined_radius = (3/4 * combined_volume / np.pi)**(1/3)
+
+        # Combined density
+        combined_density = (collisions_count*mass_spm + mass_particle) / combined_volume
+        return combined_density, combined_radius
+    
+
+
     @staticmethod
     def _collision_kernel_based_on_burd2013(spm_radius, test_particle_radius, shear_gradient):
         """

@@ -5,7 +5,7 @@ from oceantracker import main
 
 
 #-----------------------------------------------    
-run_name = '22_11_01_depth_losses_v31'
+run_name = '22_11_01_depth_losses_v32'
 #-----------------------------------------------
 
 
@@ -70,6 +70,9 @@ run_name = '22_11_01_depth_losses_v31'
 # "bigger" run with light limitation induced mortality
 # using a 12 day average (to fit the)
 
+# v32
+# using fractal radius for sinking calculations
+
 
 input_dir = "/scratch/local1/hzg3/"
 output_dir = "/scratch/local1/output/"
@@ -96,7 +99,7 @@ params={
     "debug": False,
     # 'numba_caching': False,
     # "compact_mode": True,
-    "processors": 5,
+    "processors": 1,
     "replicates": 1,
 
     "regrid_z_to_uniform_sigma_levels": False,
@@ -165,56 +168,6 @@ params={
         "cause_of_death": {
             "class_name": "oceantracker.particle_properties.cause_of_death.CauseOfDeath",
         },
-        # "density": {
-        #     "class_name": "oceantracker.particle_properties.buoyancy.Density",
-        #     "initial_value": 1000
-        # },
-        # "radius": {
-        #     "class_name": "oceantracker.particle_properties.buoyancy.Radius",
-        #     # "initial_value": 0.0005
-        #     "initial_value": 0.5e-4
-        # },
-        # "buoyancy": {
-        #     "class_name": "oceantracker.particle_properties.buoyancy.Buoyancy",
-        #     "gravity": 9.81,
-        #     "mu": 1e-6  # kinematic viscosity of the water
-        # },
-        # collision with particle classes:
-        # "collision_very_fine_silt": {
-        #     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
-        #     "stickyness": stickiness,
-        #     "spm_field": "spm_very_fine_silt",
-        #     "spm_radius": 6e-6/2,
-        #     "spm_density": 2650.
-        # },
-        # "collision_fine_silt": {
-        #     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
-        #     "stickyness": stickiness,
-        #     "spm_field": "spm_fine_silt",
-        #     "spm_radius": 12e-6/2,
-        #     "spm_density": 2650.
-        # },
-        # "collision_medium_silt": {
-        #     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
-        #     "stickyness": stickiness,
-        #     "spm_field": "spm_medium_silt",
-        #     "spm_radius": 24e-6/2,
-        #     "spm_density": 2650.
-        # },
-        # "collision_coarse_silt": {
-        #     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
-        #     "stickyness": stickiness,
-        #     "spm_field": "spm_coarse_silt",
-        #     "spm_radius": 47e-6/2,
-        #     "spm_density": 2650.
-        # },
-        # "collision_very_fine_sand": {
-        #     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
-        #     "stickyness": stickiness,
-        #     "spm_field": "spm_very_fine_sand",
-        #     "spm_radius": 94e-6/2,
-        #     "spm_density": 2650.
-        # },
     },
 
     "fields": {
@@ -232,12 +185,6 @@ params={
         "critical_friction_velocity": 0.009
     },
     
-    # "velocity_modifiers": {
-    #     "buyoancy_based_terminal_velocity": {
-    #         "class_name": "oceantracker.velocity_modifiers.stokes_based_buoyancy.StokesBasedBuoyancy"
-    #     }
-    # },
-
     "trajectory_modifiers": {
         "salinity_induced_mortality": {
             "class_name": "oceantracker.trajectory_modifiers.cull_particles.ParticleCullConcentration",
@@ -255,6 +202,11 @@ params={
             "probability_of_culling": 3.56e-05,
         }
     },
+    "velocity_modifiers": {
+            "buyoancy_based_terminal_velocity": {
+            "class_name": "oceantracker.velocity_modifiers.buoyancy_based_terminal_velocity.BuoyancyBasedTerminalVelocity"
+            }
+        },
 
     "release_groups": {
         "poly1": {
@@ -272,22 +224,6 @@ params={
                     "particle_velocity",
                     "velocity_modifier"
                     # manually added
-                    # "dry_cell_index",
-                    # "particles_written_per_time_step",
-                    # "particle_ID",
-                    # "write_step_index",
-                    # "time_step_range",
-                    # "time",
-                    # "num_part_released_so_far",
-                    # "x",
-                    # "status",
-                    # "age",
-                    # "ID",
-                    # "IDrelease_group",
-                    # "user_release_groupID",
-                    # "IDpulse",
-                    # "time_released",
-                    # "x_last_good",
                     "turbidity",
                     "spm_very_fine_sand",
                     "spm_very_fine_silt",
@@ -309,23 +245,10 @@ params={
                     "collision_very_fine_sand",
                     # "dryout",
                     # "illumination",
-                    "release_points",
-                    "number_of_release_points",
-                    "is_polygon_release",                    
                 ],
         # "time_steps_per_per_file": 24,
     },
 
-    # 'particle_concentrations': {
-    #         "top_layer": {
-    #             "class_name": 'oceantracker.particle_concentrations.particle_concentrations.ParticleConcentrationsDepthLayer',
-    #             "update_interval": 24*3600
-    #         },
-    #         "full_coloumn": {
-    #             "class_name": 'oceantracker.particle_concentrations.particle_concentrations.ParticleConcentrations2D',
-    #             "update_interval": 24*3600
-    #         }
-    # },
 }
 
 initial_size_list = np.linspace(1e-6,1e-4,3)
@@ -351,9 +274,9 @@ for initial_size in initial_size_list:
                     "initial_value": 1000
                 },
                 "buoyancy": {
-                    "class_name": "oceantracker.particle_properties.buoyancy.Buoyancy",
-                    "gravity": 9.81,
-                    "mu": 1e-6  # kinematic viscosity of the water
+                    "class_name": "oceantracker.particle_properties.buoyancy.PowerLawBasedBuoyancy",
+                    "a": 942/86400,
+                    "k": 1.17  # kinematic viscosity of the water
                 },
                 "radius": {
                     "class_name": "oceantracker.particle_properties.buoyancy.Radius",
@@ -396,11 +319,6 @@ for initial_size in initial_size_list:
                 },
 
             },
-            "velocity_modifiers": {
-                "buyoancy_based_terminal_velocity": {
-                "class_name": "oceantracker.velocity_modifiers.stokes_based_buoyancy.StokesBasedBuoyancy"
-                }
-            }
         })
 
 

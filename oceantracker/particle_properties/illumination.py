@@ -85,13 +85,16 @@ class Illumination(ParticleProperty):
         
         
 class AverageIllumination(Illumination):
+
     def __init__(self):
         super().__init__()
         self.add_default_params(
                 {
                     "time_to_average": PVC(24*3600, float),
+                    "recovery_ratio": PVC(12, float)
                 }
             )
+
 
     def initial_setup(self):
         """ 
@@ -101,6 +104,11 @@ class AverageIllumination(Illumination):
         super().initial_setup()
 
         self.info['time_steps_in_averaging_period'] = int(self.params['time_to_average'] / self.shared_info.settings['time_step'])
+
+
+    def initial_value_at_birth(self, active):
+        # initial age is zero
+        self.set_values(self.params['initial_value'], active)
 
 
     def update(self, active):
@@ -116,11 +124,16 @@ class AverageIllumination(Illumination):
         np.clip(depth, 0, None)
 
         current_illumination = particle['irradiance'].data[active] * np.exp(- self.params['c'] * particle['turbidity'].data[active] * depth)
-
-        # calculate the running average
         recent_illumination = self.data[active]
 
-        averaged_illumination = (recent_illumination * (self.info['time_steps_in_averaging_period']-1) + current_illumination) / self.info['time_steps_in_averaging_period']
+        average_time = self.info['time_steps_in_averaging_period']
+        recovery_ratio = self.params['recovery_ratio']
+
+
+        growth = (recent_illumination * (average_time/recovery_ratio-1) + current_illumination) / (average_time/recovery_ratio)
+        decay = (recent_illumination * (average_time-1) + current_illumination) / average_time
+
+        averaged_illumination = np.max([growth, decay], axis=0)
         
         # particle_operations_util.set_value(self.data, illumination, active)
         self.data[active] = averaged_illumination

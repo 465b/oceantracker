@@ -15,17 +15,17 @@ class CauseOfDeath(ParticleProperty):
     def initial_setup(self):
         super().initial_setup()
 
-        self.flags = {
-            'salinity': 1,
-            'illumination': 2,
-            'dryout': 3
-            }
+        # self.flags = {
+        #     'salinity': 1,
+        #     'illumination': 2,
+        #     'dryout': 3
+        #     }
 
-        self.culled_by = {
-            "salinity": set(),
-            "illumination": set(),
-            "dryout": set()
-        }
+        # self.culled_by = {
+        #     "salinity": set(),
+        #     "illumination": set(),
+        #     "dryout": set()
+        # }
 
 
     def initial_value_at_birth(self, new_part_IDs):
@@ -34,9 +34,11 @@ class CauseOfDeath(ParticleProperty):
 
 
     def update(self,active):
+        # manually updated by culling classes
+        pass
         
-        for item in self.culled_by:
-            particle_operations_util.set_value(self.data,self.flags[item],
-            np.array(list(self.culled_by[item]),dtype=int))
+        # for item in self.culled_by:
+        #     particle_operations_util.set_value(self.data,self.flags[item],
+        #     np.array(list(self.culled_by[item]),dtype=int))
         
 

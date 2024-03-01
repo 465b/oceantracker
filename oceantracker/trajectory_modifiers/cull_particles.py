@@ -3,6 +3,7 @@ from oceantracker.util.parameter_checking import ParamValueChecker as PVC
 from oceantracker.trajectory_modifiers._base_trajectory_modifers import _BaseTrajectoryModifier
 from oceantracker.common_info_default_param_dict_templates import particle_info
 from oceantracker.particle_properties.util import particle_comparisons_util
+from oceantracker.particle_properties.util import particle_operations_util
 
 
 # proptype for how to  cull particles, this version just culls random sltions
@@ -93,7 +94,9 @@ class ParticleCullConcentration(CullParticles):
         
         culled = np.intersect1d(salt_sel, status_sel)
 
-        part_prop['cause_of_death'].culled_by['salinity'].update(culled)
+        # part_prop['cause_of_death'].culled_by['salinity'].update(culled)
+        # particle_operations_util.set_value(part_prop['cause_of_death'],1,culled)
+        part_prop['cause_of_death'].set_values(1, culled)
         
         return culled
     
@@ -138,7 +141,9 @@ class IlluminationBasedLightLimitation(CullParticles):
         culled = particle_comparisons_util.random_selection(potentially_culled,
             self.params['probability_of_culling'], self.get_partID_subset_buffer('B1'))
 
-        part_prop['cause_of_death'].culled_by['illumination'].update(culled)
+        # part_prop['cause_of_death'].culled_by['illumination'].update(culled)
+        # particle_operations_util.set_value(part_prop['cause_of_death'],2,culled)
+        part_prop['cause_of_death'].set_values(2, culled)
         
         return culled
 

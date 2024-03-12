@@ -160,7 +160,7 @@ params={
             'name_of_irradiance_field': 'irradiance',
             'c': 5,
             'time_to_average': 24*3600*12,
-            'initial_value': 50,
+            'initial_value': 30,
         },
         "cause_of_death": {
             "class_name": "oceantracker.particle_properties.cause_of_death.CauseOfDeath",
@@ -255,6 +255,11 @@ params={
             "probability_of_culling": 3.56e-05,
         }
     },
+    "velocity_modifiers": {
+            "buyoancy_based_terminal_velocity": {
+            "class_name": "oceantracker.velocity_modifiers.buoyancy_based_terminal_velocity.BuoyancyBasedTerminalVelocity"
+            }
+        },
 
     "release_groups": {
         "poly1": {
@@ -267,51 +272,34 @@ params={
     "tracks_writer": {
         "update_interval": int(3600*24),
         "turn_off_write_particle_properties_list": [
+                    
                     # default
                     "water_velocity",
                     "particle_velocity",
                     "velocity_modifier"
+
                     # manually added
-                    # "dry_cell_index",
-                    # "particles_written_per_time_step",
-                    # "particle_ID",
-                    # "write_step_index",
-                    # "time_step_range",
-                    # "time",
-                    # "num_part_released_so_far",
-                    # "x",
-                    # "status",
-                    # "age",
-                    # "ID",
-                    # "IDrelease_group",
-                    # "user_release_groupID",
-                    # "IDpulse",
-                    # "time_released",
-                    # "x_last_good",
-                    "turbidity",
-                    "spm_very_fine_sand",
-                    "spm_very_fine_silt",
+                    # "turbidity",
+                    # "spm_very_fine_sand",
+                    # "spm_very_fine_silt",
                     # "tide",
-                    "water_depth",
-                    "spm_medium_silt",
+                    # "water_depth",
+                    # "spm_medium_silt",
                     # "salinity",
-                    "spm_coarse_silt",
-                    "spm_fine_silt",
-                    "spm_sum_of_all_classes",
-                    "irradiance",
-                    "density",
-                    "buoyancy",
-                    "radius",
-                    "collision_very_fine_silt",
-                    "collision_fine_silt",
-                    "collision_medium_silt",
-                    "collision_coarse_silt",
-                    "collision_very_fine_sand",
+                    # "spm_coarse_silt",
+                    # "spm_fine_silt",
+                    # "spm_sum_of_all_classes",
+                    # "irradiance",
+                    # "density",
+                    # "buoyancy",
+                    # "radius",
+                    # "collision_very_fine_silt",
+                    # "collision_fine_silt",
+                    # "collision_medium_silt",
+                    # "collision_coarse_silt",
+                    # "collision_very_fine_sand",
                     # "dryout",
                     # "illumination",
-                    "release_points",
-                    "number_of_release_points",
-                    "is_polygon_release",                    
                 ],
         # "time_steps_per_per_file": 24,
     },
@@ -351,7 +339,7 @@ for initial_size in initial_size_list:
                     "initial_value": 1000
                 },
                 "buoyancy": {
-                    "class_name": "oceantracker.particle_properties.buoyancy.Buoyancy",
+                    "class_name": "oceantracker.particle_properties.buoyancy.StokesBasedBuoyancy",
                     "gravity": 9.81,
                     "mu": 1e-6  # kinematic viscosity of the water
                 },
@@ -364,35 +352,40 @@ for initial_size in initial_size_list:
                     "stickyness": stickiness,
                     "spm_field": "spm_very_fine_silt",
                     "spm_radius": 6e-6/2,
-                    "spm_density": 2650.
+                    "spm_density": 2650.,
+                    'combine_density_method': 'spherical'
                 },
                 "collision_fine_silt": {
                     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
                     "stickyness": stickiness,
                     "spm_field": "spm_fine_silt",
                     "spm_radius": 12e-6/2,
-                    "spm_density": 2650.
+                    "spm_density": 2650.,
+                    'combine_density_method': 'spherical'
                 },
                 "collision_medium_silt": {
                     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
                     "stickyness": stickiness,
                     "spm_field": "spm_medium_silt",
                     "spm_radius": 24e-6/2,
-                    "spm_density": 2650.
+                    "spm_density": 2650.,
+                    'combine_density_method': 'spherical'
                 },
                 "collision_coarse_silt": {
                     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
                     "stickyness": stickiness,
                     "spm_field": "spm_coarse_silt",
                     "spm_radius": 47e-6/2,
-                    "spm_density": 2650.
+                    "spm_density": 2650.,
+                    'combine_density_method': 'spherical'
                 },
                 "collision_very_fine_sand": {
                     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
                     "stickyness": stickiness,
                     "spm_field": "spm_very_fine_sand",
                     "spm_radius": 94e-6/2,
-                    "spm_density": 2650.
+                    "spm_density": 2650.,
+                    'combine_density_method': 'spherical'
                 },
 
             },

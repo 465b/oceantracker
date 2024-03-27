@@ -260,14 +260,15 @@ params={
 }
 
 initial_size_list = np.linspace(1e-6,1e-4,3)
-stickiness_list = np.linspace(1e-4,1e-2,3)
+# stickiness_list = np.linspace(1e-2,1e-2,3)
+
 
 #prepand 0 stickiness and initial size of 1e-5
 initial_size_list = np.insert(initial_size_list, 0, 1e-5)
-stickiness_list = np.insert(stickiness_list, 0, 0)
+# stickiness_list = np.insert(stickiness_list, 0, 0)
 
 initial_size_list = [1e-5]
-# stickiness_list = [0]
+stickiness_list = [0,0.01,0.05,0.1,0.5]
 
 case_list = []
 
@@ -295,11 +296,13 @@ for initial_size in initial_size_list:
                 # },
                 "buoyancy": {
                     "class_name": "oceantracker.particle_properties.buoyancy.PowerLawBasedBuoyancy",
-                    "a": 942/86400,
+                    "radius": "radius_spherical",
+                    "a": 942,
                     "k": 1.17  # kinematic viscosity of the water
                 },
                 "collision_very_fine_silt": {
                     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
+                    "radius": "radius_spherical",
                     "stickyness": stickiness,
                     "spm_field": "spm_very_fine_silt",
                     "spm_radius": 6e-6/2,
@@ -307,6 +310,7 @@ for initial_size in initial_size_list:
                 },
                 "collision_fine_silt": {
                     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
+                    "radius": "radius_spherical",
                     "stickyness": stickiness,
                     "spm_field": "spm_fine_silt",
                     "spm_radius": 12e-6/2,
@@ -314,6 +318,7 @@ for initial_size in initial_size_list:
                 },
                 "collision_medium_silt": {
                     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
+                    "radius": "radius_spherical",
                     "stickyness": stickiness,
                     "spm_field": "spm_medium_silt",
                     "spm_radius": 24e-6/2,
@@ -321,6 +326,7 @@ for initial_size in initial_size_list:
                 },
                 "collision_coarse_silt": {
                     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
+                    "radius": "radius_spherical",
                     "stickyness": stickiness,
                     "spm_field": "spm_coarse_silt",
                     "spm_radius": 47e-6/2,
@@ -328,6 +334,7 @@ for initial_size in initial_size_list:
                 },
                 "collision_very_fine_sand": {
                     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
+                    "radius": "radius_spherical",
                     "stickyness": stickiness,
                     "spm_field": "spm_very_fine_sand",
                     "spm_radius": 94e-6/2,

@@ -262,16 +262,18 @@ params={
 }
 
 initial_size_list = np.linspace(1e-6,1e-4,3)
-stickiness_list = np.linspace(1e-4,1e-2,3)
+# stickiness_list = np.linspace(1e-2,1e-2,3)
 
 #prepand 0 stickiness and initial size of 1e-5
 initial_size_list = np.insert(initial_size_list, 0, 1e-5)
-stickiness_list = np.insert(stickiness_list, 0, 0)
+# stickiness_list = np.insert(stickiness_list, 0, 0)
 
 initial_size_list = [1e-5]
-# stickiness_list = [0]
+stickiness_list = [0,0.01,0.05,0.1,0.5]
 
 case_list = []
+
+
 
 # reference case - no collision, neutral buoyancy
 
@@ -298,7 +300,7 @@ for initial_size in initial_size_list:
                 "buoyancy": {
                     "class_name": "oceantracker.particle_properties.buoyancy.PowerLawBasedBuoyancy",
                     "radius": "radius_fractal",
-                    "a": 942/86400,
+                    "a": 942,
                     "k": 1.17  # kinematic viscosity of the water
                 },
                 "collision_very_fine_silt": {

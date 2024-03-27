@@ -179,8 +179,13 @@ class PowerLawBasedBuoyancy(ParticleProperty):
         si = self.shared_info
         part_prop = si.classes['particle_properties']
 
-        radius = part_prop[self.params['radius']].data[active]
-        buoyancy = - self.params['a'] * (radius**-self.params['k']) # m/d to m/s
+        radius = part_prop[self.params['radius']].data[active] # [m]
+
+        # transform it to be consistent with kriest 2002 (dense particle)
+        radius = radius * 1e2 # [cm]
+        
+        buoyancy = - self.params['a'] * (radius**self.params['k']) # [m/d]
+        buoyancy = buoyancy /86400 # [m/s]
 
         self.set_values(buoyancy, active)
 
@@ -242,7 +247,7 @@ class ParticleCollision(ParticleProperty):
 
         # we do not de-coagulate currently
         # to avoid large massive particles we stop particles above 1mm from coagulating
-        avg_coagulations[part_prop['radius_spherical'].data[active] > 1e-3] = 0
+        avg_coagulations[part_prop['radius_spherical'].data[active] > 1e-2] = 0
 
         # roll for collision. 
         number_of_sticky_collisions = np.random.poisson(avg_coagulations)
@@ -278,8 +283,8 @@ class ParticleCollision(ParticleProperty):
         mass_particle = density_b * volume_particle
 
         # Combined volume
-        combined_radius = (collisions_count*radius_spm**3 + radius_particle**3)**(1/3)
-        combined_volume = (4/3) * np.pi * combined_radius**3
+        combined_volume = (collisions_count*volume_spm + volume_particle)
+        combined_radius = (3/4 * combined_volume / np.pi)**(1/3)
 
         # Combined density
         combined_density = (collisions_count*mass_spm + mass_particle) / combined_volume

@@ -200,6 +200,8 @@ class ParticleCollision(ParticleProperty):
                                   'spm_density': PVC(2650., float,doc_str='Density of the SPM particles'),
                                   'combine_density_method': PVC('fractal', str,possible_values=['spherical', 'fractal'],
                                                                 doc_str='Method to use for combining densities. Options: spherical, fractal'),
+                                  'coagulation_kernel': PVC('curviliniar_shear', str,possible_values=['rectilinear_shear', 'curviliniar_shear'],
+                                                             doc_str='Method to use for calculating the coagulation kernel aka as the probability of two particles colliding and sticking together. Options: rectilinear_shear, curviliniar_shear')
                                   })
     
     # def check_requirements(self):redd_props_list=['density_spherical', 'radius', 'buoyancy'])
@@ -214,9 +216,19 @@ class ParticleCollision(ParticleProperty):
 
         self._combine_density_method = self._combine_density_spherical
 
+        # set coagulation kernel based on the self.params['coagulation_kernel']
+        if self.params['coagulation_kernel'] == 'rectilinear_shear':
+            self.coagulation_kernel = self._rectilinear_shear
+        elif self.params['coagulation_kernel'] == 'curviliniar_shear':
+            self.coagulation_kernel = self._curviliniar_shear
+        else:
+            print("?")
+
+
 
     def initial_value_at_birth(self, new_part_IDs):
         self.set_values(0, new_part_IDs) # sets this properties values
+
 
         
     def update(self, active):
@@ -234,12 +246,7 @@ class ParticleCollision(ParticleProperty):
         # make particles_per_liter
         particle_per_m3 = particle_per_liter * 1000
         
-        # collision_kernel = self._collision_kernel_based_on_Delichatsios1975(self.params['spm_radius'], part_prop['radius'].data[active], self.info['average_relative_velocity'])
-        # print(f'collision kernel by Delichatsios: {collision_kernel}')
-        
-        collision_radius = part_prop[self.params['radius']].data[active]
-        collision_kernel = self._collision_kernel_based_on_burd2013(self.params['spm_radius'], collision_radius, 0.1)
-        # print(f'collision kernel by Burd: {collision_kernel}')
+        collision_kernel = self.coagulation_kernel(self.params['spm_radius'],active)
 
         collision_frequency = (1/2) * particle_per_m3 * collision_kernel
         sticking_frequency = collision_frequency * self.params['stickyness']
@@ -290,43 +297,9 @@ class ParticleCollision(ParticleProperty):
         combined_density = (collisions_count*mass_spm + mass_particle) / combined_volume
         
         return combined_density, combined_radius
+   
 
-
-    # This is wrong/buggy as it updates the presumably spherical radius to a fractal radius
-    # at each time step even tho is is a "fractal radius" after the first iteration.
-    # def _combine_density_fractal(self, radius_spm, radius_particle, density_spm, density_b, collisions_count):
-    #     """
-    #     Calculates the density of the combined sphere formed by merging
-    #     two spheres with radii a and b and densities density_a and density_b.
-    #     """
-    #     # Volumes of the original spheres
-    #     volume_spm = (4/3) * np.pi * radius_spm**3
-    #     volume_particle = (4/3) * np.pi * radius_particle**3
-
-    #     # Masses of the original spheres
-    #     mass_spm = density_spm * volume_spm
-    #     mass_particle = density_b * volume_particle
-
-    #     """
-    #     Calculate the radius of a fractal particle.
-    #     Partly based on Stemmann et al (2004).
-    #     """
-    #     alpha = self.alpha_fractal # 22.25
-    #     beta = self.beta_fractal # 0.429
-
-    #     combined_volume_spherical = (collisions_count*volume_spm + volume_particle)
-    #     combined_volume_fractal =  alpha * combined_volume_spherical** beta
-
-    #     combined_radius_fractal = (3/4 * combined_volume_fractal / np.pi)**(1/3)
-
-    #     # Combined density
-    #     combined_density = (collisions_count*mass_spm + mass_particle) / combined_volume_fractal
-    #     return combined_density, combined_volume_fractal
-    
-
-
-    @staticmethod
-    def _collision_kernel_based_on_burd2013(spm_radius, test_particle_radius, shear_gradient):
+    def _rectilinear_shear(self, spm_radius, test_particle_radius, active, shear_gradient=0.1):
         """
         Calculate the collision kernel based on Adrians Burd model.
 
@@ -338,15 +311,45 @@ class ParticleCollision(ParticleProperty):
         Returns:
         float: The collision kernel.
         """
+        si = self.shared_info
+        part_prop = si.classes['particle_properties']
 
-        return (4/3) * shear_gradient * (spm_radius + test_particle_radius)**3
-        
+        test_particle_radius = part_prop[self.params['radius']].data[active]
 
-    @staticmethod
-    def _collision_kernel_based_on_Delichatsios1975(spm_radius, test_particle_radius, avg_velocity):
-        
-        cross_section =  np.pi * (spm_radius + test_particle_radius)**2
-        kernel = cross_section * avg_velocity
-        
-        return kernel
+        beta = (4/3) * shear_gradient * (spm_radius + test_particle_radius)**3
 
+        return beta
+
+
+    def _curviliniar_shear(self, spm_radius, active, epsilon = 0.0026964394, nu = 1.2e-6, initial_particle_size = 1e-5):
+        """
+        Calculate coagulation kernel with particles "avoiding" other particles
+        due to streamline curving around the particles.
+
+        Parameters:
+        - radius_i: Radius of particle i
+        - radius_j: Radius of particle j
+        - epsilon: turbulence kinetic energy dissipation rate
+        - nu: kinematic viscosity
+        
+        Returns:
+        - beta: coagulation kernel value
+        """
+
+        si = self.shared_info
+        part_prop = si.classes['particle_properties']
+
+        test_particle_radius = part_prop[self.params['radius']].data[active]
+        tke_diss = part_prop['TKE_dissipation_rate'].data[active]
+        # set all elements in tke_diss to zero if negative (hotfix)
+        tke_diss[tke_diss < 0] = 0
+                
+
+        ratio_organic_inorganic = initial_particle_size**3 / test_particle_radius**3 # volume ratio
+        radius_gyration = (spm_radius + test_particle_radius) * 1 #self.radius_of_sphere_to_radius_of_gyration
+        particle_ratio = np.minimum(spm_radius,test_particle_radius) / np.maximum(spm_radius,test_particle_radius)
+        coag_efficiency = 1 - (1 + 5*particle_ratio + 2.5*particle_ratio**2) / (1 + particle_ratio)**5
+        beta = np.sqrt(8*np.pi*tke_diss/15/nu) * coag_efficiency * ratio_organic_inorganic * radius_gyration**3
+
+        return beta
+        

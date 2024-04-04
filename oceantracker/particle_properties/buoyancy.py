@@ -248,13 +248,9 @@ class ParticleCollision(ParticleProperty):
         
         collision_kernel = self.coagulation_kernel(self.params['spm_radius'],active)
 
-        collision_frequency = (1/2) * particle_per_m3 * collision_kernel
+        collision_frequency = particle_per_m3 * collision_kernel
         sticking_frequency = collision_frequency * self.params['stickyness']
         avg_coagulations = sticking_frequency*self.shared_info.settings['time_step']
-
-        # we do not de-coagulate currently
-        # to avoid large massive particles we stop particles above 1mm from coagulating
-        avg_coagulations[part_prop['radius_spherical'].data[active] > 1e-2] = 0
 
         # roll for collision. 
         number_of_sticky_collisions = np.random.poisson(avg_coagulations)
@@ -321,7 +317,7 @@ class ParticleCollision(ParticleProperty):
         return beta
 
 
-    def _curviliniar_shear(self, spm_radius, active, epsilon = 0.0026964394, nu = 1.2e-6, initial_particle_size = 1e-5):
+    def _curviliniar_shear(self, spm_radius, active, epsilon = 0.0026964394, nu = 1e-6, initial_particle_size = 1e-5):
         """
         Calculate coagulation kernel with particles "avoiding" other particles
         due to streamline curving around the particles.
@@ -346,7 +342,7 @@ class ParticleCollision(ParticleProperty):
                 
 
         ratio_organic_inorganic = initial_particle_size**3 / test_particle_radius**3 # volume ratio
-        radius_gyration = (spm_radius + test_particle_radius) * 1 #self.radius_of_sphere_to_radius_of_gyration
+        radius_gyration = (spm_radius + test_particle_radius) * 1.3 #self.radius_of_sphere_to_radius_of_gyration
         particle_ratio = np.minimum(spm_radius,test_particle_radius) / np.maximum(spm_radius,test_particle_radius)
         coag_efficiency = 1 - (1 + 5*particle_ratio + 2.5*particle_ratio**2) / (1 + particle_ratio)**5
         beta = np.sqrt(8*np.pi*tke_diss/15/nu) * coag_efficiency * ratio_organic_inorganic * radius_gyration**3

@@ -94,6 +94,10 @@ run_name = '22_11_01_depth_losses_v39'
 # v38
 # increased stickiness resolution to 0.01
 
+# v39
+# new dataset with tke diss
+# added curvilinear shear kernel for coagulation
+
 
 input_dir = "/scratch/local1/hzg4/"
 output_dir = "/scratch/local1/output/"

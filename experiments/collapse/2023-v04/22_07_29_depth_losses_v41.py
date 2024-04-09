@@ -5,7 +5,7 @@ from oceantracker import main
 
 
 #-----------------------------------------------    
-run_name = '22_11_01_depth_losses_v40'
+run_name = '22_11_01_depth_losses_v41'
 #-----------------------------------------------
 
 
@@ -101,6 +101,9 @@ run_name = '22_11_01_depth_losses_v40'
 # v40
 # fixed coagulation rates
 
+# v41
+# added differential sedimentation kernel
+
 
 input_dir = "/scratch/local1/hzg4/"
 output_dir = "/scratch/local1/output/"
@@ -108,6 +111,8 @@ output_dir = "/scratch/local1/output/"
 # output_dir = "/work/uh0296/u301513/ot_output/"
 
 # tweeked parameters:
+
+
 
 release_polygon = [
     # old - upstream of weir
@@ -126,6 +131,27 @@ release_polygon = [
             [588523, 5920773],
             [588442, 5919759],
             [589038, 5919759],
+        ])
+    }
+]
+
+observational_polygons = [
+    {
+        'points': np.array([
+            # zollenspieker
+            [578503, 5917114],
+            [578341, 5917110],
+            [578291, 5916941],
+            [578447, 5916941],
+        ])
+    },
+    {
+        'points': np.array([
+            # seemanshöft
+            [558344, 5933147],
+            [558107, 5933176],
+            [558031, 5932881],
+            [558269, 5932847],
         ])
     }
 ]
@@ -343,7 +369,7 @@ for initial_size in initial_size_list:
                     "spm_field": "spm_very_fine_silt",
                     "spm_radius": 6e-6/2,
                     "spm_density": 2650.,
-                    "coagulation_kernel": "curviliniar_shear"
+                    "coagulation_kernel": "curviliniar_shear & curvilinear_diff_settling"
                 },
                 "collision_fine_silt": {
                     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
@@ -352,7 +378,7 @@ for initial_size in initial_size_list:
                     "spm_field": "spm_fine_silt",
                     "spm_radius": 12e-6/2,
                     "spm_density": 2650.,
-                    "coagulation_kernel": "curviliniar_shear"
+                    "coagulation_kernel": "curviliniar_shear & curvilinear_diff_settling"
                 },
                 "collision_medium_silt": {
                     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
@@ -361,7 +387,7 @@ for initial_size in initial_size_list:
                     "spm_field": "spm_medium_silt",
                     "spm_radius": 24e-6/2,
                     "spm_density": 2650.,
-                    "coagulation_kernel": "curviliniar_shear"
+                    "coagulation_kernel": "curviliniar_shear & curvilinear_diff_settling"
                 },
                 "collision_coarse_silt": {
                     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
@@ -370,7 +396,7 @@ for initial_size in initial_size_list:
                     "spm_field": "spm_coarse_silt",
                     "spm_radius": 47e-6/2,
                     "spm_density": 2650.,
-                    "coagulation_kernel": "curviliniar_shear"
+                    "coagulation_kernel": "curviliniar_shear & curvilinear_diff_settling"
                 },
                 "collision_very_fine_sand": {
                     "class_name": "oceantracker.particle_properties.buoyancy.ParticleCollision",
@@ -379,7 +405,7 @@ for initial_size in initial_size_list:
                     "spm_field": "spm_very_fine_sand",
                     "spm_radius": 94e-6/2,
                     "spm_density": 2650.,
-                    "coagulation_kernel": "curviliniar_shear"
+                    "coagulation_kernel": "curviliniar_shear & curvilinear_diff_settling"
                 },
             },
         })

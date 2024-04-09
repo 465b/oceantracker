@@ -179,13 +179,7 @@ class PowerLawBasedBuoyancy(ParticleProperty):
         si = self.shared_info
         part_prop = si.classes['particle_properties']
 
-        radius = part_prop[self.params['radius']].data[active] # [m]
-
-        # transform it to be consistent with kriest 2002 (dense particle)
-        radius = radius * 1e2 # [cm]
-        
-        buoyancy = - self.params['a'] * (radius**self.params['k']) # [m/d]
-        buoyancy = buoyancy /86400 # [m/s]
+        buoyancy = settling_velocity_kriest_dPAM(part_prop[self.params['radius']].data[active],self.params['a'],self.params['k'])
 
         self.set_values(buoyancy, active)
 
@@ -200,7 +194,7 @@ class ParticleCollision(ParticleProperty):
                                   'spm_density': PVC(2650., float,doc_str='Density of the SPM particles'),
                                   'combine_density_method': PVC('fractal', str,possible_values=['spherical', 'fractal'],
                                                                 doc_str='Method to use for combining densities. Options: spherical, fractal'),
-                                  'coagulation_kernel': PVC('curviliniar_shear', str,possible_values=['rectilinear_shear', 'curviliniar_shear'],
+                                  'coagulation_kernel': PVC('curviliniar_shear', str,possible_values=['rectilinear_shear', 'curviliniar_shear', 'curviliniar_shear & curvilinear_diff_settling'],
                                                              doc_str='Method to use for calculating the coagulation kernel aka as the probability of two particles colliding and sticking together. Options: rectilinear_shear, curviliniar_shear')
                                   })
     
@@ -221,8 +215,13 @@ class ParticleCollision(ParticleProperty):
             self.coagulation_kernel = self._rectilinear_shear
         elif self.params['coagulation_kernel'] == 'curviliniar_shear':
             self.coagulation_kernel = self._curviliniar_shear
+        elif self.params['coagulation_kernel'] == 'curviliniar_shear & curvilinear_diff_settling':
+            self.coagulation_kernel = self._curviliniar_shear_and_curvilinear_diff_settling
         else:
-            print("?")
+            # raise error
+            raise ValueError(f"Invalid coagulation kernel method: {self.params['coagulation_kernel']}")
+
+
 
 
 
@@ -349,3 +348,59 @@ class ParticleCollision(ParticleProperty):
 
         return beta
         
+
+    def _curvilinear_diff_settling(self, spm_radius, active, initial_particle_size = 1e-5):
+        """
+            \beta^{C}_{ds} &= \frac{1}{2}\pi r^{2}_{i} | v_{i} - v_{j} |
+        """
+
+        si = self.shared_info
+        part_prop = si.classes['particle_properties']
+
+        test_particle_radius = part_prop[self.params['radius']].data[active]
+
+        settling_velocity_spm = settling_velocity_sedimorph(spm_radius)
+        settling_velocity_test_particle = settling_velocity_kriest_dPAM(test_particle_radius)
+
+        ratio_organic_inorganic = initial_particle_size**3 / test_particle_radius**3 # volume ratio
+        radius_gyration = (spm_radius + test_particle_radius) * 1.3 #self.radius_of_sphere_to_radius_of_gyration
+
+        beta = ratio_organic_inorganic * np.pi * radius_gyration**2 * np.abs(settling_velocity_spm - settling_velocity_test_particle)
+
+        return beta
+
+    def _curviliniar_shear_and_curvilinear_diff_settling(self, spm_radius, active, epsilon = 0.0026964394, nu = 1e-6, initial_particle_size = 1e-4):
+        return self._curviliniar_shear(spm_radius, active, epsilon, nu, initial_particle_size) + self._curvilinear_diff_settling(spm_radius, active, initial_particle_size)
+
+
+def settling_velocity_kriest_dPAM(radius, a = 942, k = 1.17):
+
+        # transform it to be consistent with kriest 2002 (dense particle)
+        radius = radius * 1e2 # [cm]
+        
+        buoyancy = - a * (radius**k) # [m/d]
+        buoyancy = buoyancy / 86400 # [m/s]
+
+        return buoyancy
+
+
+def settling_velocity_sedimorph(radius):
+
+    # | Very fine silt    | > 8       | 8 – 4        | 0.31·10⁻³       |
+    if radius == 6e-6/2:
+        return 3.1e-6
+    # | Fine silt         | > 7       | 16 – 8       | 0.11·10⁻²        |
+    elif radius == 12e-6/2:
+        return 1.1e-5
+    # | Medium silt       | > 6       | 31 – 16      | 0.51·10⁻²        |
+    elif radius == 24e-6/2:
+        return 5.1e-5
+    # | Coarse silt       | > 5       | 62 – 31      | 0.19·10⁻¹        |
+    elif radius == 47e-6/2:
+        return 1.9e-4
+    # | Very fine sand    | > 4       | 125 – 62     | 0.07              |
+    elif radius == 94e-6/2:
+        return 7e-4
+    else:
+        raise ValueError(f"Invalid radius: {radius}")        
+

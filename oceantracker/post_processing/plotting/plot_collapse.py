@@ -394,43 +394,25 @@ def rotate_points(x, y, label=None, angle = 32 * np.pi / 180, point = [5.489e5,5
 
     return x_rotated, y_rotated
 
-def hexmap_of_death(case, property_name_and_unit='dead', labels_dict=None,
-                            xlim=[4.80e5, 5.75e5], ylim=[5.924e6, 5.950e6], vmin=0, vmax=1000,
-                            num_bins=30, fraction=1, save_path=None):
 
-    case_info = read_case_info_file(case)
-    initial_radius = case_info['full_case_params']['class_dicts']['particle_properties']['radius_spherical']['initial_value']
-    stickiness = case_info['full_case_params']['class_dicts']['particle_properties']['collision_very_fine_silt']['stickyness']
+def drop_frame_and_spines(ax):
 
-    var_list = ['cause_of_death']
+    # Remove spines
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
 
-    track_data = load_track_data(case,var_list)    
-    
-    x,y = track_data['x'][:,:,0],track_data['x'][:,:,1]
-    dead = track_data['status'][-1] < 0
-    particle_property = track_data['cause_of_death']
+    # Remove axis labels and ticks
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xlabel('')
+    ax.set_ylabel('')
 
-    # go thru all dead particles and find their last non nan location
-    dead_particles = np.where(dead)[0]
-    # get the last non nan location of each dead particle
-    last_non_nan = np.zeros(len(dead_particles),dtype=int)
-    for i,dead_particle in enumerate(dead_particles):
-        # print(i, dead_particle)
+    return ax
 
-        last_idx = np.where(np.isnan(track_data['x'][:,dead_particle]) == False)[0]
-        if len(last_idx) == 0:
-            last_non_nan[i] = -1
-        else:
-            last_non_nan[i] = last_idx[-1]
 
-    x = track_data['x'][last_non_nan,dead_particles][:,0]
-    y = track_data['x'][last_non_nan,dead_particles][:,1]
-    particle_property = particle_property[last_non_nan,dead_particles]
-
-    if labels_dict is not None:
-        x, y, labels_rotated = rotate_points(x, y, labels_dict)
-    else:
-        x, y = rotate_points(x, y)
+def slice_data_to_frame(x,y,particle_property,xlim,ylim):
 
     # flatten
     x = x.flatten()
@@ -454,6 +436,11 @@ def hexmap_of_death(case, property_name_and_unit='dead', labels_dict=None,
 
     aspect_ratio = (np.max(x) - np.min(x)) / (np.max(y) - np.min(y))
 
+    return x,y,particle_property,aspect_ratio
+
+
+def slice_data_to_fraction(x,y,particle_property,fraction):
+    
     # slite down to a fraction of particles
     # create a random selection of indices to fit the length
     indices_subset = np.random.choice(x.shape[0], int(x.shape[0] * fraction), replace=False)
@@ -461,6 +448,86 @@ def hexmap_of_death(case, property_name_and_unit='dead', labels_dict=None,
     x = x[indices_subset]
     y = y[indices_subset]
     particle_property = particle_property[indices_subset]
+
+    return x,y,particle_property
+
+
+def draw_north_pointing_arrow(ax, arrow_pos=[0.95, 0.1], angle=32, length=0.15):
+    
+
+    ax.arrow(arrow_pos[0], arrow_pos[1], -np.sin(angle * np.pi / 180)*length, np.cos(angle * np.pi / 180)*length, 
+             transform=ax.transAxes, length_includes_head=True, overhang=0.3,
+             head_width=0.03, head_length=0.04, color='k', zorder=4)
+
+    # add N to arrow
+    ax.text(arrow_pos[0]+0.015, arrow_pos[1]-0.07, 'N', transform=ax.transAxes, fontsize=14, zorder=4)
+
+    return ax
+
+
+def hexmap_of_death(case, property_name_and_unit='dead', labels_dict=None,
+                            xlim=[4.80e5, 5.75e5], ylim=[5.924e6, 5.950e6], vmin=0, vmax=1,
+                            num_bins=30, fraction=1, save_path=None):
+
+    case_info = read_case_info_file(case)
+    initial_radius = case_info['full_case_params']['class_dicts']['particle_properties']['radius_spherical']['initial_value']
+    stickiness = case_info['full_case_params']['class_dicts']['particle_properties']['collision_very_fine_silt']['stickyness']
+
+    var_list = ['cause_of_death']
+
+    track_data = load_track_data(case,var_list)    
+    
+    dead = track_data['status'][-1] < 0
+    particle_property = track_data['cause_of_death']    
+
+    # transform all (aka alive) particles for the background map
+    x_alive,y_alive = track_data['x'][:,:,0],track_data['x'][:,:,1]
+    # rotate them   
+    if labels_dict is not None:
+        x_alive, y_alive, labels_rotated = rotate_points(x_alive, y_alive, labels_dict)
+    else:
+        x_alive, y_alive = rotate_points(x_alive, y_alive)
+    # drop flatte, drop nans, drop those outside of frame
+    x_alive,y_alive,particle_property,aspect_ratio = slice_data_to_frame(x_alive,y_alive,particle_property,xlim,ylim)
+    # drop fraction of the particles (to ease computational load)
+    x_alive,y_alive,particle_property = slice_data_to_fraction(x_alive,y_alive,particle_property,fraction)
+
+
+    dead = track_data['status'][-1] < 0
+    particle_property = track_data['cause_of_death']
+
+    # go thru all dead particles and find their last non nan location
+    dead_particles = np.where(dead)[0]
+    # get the last non nan location of each dead particle
+    last_non_nan = np.zeros(len(dead_particles),dtype=int)
+    for i,dead_particle in enumerate(dead_particles):
+        # print(i, dead_particle)
+
+        last_idx = np.where(np.isnan(track_data['x'][:,dead_particle]) == False)[0]
+        if len(last_idx) == 0:
+            last_non_nan[i] = -1
+        else:
+            last_non_nan[i] = last_idx[-1]
+
+    x_dead = track_data['x'][last_non_nan,dead_particles][:,0]
+    y_dead = track_data['x'][last_non_nan,dead_particles][:,1]
+    particle_property = particle_property[last_non_nan,dead_particles]
+
+    if labels_dict is not None:
+        x_dead, y_dead, labels_rotated = rotate_points(x_dead, y_dead, labels_dict)
+    else:
+        x_dead, y_dead = rotate_points(x_dead, y_dead)
+
+    # drop flatte, drop nans, drop those outside of frame
+    x_dead,y_dead,particle_property,aspect_ratio = slice_data_to_frame(x_dead,y_dead,particle_property,xlim,ylim)
+
+    # drop fraction of the particles (to ease computational load)
+    x_dead,y_dead,particle_property = slice_data_to_fraction(x_dead,y_dead,particle_property,fraction)
+
+    # create norm 
+    absolut_particle_count = len(x_dead)
+    #normalize such that [0,len(dead)] is mapped to [0,1]
+
 
     # -- PLOTTING --
 
@@ -470,48 +537,43 @@ def hexmap_of_death(case, property_name_and_unit='dead', labels_dict=None,
     # set title
     ax.set_title(f'{property_name_and_unit} of {initial_radius*1e6}um, stickiness: {stickiness}')
 
-    ax.set_facecolor('lightgray')
-
-    hb = ax.hexbin(x, y, 
+    # draw a background black heatmap for all particles in the frame 
+    # to show all the posible locations on the map (to avoid white patches)
+    hb = ax.hexbin(x_alive, y_alive, 
                    gridsize=[int(num_bins*aspect_ratio), num_bins],
-                   cmap=cm.get_cmap('inferno', 6), vmin=vmin, vmax=vmax,
+                   cmap=cm.get_cmap('inferno', 6), vmin=1e6, vmax=1e6+1,
+                   mincnt=1,
+                   extent=[xlim[0], xlim[1], ylim[0], ylim[1]], zorder=2)
+    
+    # drawing heatmap of the location of dead particles
+    print(len(x_dead))
+    hb = ax.hexbin(x_dead, y_dead, 
+                   # np.ones(len(x_dead))/absolut_particle_count,
+                   C = np.ones_like(x_dead)/absolut_particle_count, reduce_C_function=np.sum,
+                   gridsize=[int(num_bins*aspect_ratio), num_bins],
+                   cmap=cm.get_cmap('inferno'), vmin=vmin, vmax=vmax,
                    mincnt=1,
                    extent=[xlim[0], xlim[1], ylim[0], ylim[1]], zorder=3)
     cb = fig.colorbar(hb, ax=ax, label=property_name_and_unit, pad=0.01)
     # add cbar label
     cb.ax.set_ylabel(property_name_and_unit, rotation=90, labelpad=10, fontsize=14)
 
-    # Remove spines
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
-    ax.spines['left'].set_visible(False)
-
-    # Remove axis labels and ticks
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_xlabel('')
-    ax.set_ylabel('')
-
+    ax = drop_frame_and_spines(ax)
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
 
     # add an arrow pointing 32 degree north in the top center
-    arrow_pos = [0.95, 0.1]
-    ax.arrow(arrow_pos[0], arrow_pos[1], -np.sin(32 * np.pi / 180)*0.15, np.cos(32 * np.pi / 180)*0.15, 
-             transform=ax.transAxes, length_includes_head=True, overhang=0.3,
-             head_width=0.03, head_length=0.04, color='k', zorder=4)
+    ax = draw_north_pointing_arrow(ax)
+    # fix aspect ratio
+    ax.set_aspect('equal', 'box')
+    # set background color
+    ax.set_facecolor('lightgray')
 
-    # add N to arrow
-    ax.text(arrow_pos[0]+0.015, arrow_pos[1]-0.07, 'N', transform=ax.transAxes, fontsize=14, zorder=4)
 
     # add labels
     if labels_dict is not None:
         for key, value in labels_rotated.items():
             ax.text(value[0], value[1], key, ha='center', va='center', zorder=4, fontsize=14)
-
-    # fix aspect ratio
-    ax.set_aspect('equal', 'box')
 
     plt.tight_layout()
 

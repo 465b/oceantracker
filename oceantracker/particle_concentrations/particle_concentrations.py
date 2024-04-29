@@ -93,9 +93,11 @@ class  ParticleConcentrations2D(_BaseTriangleProperties):
 
 class ParticleConcentrationsDepthLayer(ParticleConcentrations2D):
 
-    # def __init__(self):
-    #     super().__init__()
-    #     self.add_default_params({'layer_depth' : PVC(1, float, min=0)})
+    def __init__(self):
+        super().__init__()
+        self.add_default_params({'layer_depth_min' : PVC(1, float, min=0)})
+        self.add_default_params({'layer_depth_max' : PVC(2, float, min=0)})
+
 
     # def check_requirements(self):
     #     super().__init__()
@@ -106,5 +108,7 @@ class ParticleConcentrationsDepthLayer(ParticleConcentrations2D):
         part_prop =  si.classes['particle_properties']
         status_sel =  part_prop['status'].compare_all_to_a_value('gteq', si.particle_status_flags['frozen'], out=self.get_partID_buffer('B1'))
         distance_from_surface = part_prop['tide'].data - part_prop['x'].data[:,2]
-        layer_sel = np.where(distance_from_surface < 1)[0]
+        # layer_sel = np.where(distance_from_surface < 1)[0]
+        layer_sel = np.where(np.logical_and(distance_from_surface >= self.params['layer_depth_min'],
+                                            distance_from_surface < self.params['layer_depth_max']))[0]
         return np.intersect1d(status_sel, layer_sel)

@@ -195,8 +195,8 @@ class ParticleCollision(ParticleProperty):
                                   'combine_density_method': PVC('fractal', str,possible_values=['spherical', 'fractal'],
                                                                 doc_str='Method to use for combining densities. Options: spherical, fractal'),
                                   'coagulation_kernel': PVC('curviliniar_shear', str,possible_values=['rectilinear_shear', 'curviliniar_shear', 'curviliniar_shear & curvilinear_diff_settling'],
-                                                             doc_str='Method to use for calculating the coagulation kernel aka as the probability of two particles colliding and sticking together. Options: rectilinear_shear, curviliniar_shear')
-                                  })
+                                                             doc_str='Method to use for calculating the coagulation kernel aka as the probability of two particles colliding and sticking together. Options: rectilinear_shear, curviliniar_shear'),
+                                  'initial_radius': PVC(1e-5, float,doc_str='Organic aggregate size at the time of release'),})
     
     # def check_requirements(self):redd_props_list=['density_spherical', 'radius', 'buoyancy'])
 
@@ -245,7 +245,7 @@ class ParticleCollision(ParticleProperty):
         # make particles_per_liter
         particle_per_m3 = particle_per_liter * 1000
         
-        collision_kernel = self.coagulation_kernel(self.params['spm_radius'],active)
+        collision_kernel = self.coagulation_kernel(self.params['spm_radius'],active, initial_particle_size=self.params['initial_radius'])
 
         collision_frequency = particle_per_m3 * collision_kernel
         sticking_frequency = collision_frequency * self.params['stickyness']
@@ -359,7 +359,7 @@ class ParticleCollision(ParticleProperty):
 
         test_particle_radius = part_prop[self.params['radius']].data[active]
 
-        settling_velocity_spm = settling_velocity_sedimorph(spm_radius)
+        settling_velocity_spm = settling_velocity_kriest_dPAM(spm_radius)
         settling_velocity_test_particle = settling_velocity_kriest_dPAM(test_particle_radius)
 
         ratio_organic_inorganic = initial_particle_size**3 / test_particle_radius**3 # volume ratio
@@ -369,8 +369,9 @@ class ParticleCollision(ParticleProperty):
 
         return beta
 
-    def _curviliniar_shear_and_curvilinear_diff_settling(self, spm_radius, active, epsilon = 0.0026964394, nu = 1e-6, initial_particle_size = 1e-4):
-        return self._curviliniar_shear(spm_radius, active, epsilon, nu, initial_particle_size) + self._curvilinear_diff_settling(spm_radius, active, initial_particle_size)
+    def _curviliniar_shear_and_curvilinear_diff_settling(self, spm_radius, active, epsilon = 0.0026964394, nu = 1e-6, initial_particle_size = 5e-5):
+        return self._curviliniar_shear(spm_radius, active, epsilon, nu, initial_particle_size) \
+               + self._curvilinear_diff_settling(spm_radius, active, initial_particle_size)
 
 
 def settling_velocity_kriest_dPAM(radius, a = 942, k = 1.17):

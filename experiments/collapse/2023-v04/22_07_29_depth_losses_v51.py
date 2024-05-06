@@ -136,10 +136,10 @@ run_name = '22_11_01_depth_losses_v51'
 # moving to levante for (close to) final runs
 
 
-# input_dir = "/scratch/local1/hzg4/"
-# output_dir = "/scratch/local1/output/"
-input_dir = "/work/uh0296/u301513/hydrodynamics_data/hzg_tkediss_spm/"
-output_dir = "/work/uh0296/u301513/ot_output/"
+input_dir = "/scratch/local1/hzg4/"
+output_dir = "/scratch/local1/output/"
+# input_dir = "/work/uh0296/u301513/hydrodynamics_data/hzg_tkediss_spm/"
+# output_dir = "/work/uh0296/u301513/ot_output/"
 
 # tweeked parameters:
 
@@ -192,7 +192,7 @@ params={
     "root_output_dir": output_dir,
     "output_file_base": run_name,
     "debug": False,
-    "processors": 128,
+    "processors": 5,
 
     "regrid_z_to_uniform_sigma_levels": False,
 

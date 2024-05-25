@@ -535,7 +535,7 @@ def hexmap_of_death(case, property_name_and_unit='dead', labels_dict=None,
     fig, ax = plt.subplots(figsize=(12, 12/(aspect_ratio*0.85)), dpi=300)
 
     # set title
-    ax.set_title(f'{property_name_and_unit} of {initial_radius*1e6}um, stickiness: {stickiness}')
+    # ax.set_title(f'{property_name_and_unit} of {initial_radius*1e6}um, stickiness: {stickiness}')
 
     # draw a background black heatmap for all particles in the frame 
     # to show all the posible locations on the map (to avoid white patches)
@@ -549,14 +549,14 @@ def hexmap_of_death(case, property_name_and_unit='dead', labels_dict=None,
     print(len(x_dead))
     hb = ax.hexbin(x_dead, y_dead, 
                    # np.ones(len(x_dead))/absolut_particle_count,
-                   C = np.ones_like(x_dead)/absolut_particle_count, reduce_C_function=np.sum,
+                   C = np.ones_like(x_dead)/absolut_particle_count*100, reduce_C_function=np.sum,
                    gridsize=[int(num_bins*aspect_ratio), num_bins],
                    cmap=cm.get_cmap('inferno'), vmin=vmin, vmax=vmax,
                    mincnt=1,
                    extent=[xlim[0], xlim[1], ylim[0], ylim[1]], zorder=3)
     cb = fig.colorbar(hb, ax=ax, label=property_name_and_unit, pad=0.01)
     # add cbar label
-    cb.ax.set_ylabel(property_name_and_unit, rotation=90, labelpad=10, fontsize=14)
+    cb.ax.set_ylabel("norm. deaths in bin (%)", rotation=90, labelpad=10, fontsize=14)
 
     ax = drop_frame_and_spines(ax)
     ax.set_xlim(xlim)

@@ -32,7 +32,7 @@ def main(args):
 
     ot.add_class('release_groups',name='my_polygon_release',  # name used internal to refer to this release
                             class_name='PolygonRelease',  # class to use
-                            release_interval = 1800,
+                            release_interval = 900,
                             points=poly_points)
     ot.add_class('release_groups', name='my_grid_release',  # name used internal to refer to this release
                  class_name='GridRelease',  # class to use
@@ -43,7 +43,9 @@ def main(args):
                  )
     # add a decaying particle property,# with exponential decay based on age
     ot.add_class('particle_properties', **test_definitions.pp1) # add a new property to particle_properties role
-    ot.add_class('particle_properties', class_name='Speed', name='speed')
+    ot.add_class('particle_properties', class_name='WaterSpeed')
+    ot.add_class('particle_properties', class_name='DistanceTravelled')
+
     ot.add_class('particle_statistics',name='my_heatmap',
                                              class_name='GriddedStats2D_timeBased',
                                             grid_span=[1,1.5],
@@ -51,7 +53,7 @@ def main(args):
                                              grid_size=[60, 121],  # number of east and north cells in the heat map
                                              release_group_centered_grids=True,  # center a grid around each release group
                                              update_interval=1800,  # time interval in sec, between doing particle statists counts
-                                             particle_property_list=['speed'],  # request a heat map for the decaying part. prop. added above
+                                             particle_property_list=['water_speed'],  # request a heat map for the decaying part. prop. added above
                                              status_list=['moving'],  # only count the particles which are moving
                                              z_min=-10.,  # only count particles at locations above z=-2m
                                         )
@@ -60,7 +62,7 @@ def main(args):
                                              # the below are optional settings/parameters
                                              polygon_list=[dict(points=poly_points+.05)],  # number of east and north cells in the heat map
                                              update_interval=1800,  # time interval in sec, between doing particle statists counts
-                                             particle_property_list=['speed'],  # request a heat map for the decaying part. prop. added above
+                                             particle_property_list=['water_speed'],  # request a heat map for the decaying part. prop. added above
                                              status_list=['moving'],  # only count the particles which are moving
                                              z_min=-10.,  # only count particles at locations above z=-2m
                                         )

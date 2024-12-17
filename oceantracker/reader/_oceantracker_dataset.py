@@ -46,7 +46,7 @@ class OceanTrackerDataSet(object):
         cat['ref_time'] = time
 
         vi = deepcopy(cat['variables'][v_name])
-        vi.update(dims=info['time_dim'], shape=( time .size,), dtype=time.dtype )
+        vi.update(dims=info['time_dim'], shape=( time.size,), dtype=time.dtype )
         cat['variables'][info['time_variable']] = vi
 
         # set up statr ends times
@@ -145,9 +145,12 @@ class OceanTrackerDataSet(object):
         info = cat['info']
         info['time_variable'] = time_variable
         info['time_dim'] = None
+        info['time_units'] = None
+
         ml = self.msg_logger
         info['dims']= {}
         info['attrs'] = {}
+
         for fileID, fn in enumerate(file_names):
             fi = dict(name=fn, ID=fileID, has_time=False)
             ds = self._open_file(fi['name'])
@@ -155,7 +158,8 @@ class OceanTrackerDataSet(object):
             if time_variable in ds.variables:
                 info['time_dim'] = ds[time_variable].dims[0]
                 info['time_dtype'] = ds[time_variable].dtype
-                info['time_encoding'] = ds.variables[info['time_variable']].encoding
+                if 'units' in ds.variables[info['time_variable']].encoding:
+                    info['time_units'] = ds.variables[info['time_variable']].encoding['units']
                 fi['has_time'] = True
                 time = ds.variables[info['time_variable']].data
                 fi['time'] = time
@@ -189,7 +193,7 @@ class OceanTrackerDataSet(object):
                 ml.progress_marker(f'Cataloging hindcast file # {fileID} of {len(file_names)}, '
                                         f'name="{s}"',start_time=t0)
                 tlast = perf_counter()
-        if info['time_dim'] is None or 'units'  not in info['time_encoding']:
+        if info['time_dim'] is None or info['time_units'] is None:
             ml.msg(f'X=xarray could not identify time variable index in file ={fn}',
                    fatal_error=True, crumbs= self.crumbs,
                    hint='Hindcast filed do not have time variable with "units" attribute meeting CF convention, eg. "seconds since 2017-01-01 00:00:00 +0000"  ')

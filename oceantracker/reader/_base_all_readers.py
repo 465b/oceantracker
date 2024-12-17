@@ -59,7 +59,8 @@ class _BaseReader(ParameterBaseClass):
                             z=PVC( None, str, doc_str='name of dimensions for z layer boundaries '),
                             all_z_dims=PLC(None, str, doc_str='All z dims used to identify  3D variables'),
                             ),
-            'field_variables': PLC(None, str, obsolete=True, doc_str=' parameter obsolete, use "load_fields" parameter, with field_variable_map if needed', make_list_unique=True),
+            'field_variables' : PLC(None, str, obsolete=True, doc_str=' parameter obsolete, use "load_fields" parameter, with field_variable_map if needed', make_list_unique=True),
+            'drop_variables ' :PLC(None, str,doc_str='Variable for xarray to ingore, eg. problimatic time variables that wont decode, ie not CFtime standard compliant'),
         })  # list of normal required dimensions
 
         self.info['buffer_info'] = dict( time_steps_in_buffer = [])
@@ -225,11 +226,13 @@ class _BaseReader(ParameterBaseClass):
 
         info['bounding_box'] = b
         si.msg_logger.msg(f'Hydro-model is "{"3D" if info["is3D"] else "2D"}", in geographic coords = "{info["geographic_coords"] }"  type "{self.__class__.__name__}"',
-                          note=True, hint=f'Files found in dir and sub-dirs of "{self.params["input_dir"]}"')
+                          tabs=2,note=True, hint=f'Files found in dir and sub-dirs of "{self.params["input_dir"]}"')
 
-        si.msg_logger.msg(f'Hindcast start: {info["start_date"]}  end:  {info["end_date"]}, time steps  {info["total_time_steps"]} ', tabs=3)
-
-        si.msg_logger.msg('grid bounding box = ' + b, tabs=4)
+        si.msg_logger.msg(f'Hindcast start: {info["start_date"]}  end:  {info["end_date"]}', tabs=4)
+        dt = time_util.seconds_to_pretty_duration_string(info['time_step'])
+        si.msg_logger.msg(f'time step = {dt}, number of time steps= {info["total_time_steps"]} ',
+            tabs=5)
+        si.msg_logger.msg('grid bounding box = ' + b, tabs=5)
 
         # reader triangles
         grid['triangles'] = self.read_triangles(grid)
@@ -241,7 +244,6 @@ class _BaseReader(ParameterBaseClass):
         # ensure variables have right type
         grid['x'] = grid['x'].astype(np.float64)
 
-
         return grid
 
     def construct_grid_variables(self, grid):
@@ -249,27 +251,27 @@ class _BaseReader(ParameterBaseClass):
         # add to reader build info
         info = self.info
         msg_logger = si.msg_logger
-        msg_logger.progress_marker('Starting grid setup')
+        msg_logger.progress_marker('Starting grid setup',tabs=2)
 
         # node to cell map
         t0 = perf_counter()
         grid['node_to_tri_map'], grid['tri_per_node'] = triangle_utilities.build_node_to_triangle_map(grid['triangles'], grid['x'])
-        msg_logger.progress_marker('built node to triangles map', start_time=t0)
+        msg_logger.progress_marker('built node to triangles map', start_time=t0,tabs=2)
 
         # adjacency map
         t0 = perf_counter()
         grid['adjacency'] = triangle_utilities.build_adjacency_from_node_tri_map(grid['node_to_tri_map'], grid['tri_per_node'], grid['triangles'])
-        msg_logger.progress_marker('built triangle adjacency matrix', start_time=t0)
+        msg_logger.progress_marker('built triangle adjacency matrix', start_time=t0,tabs=2)
 
         # boundary triangles
         t0 = perf_counter()
         grid['is_boundary_triangle'] = triangle_utilities.get_boundary_triangles(grid['adjacency'])
-        msg_logger.progress_marker('found boundary triangles', start_time=t0)
+        msg_logger.progress_marker('found boundary triangles', start_time=t0,tabs=2)
         t0 = perf_counter()
         grid['grid_outline'] = triangle_utilities.build_grid_outlines(grid['triangles'], grid['adjacency'],
                                             grid['is_boundary_triangle'], grid['node_to_tri_map'], grid['x'])
 
-        msg_logger.progress_marker('built domain and island outlines', start_time=t0)
+        msg_logger.progress_marker('built domain and island outlines', start_time=t0,tabs=2)
 
         # make island and domain nodes, not in regular grid some nodes may be unsed so mark as land
         grid['node_type'] = np.full(grid['x'].shape[0],  node_types.land,dtype=np.int8) # mark all as land
@@ -285,8 +287,8 @@ class _BaseReader(ParameterBaseClass):
 
         t0 = perf_counter()
         grid['triangle_area'] = triangle_utilities.calcuate_triangle_areas(grid['x'], grid['triangles'],info['geographic_coords'])
-        msg_logger.progress_marker('calculated triangle areas', start_time=t0)
-        msg_logger.progress_marker('Finished grid setup')
+        msg_logger.progress_marker('calculated triangle areas', start_time=t0,tabs=2)
+
 
         # adjust node type and adjacent for open boundaries
         # todo define node and adjacent type values in dict, for single definition and case info output?
@@ -315,6 +317,7 @@ class _BaseReader(ParameterBaseClass):
         #grid['water_depth_at_nodes'] = np.full((grid['x'].shape[0],3), 0, dtype=np.float32)
         #for n  in range(3):
         #    pass
+        msg_logger.progress_marker('Finished grid setup', tabs=2)
         return grid
 
     def build_vertical_grid(self, grid):

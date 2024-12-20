@@ -111,7 +111,7 @@ class GriddedStats3D_timeBased(GriddedStats2D_timeBased):
                                 warning=True)
 
     @staticmethod
-    # @njitOT
+    @njitOT
     def do_counts_and_summing_numba(group_ID, x, x_edges, y_edges, z_edges, count, 
                                    count_all_particles, prop_list, sum_prop_list, sel):
         # Zero counts for this time slice

@@ -57,7 +57,7 @@ def draw_base_map(grid, ax=plt.gca(), axis_lims=None, back_ground_depth=True,
     if title is not None:  ax.set_title(title)
     if text1 is not None:  text_norm(.4, .1, text1, fontsize=8)
     add_credit(credit)
-    add_map_scale_bar(axis_lims, ax=ax)
+    # add_map_scale_bar(axis_lims, ax=ax)
     return ax
 
 def display_grid(grid, ginput=0, axis_lims=None):

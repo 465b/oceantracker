@@ -8,6 +8,13 @@ PolygonStats2D_timeBased
 
 **full class_name :** oceantracker.particle_statistics.polygon_statistics.PolygonStats2D_timeBased
 
+
+.. warning::
+
+	Class is under development may not yet work in all cases, if errors contact developer
+
+
+
 **Inheritance:** > ParameterBaseClass> _BaseParticleLocationStats> GriddedStats2D_timeBased> _CorePolygonMethods> PolygonStats2D_timeBased
 
 
@@ -82,19 +89,16 @@ Parameters:
 		- possible_types: ``[<class 'str'>, <class 'float'>, <class 'numpy.datetime64'>, <class 'int'>, <class 'numpy.float64'>, <class 'numpy.float32'>]``
 		- units: ``ISO8601  date as string eg. "2017-01-01T00:30:00",np.datetime64, or float of seconds since 1/1/1970``
 
-	* ``status_max`` :   ``<class 'str'>``   *<optional>*
-		Description: Count only those particles with status  <= to this value
+	* ``status_list``:  *<optional>*
+		Description: - List of particle status types to count,eg  ["on_bottom","moving"], other status types will be ignored in statistcs
 
-		- default: ``moving``
+		- a list containing type:  ``[]``
+		- default list : ``['stationary', 'stranded_by_tide', 'on_bottom', 'moving']``
 		- data_type: ``<class 'str'>``
-		- possible_values: ``['unknown', 'bad_cord', 'cell_search_failed', 'notReleased', 'dead', 'outside_open_boundary', 'stationary', 'stranded_by_tide', 'on_bottom', 'moving']``
-
-	* ``status_min`` :   ``<class 'str'>``   *<optional>*
-		Description: Count only those particles with status >= to this value
-
-		- default: ``stationary``
-		- data_type: ``<class 'str'>``
-		- possible_values: ``['unknown', 'bad_cord', 'cell_search_failed', 'notReleased', 'dead', 'outside_open_boundary', 'stationary', 'stranded_by_tide', 'on_bottom', 'moving']``
+		- possible_values: ``['unknown', 'notReleased', 'dead', 'outside_open_boundary', 'outside_domain', 'stationary', 'stranded_by_tide', 'on_bottom', 'moving']``
+		- possible_types: ``[]``
+		- make_list_unique: ``False``
+		- min_len: ``0``
 
 	* ``update_interval`` :   ``<class 'float'>``   *<optional>*
 		Description: Time in seconds between calculating statistics, wil be rounded to be a multiple of the particle tracking time step

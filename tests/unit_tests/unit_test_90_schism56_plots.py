@@ -4,11 +4,11 @@ from plot_oceantracker import plot_tracks
 
 import numpy as np
 from tests.unit_tests import test_definitions
-
+from copy import deepcopy
 def main(args):
     ot = OceanTracker()
     ot.settings(**test_definitions.base_settings(__file__,args))
-    ot.settings(time_step=240, use_A_Z_profile=True)
+    ot.settings(time_step=240, use_A_Z_profile=True, screen_output_time_interval=240)
 
     ot.add_class('reader', **test_definitions.reader_demo_schisim3D)
 
@@ -48,6 +48,6 @@ def main(args):
 
     test_definitions.show_track_plot(case_info_file, args)
 
-    return case_info_file
+    return ot.params
 
 

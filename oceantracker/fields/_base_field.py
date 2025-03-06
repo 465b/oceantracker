@@ -22,17 +22,20 @@ class _BaseField(ParameterBaseClass):
         reader = None
         interp = None
 
-    def initial_setup(self,time_buffer_size, reader_info, reader_fields):
+    def add_required_classes_and_settings(self, reader_info): pass
+
+    def initial_setup(self, reader_info):
 
         params= self.params
 
-        s= [time_buffer_size if params['time_varying'] else 1,
+        s= [si.settings.time_buffer_size if params['time_varying'] else 1,
             reader_info['num_nodes'],
             reader_info['num_z_levels'] if params['is3D'] else 1,
             (3 if params['is3D'] else 2) if params['is_vector'] else 1
         ]
 
         self.data = np.full(s, 0., dtype=np.float32)  # all fields are float 32
+        self.info.update(params)
 
     def is_time_varying(self): return self.data.shape[0] > 1
     def is3D(self): return  self.data.shape[2] > 1
@@ -57,8 +60,7 @@ class CustomFieldBase(_BaseField):
 
         self.add_default_params(requires3D=PVC(False, bool, doc_str='Must be a 3D run to be used', is_required=True))
 
-    def initial_setup(self, time_buffer_size, reader_info, reader_fields, grid):
-        super().initial_setup(time_buffer_size, reader_info, reader_fields)
+
     def update(self,fields, grid, buffer_index=None): basic_util.nopass(' Custom User fields must have update method')
     # if buffer index None, this  allows update of non-time varying use fields
 

@@ -7,8 +7,8 @@ from os import path
 import subprocess, sys
 from dataclasses import  dataclass, asdict
 
-version= dict(major= 0.5, revision  = 9, date = '2024-03-30', parameter_ver=0.5)
-version['str'] = f"{version['major']:.2f}.{version['revision']:04.0f}-{version['date']}"
+version= dict(major= 0.5, revision  = 40, date = '2025-03-04', parameter_ver=0.5)
+version['str'] = f"{version['major']:.2f}.{version['revision']:04d}-{version['date']}"
 
 try:
     version['git_revision'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=path.dirname(path.realpath(__file__))).decode().replace('\n', '')
@@ -26,16 +26,18 @@ package_dir = path.dirname(__file__)
 ot_root_dir = path.dirname(package_dir)
 default_output_dir = path.join(path.dirname(path.dirname(package_dir)),'oceantracker_output')
 
+#todo automate build of known readers list
 known_readers = dict(
-                SCHISM= 'oceantracker.reader.SCHISM_reader.SCHISMreaderNCDF',
-                ROMS =  'oceantracker.reader.ROMS_reader.ROMsNativeReader',
-                SCHISM_v5 =  'oceantracker.reader.SCHISM_reader_v5.SCHISMreaderNCDFv5',
+                SCHISM= 'oceantracker.reader.SCHISM_reader.SCHISMreader',
+                ROMS =  'oceantracker.reader.ROMS_reader.ROMSreader',
+                SCHISM_v5 =  'oceantracker.reader.SCHISM_reader_v5.SCHISMreaderV5',
                 GLORYS =  'oceantracker.reader.GLORYS_reader.GLORYSreader',
-                DEFT3D_FM =  'oceantracker.reader.delft_fm.DELFTFM',
-                # FVCOM =  'oceantracker.reader.dev.dev_FVCOM_reader.FVCOM',
-
+                DEFT3D_FM =  'oceantracker.reader.DEFT3DFM_reader.DELF3DFMreader',
+                FVCOMreader =  'oceantracker.reader.FVCOM_reader.FVCOMreader',
+                ROMSmoanaProject = 'oceantracker.reader.ROMS_reader_moana_project.ROMSreaderMonaProject'
                 #generic =  'oceantracker.reader.generic_unstructured_reader.GenericUnstructuredReader',
                 #dummy_data =  'oceantracker.reader.dummy_data_reader.DummyDataReader',
+
                  )
 
 default_classes_dict = dict(
@@ -58,33 +60,56 @@ default_classes_dict = dict(
                 )
 # index values
 
-# below are mapping names to index name
+# below are mapping names to index name, and are added to shared info
 @dataclass
-class _base_values_class:
-    def asdict(self):
-        return asdict(self)
+class _BaseConstantsClass:
+    c = 1
+    def asdict(self):  return self.__dict__
+    def possible_values(self):  return list(self.__dict__.keys())
+
+
+''' Particle status flags mapped to integer values '''
+@dataclass
+class _ParticleStatusFlags(_BaseConstantsClass):
+    unknown : int = -20
+    notReleased : int = -10
+    dead : int = -5
+    outside_open_boundary : int = -2
+    outside_domain: int = -1
+    stationary : int = 0
+    stranded_by_tide : int = 3
+    on_bottom : int = 6
+    moving : int = 10
+
+# status of cell search
+@dataclass
+class _CellSearchStatusFlags(_BaseConstantsClass):
+    ok: int = 0
+    hit_domain_boundary: int = -1
+    hit_open_boundary: int = -2
+    hit_dry_cell : int = -3
+    bad_coord: int = -20
+    failed: int = -30
+
+
 
 # types of node
 @dataclass
-class _node_types_class(_base_values_class):
+class _NodeTypes(_BaseConstantsClass):
     interior: int = 0
     island_boundary: int = 1
     domain_boundary: int = 2
     open_boundary: int = 3
     land: int = 4
-node_types = _node_types_class()
 
-
-
-# status of cell search
 @dataclass
-class _CellSearchStatusFlags(_base_values_class):
-    ok: int = 0
-    domain_edge: int = -1
-    open_boundary_edge: int = -2
-    dry_cell_edge : int = -3
-    bad_cord: int = -20
-    failed: int = -30
+class _EdgeTypes(_BaseConstantsClass):
+    interior: int = 0
+    domain: int = -1
+    open_boundary: int = -2
+
+
+
 
     def get_edge_vars(self):
         return {key:item for key,item in self.asdict().items() if key in ['domain_edge']}

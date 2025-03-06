@@ -34,8 +34,6 @@ class GriddedStats2D_timeBased(_BaseParticleLocationStats):
         super().initial_setup()
         self.open_output_file()
         nc = self.nc
-        if self.params['write']:
-              nc.add_dimension('release_group_dim', len(si.class_roles.release_groups))
 
         # get release group IDs to split bt
         self.set_up_spatial_bins(nc)
@@ -143,6 +141,8 @@ class GriddedStats2D_timeBased(_BaseParticleLocationStats):
         nc.create_a_variable('count', dim_names, np.int64, description= 'counts of particles in grid at given times, for each release group')
         nc.create_a_variable('count_all_particles', dim_names[:2], np.int64, description='counts of particles whether in grid or not')
 
+
+
         # set up space for requested particle properties
         # working count space, row are (y,x)
         self.count_time_slice = np.full(dim_sizes[1:], 0, np.int64)
@@ -167,6 +167,8 @@ class GriddedStats2D_timeBased(_BaseParticleLocationStats):
         self.do_counts_and_summing_numba(p_groupID, p_x, stats_grid['x_bin_edges'], stats_grid['y_bin_edges'],
                                         self.count_time_slice, self.count_all_particles_time_slice,
                                         self.prop_data_list, self.sum_prop_data_list, sel)
+
+
 
     @staticmethod
     @njitOT

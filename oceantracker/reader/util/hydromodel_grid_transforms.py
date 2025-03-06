@@ -2,8 +2,9 @@ import numpy as np
 from numba import njit
 from oceantracker.interpolator.util.interp_kernals import kernal_linear_interp1D
 from copy import copy
-from oceantracker.util.numba_util import njitOT
+from oceantracker.util.numba_util import njitOT, njitOTparallel
 from oceantracker.util.triangle_utilities import split_quad_cells
+import numba as nb
 
 def convert_regular_grid_to_triangles(grid,mask):
     # get nodes for each corner of quad
@@ -30,11 +31,11 @@ def convert_regular_grid_to_triangles(grid,mask):
     return grid['triangles']
 
 
-@njitOT
+@njitOTparallel
 def convert_zlevels_to_fractions(zlevels,bottom_cell_index,z0):
     # get zlevels (nodes, depths) as fraction of water depth
     z_fractions= np.full_like(zlevels,np.nan,dtype=np.float32)
-    for n in range(zlevels.shape[0]): # loop over nodes
+    for n in nb.prange(zlevels.shape[0]): # loop over nodes
         z_surface = float(zlevels[n, -1])
         z_bottom= float(zlevels[n,bottom_cell_index[n]])
         total_water_depth = abs(z_surface-z_bottom)
@@ -62,13 +63,13 @@ def find_node_with_smallest_bot_layer(z_fractions,bottom_cell_index):
 
     return node_min
 
-@njitOT
+@njitOTparallel
 def  interp_4D_field_to_fixed_sigma_values(zlevel_fractions,bottom_cell_index,sigma,
                                            water_depth,tide,z0,minimum_total_water_depth,
                                            data,out, is_water_velocity):
     # assumes time invariant zlevel_fractions, linear interp
     # set up space
-    for nt in range(out.shape[0]):
+    for nt in nb.prange(out.shape[0]):
         for node in range(out.shape[1]):
             nz_bottom =  int(bottom_cell_index[node])
             nz_data = nz_bottom
@@ -117,21 +118,21 @@ def  interp_4D_field_to_fixed_sigma_values(zlevel_fractions,bottom_cell_index,si
 def convert_mid_layer_sigma_top_bot_layer_values(data, sigma_layer, sigma):
     # convert values at depth at center of the cell to values on the boundaries between cells baed on fractional layer/boundary depthsz
     # used in FVCOM reader
-    data_levels = np.full((data.shape[0],) + (data.shape[1],) + (sigma.shape[0],), 0., dtype=np.float32)
+    data_interface = np.full((data.shape[0],) + (data.shape[1],) + (sigma.shape[0],), 0., dtype=np.float32)
 
     for nt in range(data.shape[0]):
         for n in range(data.shape[1]):
             for nz in range(1, data.shape[2]):
                 # linear interp levels not, first or last boundary
-                data_levels[nt, n, nz] = kernal_linear_interp1D(sigma_layer[nz - 1], data[nt, n, nz - 1], sigma_layer[nz], data[nt, n, nz], sigma[nz])
+                data_interface[nt, n, nz] = kernal_linear_interp1D(sigma_layer[nz - 1], data[nt, n, nz - 1], sigma_layer[nz], data[nt, n, nz], sigma[nz])
 
             # extrapolate to top zlevel
-            data_levels[nt, n, -1] = kernal_linear_interp1D(sigma_layer[-2], data[nt, n, -2], sigma_layer[-1], data[nt, n, -1], sigma[-1])
+            data_interface[nt, n, -1] = kernal_linear_interp1D(sigma_layer[-2], data[nt, n, -2], sigma_layer[-1], data[nt, n, -1], sigma[-1])
 
             # extrapolate to bottom zlevel
-            data_levels[nt, n, 0] = kernal_linear_interp1D(sigma_layer[0], data[nt, n, 0], sigma_layer[1], data[nt, n, 1], sigma[0])
+            data_interface[nt, n, 0] = kernal_linear_interp1D(sigma_layer[0], data[nt, n, 0], sigma_layer[1], data[nt, n, 1], sigma[0])
 
-    return data_levels
+    return data_interface
 
 @njitOT
 def convert_mid_layer_fixedZ_top_bot_layer_values(data_zlayer, z_layer, z, bottom_cell_index,water_depth):
@@ -170,18 +171,26 @@ def convert_mid_layer_fixedZ_top_bot_layer_values(data_zlayer, z_layer, z, botto
 def get_nodal_values_from_weighted_data(data, node_to_tri_map, tri_per_node, cell_center_weights):
     # get nodal values from 4D data in surrounding cells based in distance weighting
     # used in FVCOM, DELFT3D FM  reader
-    #todo make this faster as works in 4D?
+
     s = (data.shape[0],len(node_to_tri_map)) + data.shape[2:4]
-    data_nodes = np.full( s , 0., dtype=np.float32)
+    data_nodes = np.full( s, np.nan, dtype=np.float32)
 
     for nt in range(data.shape[0]): # loop over time steps
-        # loop over triangles
-        for node in range(s[1]):
+
+        for node in range(s[1]): # loop over triangles
             for nz in range(s[2]):
                 # loop over cells containing this node
+                node_val = 0.
+                n_good = 0
                 for m in range(tri_per_node[node]):
                     cell = node_to_tri_map[node, m]
-                    data_nodes[nt, node, nz] += data[nt, cell, nz]*cell_center_weights[node, m] # weight this cell value
+                    val = data[nt, cell, nz]
+                    if not np.isnan(val):
+                        # cope with nans in data
+                        node_val += val * cell_center_weights[node, m] # weight this cell value
+                        n_good += 1
+                if n_good > 0:
+                    data_nodes[nt, node, nz] = node_val*tri_per_node[node] / n_good # weight total basd on non nans
 
     return data_nodes
 

@@ -20,7 +20,7 @@ class _CorePolygonMethods(ParameterBaseClass):
         self.remove_default_params(['grid_center','release_group_centered_grids', 'grid_span' ])
         self.file_tag = 'polygon_stats'
 
-    def add_required_classes_and_settings(self, settings, reader_builder, msg_logger):
+    def add_required_classes_and_settings(self):
         info = self.info
         # make a particle property to hold which polygon particles are in, but need instanceID to make it unique beteen different polygon stats instances
         info['inside_polygon_particle_prop'] = f'inside_polygon_for_onfly_stats_ {self.info["instanceID"]:03d}'
@@ -91,7 +91,6 @@ class PolygonStats2D_timeBased(_CorePolygonMethods, gridded_statistics2D.Gridded
         dim_names = ('time_dim', 'release_group_dim', 'polygon_dim')
         dim_sizes  = (None, len(si.class_roles.release_groups), nc.dim_size('polygon_dim'))
 
-        nc.add_dimension('release_group_dim', dim_sizes[1])
         nc.create_a_variable('count', dim_names, np.int64, description='counts of particles in each polygon at given times, for each release group')
         nc.create_a_variable('count_all_particles', ['time_dim', 'release_group_dim'], np.int64, description='counts of particles whether in a polygon or not')
         # set up space for requested particle properties

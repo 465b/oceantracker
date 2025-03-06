@@ -13,15 +13,15 @@ each given polygon and each release group.
 
 A release group may be a:
 
-- “point_releases” set points, giving one or more 2D or 3D locations
-  where particles are released. A radius for 2D release around theses
-  point also can be set.
+-  “point_releases” set points, giving one or more 2D or 3D locations
+   where particles are released. A radius for 2D release around theses
+   point also can be set.
 
-- “polygon release”, where particles are released randomly within
-  polygon made up of 3 or more 2D points. Particles will not be released
-  in any parts of the polygon outside the domain.
+-  “polygon release”, where particles are released randomly within
+   polygon made up of 3 or more 2D points. Particles will not be
+   released in any parts of the polygon outside the domain.
 
-- “grid_release”, particles released from points on a regular grid.
+-  “grid_release”, particles released from points on a regular grid.
 
 For polygons, the vertical release location is randomly chosen in the
 water column, or user a given in z range. If the z value of a point
@@ -30,17 +30,17 @@ the same manner.
 
 For both types user can specify:
 
-- time to start and end the release, or the duration of the release.
-  Defaults are to start at beginning of hindcast and continue until it’s
-  end.
+-  time to start and end the release, or the duration of the release.
+   Defaults are to start at beginning of hindcast and continue until
+   it’s end.
 
-- the time between releases, the “release_interval”, a zero value gives
-  a single release.
+-  the time between releases, the “release_interval”, a zero value gives
+   a single release.
 
-- the number of particles release each time, the “pulse_size”
+-  the number of particles release each time, the “pulse_size”
 
-- whether to release in dry cells, default “allow_release_in_dry_cells”
-  = False
+-  whether to release in dry cells, default “allow_release_in_dry_cells”
+   = False
 
 Plus other options see:
 
@@ -270,6 +270,8 @@ plot tracks
     ax= [1591000, 1601500, 5479500, 5491000]  # area to plot
     anim=animate_particles(tracks, axis_lims=ax, show_grid=True,show_dry_cells=True)
     
+    # this line only used in note books, in python scripts use show = True above
+    # this is slow to build! 
     HTML(anim.to_html5_video())# this is slow to build!
 
 

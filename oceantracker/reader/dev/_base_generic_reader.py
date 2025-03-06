@@ -31,38 +31,14 @@ class BaseGenericReader(_BaseReader):
              })  # list of normal required dimensions
 
 
-    def is_file_format(self,file_name):
-        # check if file matches this file format
-        nc = self._open_file(file_name)
-        gm = self.params['grid_variable_map']
-        fm  = self.params['field_variable_map']
-        dm = self.params['dimension_map']
-
-        is_file_type=  nc.is_dim(dm['time']) and nc.is_dim(dm['node']) and nc.is_var(gm['x'][0]) and nc.is_var(gm['x'][1]) and nc.is_var(fm['tide']) and nc.is_var(fm['water_depth'])
-        nc.close()
-        return is_file_type
-
-    def get_field_params(self, nc, name, crumbs=''):
-        # work out if feild is 3D ,etc
-        fmap = deepcopy(self.params['field_variable_map'][name])
-        dim_map = self.params['dimension_map']
-
-        if type(fmap) != list: fmap = [fmap]
-        f_params = dict(time_varying=nc.is_var_dim(fmap[0], dim_map['time']),
-                        is3D=nc.is_var_dim(fmap[0], dim_map['z']),
-                        is_vector=nc.is_var_dim(fmap[0],  dim_map['vector2D']) or nc.is_var_dim(fmap[0],  dim_map['vector3D']) or len(fmap) > 1
-                        )
-        return f_params
-
-
     def is_3D_variable(self,nc, var_name):
         # is variable 3D
         return  nc.is_var_dim(var_name,self.params['dimension_map']['z'])
 
 
-    def build_hori_grid(self, nc, grid):
+    def build_hori_grid(self, grid):
         # read nodal values and triangles
-         
+
         ml = si.msg_logger
         params = self.params
         grid_map= params['grid_variable_map']
@@ -75,15 +51,14 @@ class BaseGenericReader(_BaseReader):
 
         # read nodal x's
 
-        grid = self.read_horizontal_grid_coords(nc, grid)
+        self.read_horizontal_grid_coords(nc, grid)
         grid['x'] = grid['x'].astype(np.float64)
 
-        grid = self.read_triangles(nc, grid)
+        self.read_triangles(grid)
         # ensure np.int32 values
         grid['triangles']=grid['triangles'].astype(np.int32)
         grid['quad_cells_to_split'] = grid['quad_cells_to_split'].astype(np.int32)
 
-        return grid
 
     def field_var_info(self,nc,file_var_map):
          
@@ -115,16 +90,6 @@ class BaseGenericReader(_BaseReader):
     #---------------------------------------------------------
 
 
-    def read_time_sec_since_1970(self, nc, file_index=None):
-        vname = self.params['grid_variable_map']['time']
-        if file_index is None: file_index = np.arange(nc.var_shape(vname)[0])
-
-        time = nc.read_a_variable(vname, sel=file_index)
-
-        if self.params['isodate_of_hindcast_time_zero'] is not None:
-            time += time_util.isostr_to_seconds(self.params['isodate_of_hindcast_time_zero'])
-        return time
-
     def read_horizontal_grid_coords(self,  grid):
         params= self.params
         var_name = params['grid_variable_map']['x']
@@ -133,9 +98,8 @@ class BaseGenericReader(_BaseReader):
         if self.params['hydro_model_cords_geographic']:
             grid['x'] = self.convert_lon_lat_to_meters_grid(grid['x'])
 
-        return grid
 
-    def read_triangles(self, nc, grid):
+    def read_triangles(self, grid):
         # return triangulation
         # if triangualur has /quad cells
         params = self.params
@@ -148,8 +112,6 @@ class BaseGenericReader(_BaseReader):
         grid['quad_cells_to_split'] =  np.full((0,),0, np.int32)
 
 
-
-        return grid
 
 
     def set_up_uniform_sigma(self, nc, grid):
@@ -246,7 +208,7 @@ class BaseGenericReader(_BaseReader):
             # get dry cells from hydro file for each triangle allowing for splitting quad cells
             self.read_dry_cell_data(self, nc, grid, fields, file_index, is_dry_cell_buffer, buffer_index)
 
-    def read_zlevel_as_float32(self, nc,grid,fields, file_index, zlevel_buffer, buffer_index):
+    def read_zlevel(self, nc,grid,fields, file_index, zlevel_buffer, buffer_index):
         # read in place
         zlevel_buffer[buffer_index,...] = nc.read_a_variable('zcor', sel=file_index).astype(np.float32)
 
@@ -266,7 +228,7 @@ class BaseGenericReader(_BaseReader):
 
     def hydro_model_index_to_buffer_offset(self, nt_hindcast):
         # ring buffer mapping
-        return nt_hindcast % self.info['buffer_info']['buffer_size']
+        return nt_hindcast % si.settings.time_buffer_size
 
     def are_time_steps_in_buffer(self, time_sec):
         # check if next two steps of remaining  hindcast time steps required to run  are in the buffer

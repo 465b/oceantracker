@@ -10,12 +10,6 @@ ______________________________
 Parameters:
 ************
 
-	* ``EPSG_code_meters_grid`` :   ``<class 'int'>``   *<optional>*
-		Description: If hydro-model has lon_lat coords, then grid is converted to this meters system. For codes see https://epsg.io/. eg EPSG for NZ Transverse Mercator use 2193. Default grid is UTM
-
-		- default: ``None``
-		- data_type: ``<class 'int'>``
-
 	* ``add_date_to_run_output_dir`` :   ``<class 'bool'>``   *<optional>*
 		Description: Append the date to the output dir. name to help in keeping output from different runs separate
 
@@ -88,7 +82,7 @@ Parameters:
 		- data_type: ``<class 'str'>``
 
 	* ``processors`` :   ``<class 'int'>``   *<optional>*
-		Description: number of processors used, if > 1 then cases in the case_list to run in parallel
+		Description: Maximum number of threads to use in parallelization, default is one less than the number of physical computer cores. Use a smaller value to reduce load to enable other prgrams to run better during particle tracking
 
 		- default: ``None``
 		- data_type: ``<class 'int'>``
@@ -196,6 +190,13 @@ Parameters:
 Expert Parameters:
 *******************
 
+	* ``NCDF_particle_chunk`` :   ``<class 'int'>``   *<optional>*
+		Description: Chunk size for particle variable Net CDF output files, default is estimated max. particles alive
+
+		- default: ``None``
+		- data_type: ``<class 'int'>``
+		- min: ``1``
+
 	* ``NCDF_time_chunk`` :   ``<class 'int'>``   *<optional>*
 		Description: Used when writing time series to netcdf output, is number of time steps per time chunk in the netcdf file
 
@@ -205,6 +206,13 @@ Expert Parameters:
 
 	* ``NUMBA_cache_code`` :   ``<class 'bool'>``   *<optional>*
 		Description: Speeds start-up by caching complied Numba code on disk in root output dir. Can ignore warning/bug from numba "UserWarning: Inspection disabled for cached code..."
+
+		- default: ``False``
+		- data_type: ``<class 'bool'>``
+		- possible_values: ``[True, False]``
+
+	* ``NUMBA_fastmath`` :   ``<class 'bool'>``   *<optional>*
+		Description: Use NUmbas fastmath mode to speed operation with slight reduction in accuracy"
 
 		- default: ``False``
 		- data_type: ``<class 'bool'>``
@@ -230,26 +238,19 @@ Expert Parameters:
 		- data_type: ``<class 'bool'>``
 		- possible_values: ``[True, False]``
 
-	* ``multiprocessing_case_start_delay`` :   ``<class 'float'>``   *<optional>*
-		Description: Delay start of each sucessive case run parallel, to reduce congestion reading first hydo-model file
-
-		- default: ``0.0``
-		- data_type: ``<class 'float'>``
-		- min: ``0.0``
-
-	* ``particle_buffer_chunk_size`` :   ``<class 'int'>``   *<optional>*
-		Description: How much particle property memory buffer sizes are increased by when they are full
-
-		- default: ``500000``
-		- data_type: ``<class 'int'>``
-		- min: ``1``
-
 	* ``particle_buffer_initial_size`` :   ``<class 'int'>``   *<optional>*
-		Description: Starting size of particle property memory buffer. This expands by particle_buffer_chunk_size as needed
+		Description: Initial particle property memory buffer size, and amount increased by when they are full, default is estimated max particles alive
 
-		- default: ``1000000``
+		- default: ``None``
 		- data_type: ``<class 'int'>``
 		- min: ``1``
+
+	* ``time_buffer_size`` :   ``<class 'int'>``   *<optional>*
+		Description: Number of time steps held in hindcast memory buffers
+
+		- default: ``24``
+		- data_type: ``<class 'int'>``
+		- min: ``2``
 
 	* ``use_geographic_coords`` :   ``<class 'bool'>``   *<optional>*
 		Description: Used geographic coordniated for inputs and outputs ( lon, lat_), normally auto detected based in hindcast coords (if True and hindcast already geographic coords, then reader must have EPGS code

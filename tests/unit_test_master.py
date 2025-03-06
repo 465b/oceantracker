@@ -5,12 +5,14 @@ from glob import glob
 import importlib
 import  sys
 from oceantracker.util import json_util, yaml_util
+import unit_tests.test_definitions
+import oceantracker.main
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--test', type=int)
     parser.add_argument('--norun',type=int)
-    parser.add_argument('--variant',type=int)
+    parser.add_argument('--variant',default=0, type=int)
     parser.add_argument('-backtracking', action='store_true')
     parser.add_argument('-reference_case', action='store_true')
     parser.add_argument('-plot', action='store_true')

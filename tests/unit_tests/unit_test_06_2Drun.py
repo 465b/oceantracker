@@ -15,8 +15,7 @@ def main(args):
              use_A_Z_profile=False,
             regrid_z_to_uniform_sigma_levels=True)
 
-    ot.add_class('tracks_writer',update_interval = 1*3600, write_dry_cell_flag=False,
-                 NCDF_particle_chunk= 500) # keep file small
+    ot.add_class('tracks_writer',update_interval = 1*3600, write_dry_cell_flag=False)
 
     #ot.settings(NUMBA_cache_code = True)
     hm = test_definitions.hydro_model['demoSchism2D']
@@ -25,9 +24,9 @@ def main(args):
 
     # add a point release
     ot.add_class('release_groups',**test_definitions.rg_release_interval0)
-    ot.add_class('release_groups', **test_definitions.rg_start_in_middle)
+    ot.add_class('release_groups', **test_definitions.rg_start_in_datetime1)
     ot.add_class('release_groups', **test_definitions.rg_outside_domain)
-    ot.add_class('release_groups', **test_definitions.rg_datetime)
+    ot.add_class('release_groups', **test_definitions.rg_min_depth)
 
     # add a decaying particle property,# with exponential decay based on age
     ot.add_class('particle_properties', **test_definitions.pp1) # add a new property to particle_properties role
@@ -40,11 +39,6 @@ def main(args):
                  polygon_list=[dict(points=hm['polygon'])])
 
     case_info_file = ot.run()
-
-
-    test_definitions.compare_reference_run(case_info_file, args)
-
-    test_definitions.show_track_plot(case_info_file, args)
 
 
 

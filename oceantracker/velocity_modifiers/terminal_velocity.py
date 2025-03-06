@@ -16,7 +16,7 @@ class TerminalVelocity(_VelocityModiferBase):
                                  variance= PVC(None, float, min=0., doc_str='variance of normal distribution of terminal velocity, used to give each particles its own terminal velocity from random normal distribution'),
                                  )
 
-    def add_required_classes_and_settings(self, settings, reader_builder, msg_logger):
+    def add_required_classes_and_settings(self):
         info = self.info
 
         if self.params['variance'] is not None:
@@ -36,7 +36,6 @@ class TerminalVelocity(_VelocityModiferBase):
          
         pgm= si.core_class_roles.particle_group_manager
 
-        si.msg_logger.msg('When using a terminal velocity, ensure time step is small enough that vertical displacement is a small fraction of the water depth, ie vertical Courant number < 1',note=True)
 
     def update(self,n_time_step, time_sec, active):
         # modify vertical velocity, if backwards, make negative

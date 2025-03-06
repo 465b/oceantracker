@@ -2,11 +2,18 @@
 ParticleLoad
 #############
 
-**Doc:**     Particle property which carries a load or mass, which can be used to calculate spatial and temporal statistics of this load or mass.    
+**Doc:**     Particle property which carries a constant load or mass, which can be used to calculate spatial and temporal statistics of this load or mass.    
 
 **short class_name:** ParticleLoad
 
 **full class_name :** oceantracker.particle_properties.load_carrying.ParticleLoad
+
+
+.. warning::
+
+	Class is under development may not yet work in all cases, if errors contact developer
+
+
 
 **Inheritance:** > ParameterBaseClass> _BaseParticleProperty> CustomParticleProperty> ParticleLoad
 

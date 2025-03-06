@@ -8,6 +8,13 @@ GLORYSreader
 
 **full class_name :** oceantracker.reader.GLORYS_reader.GLORYSreader
 
+
+.. warning::
+
+	Class is under development may not yet work in all cases, if errors contact developer
+
+
+
 **Inheritance:** > ParameterBaseClass> _BaseReader> _BaseStructuredReader> GLORYSreader
 
 
@@ -65,11 +72,6 @@ Parameters:
 		- default: ``False``
 		- data_type: ``<class 'bool'>``
 		- possible_values: ``[True, False]``
-
-	* ``time_buffer_size`` :   ``<class 'int'>``   *<optional>*
-		- default: ``24``
-		- data_type: ``<class 'int'>``
-		- min: ``2``
 
 	* ``user_note`` :   ``<class 'str'>``   *<optional>*
 		- default: ``None``

@@ -217,7 +217,7 @@ params = {
         "processors": 1,
     },
     "reader": {
-        "class_name": "oceantracker.reader.schism_reader.SCHISMreaderNCDF",
+        "class_name": "oceantracker.reader.schism_reader.SCHISMreader",
         "depth_average": False,
         "file_mask": "NZfinite*.nc",
         "input_dir": input_dir,
@@ -242,7 +242,6 @@ params = {
         },
         "solver": {
             "n_sub_steps": int(data_time_step/model_time_step),
-            "screen_output_step_count": int(data_time_step/model_time_step)
         },
         "tracks_writer": {
             "class_name": "oceantracker.tracks_writer.track_writer_compact.FlatTrackWriter",

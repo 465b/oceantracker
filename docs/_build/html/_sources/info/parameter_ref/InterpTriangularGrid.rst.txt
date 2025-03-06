@@ -8,6 +8,13 @@ InterpTriangularGrid
 
 **full class_name :** oceantracker.interpolator.interp_triangle_native_grid.InterpTriangularGrid
 
+
+.. warning::
+
+	Class is under development may not yet work in all cases, if errors contact developer
+
+
+
 **Inheritance:** > ParameterBaseClass> _BaseInterp> InterpTriangularGrid
 
 
@@ -15,7 +22,7 @@ Parameters:
 ************
 
 	* ``bc_walk_tol`` :   ``<class 'float'>``   *<optional>*
-		- default: ``0.0001``
+		- default: ``0.001``
 		- data_type: ``<class 'float'>``
 		- min: ``0.0``
 

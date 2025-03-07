@@ -1,6 +1,8 @@
 NCDF_time_chunk: 1
+NUMBA_cache_code: true
 debug: true
 output_file_base: unit_test_01_check-against-ref_00
+particle_buffer_initial_size: 10
 particle_properties:
 - class_name: oceantracker.particle_properties.age_decay.AgeDecay
   decay_time_scale: 7200.0
@@ -95,6 +97,7 @@ root_output_dir: F:\H_Local_drive\ParticleTracking\oceantracker_output\unit_test
 screen_output_time_interval: 1800
 time_step: 1800
 tracks_writer:
+  time_steps_per_per_file: 10
   update_interval: 3600
   write_dry_cell_flag: false
 use_A_Z_profile: true

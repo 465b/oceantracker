@@ -11,7 +11,9 @@ class NetCDFhandler(object):
 
         # get a file handle
         self.file_name = file_name
+
         self.mode = mode
+        path.isfile(file_name)
         try:
             self.file_handle = Dataset(self.file_name, mode)
         except Exception as e:
@@ -31,6 +33,10 @@ class NetCDFhandler(object):
                     self.variable_info[name] ={'dimensions':v[name].dimensions,
                                                'shape': v[name].shape,'dtype': v[name].datatype,
                                                'attributes': self.all_var_attr(name)}
+
+        self.dimensions = self.file_handle.dimensions
+        self.attrs = self.file_handle.__dict__
+        pass
 
     def add_dimension(self, name, dim_size=None):
         # add a dimension for use in netcdf
@@ -53,7 +59,6 @@ class NetCDFhandler(object):
                 fill_value = np.iinfo(dtype).min
             else:
                 fill_value = None
-
 
         v = self.file_handle.createVariable(name, dtype, tuple(dimList), chunksizes=chunksizes, zlib=(compressionLevel > 0),
                                                 complevel=compressionLevel, fill_value=fill_value)

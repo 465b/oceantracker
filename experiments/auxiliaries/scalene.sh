@@ -1,0 +1,1 @@
+/home/zmaw/u301513/.conda/envs/oceantracker/bin/python -m  scalene --cpu-only --outfile transect_profiler.json /home/zmaw/u301513/Documents/scr/phd/bicest/oceantracker/experiments/auxiliaries/speed_testing_transect_code.py 

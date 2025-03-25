@@ -7,7 +7,7 @@ from os import path
 import subprocess, sys
 from dataclasses import  dataclass, asdict
 
-version= dict(major= 0.5, revision  = 40, date = '2025-03-04', parameter_ver=0.5)
+version= dict(major= 0.5, revision  = 43, date = '2025-03-25', parameter_ver=0.5)
 version['str'] = f"{version['major']:.2f}.{version['revision']:04d}-{version['date']}"
 
 try:
@@ -34,7 +34,7 @@ known_readers = dict(
                 GLORYS =  'oceantracker.reader.GLORYS_reader.GLORYSreader',
                 DEFT3D_FM =  'oceantracker.reader.DEFT3DFM_reader.DELF3DFMreader',
                 FVCOMreader =  'oceantracker.reader.FVCOM_reader.FVCOMreader',
-                ROMSmoanaProject = 'oceantracker.reader.ROMS_reader_moana_projectNZ.ROMSreaderMonaProject'
+                ROMSmoanaProject = 'oceantracker.reader.ROMS_reader_moana_projectNZ.ROMSreaderMoanaProjectNZ'
                 #generic =  'oceantracker.reader.generic_unstructured_reader.GenericUnstructuredReader',
                 #dummy_data =  'oceantracker.reader.dummy_data_reader.DummyDataReader',
 
@@ -108,6 +108,14 @@ class _EdgeTypes(_BaseConstantsClass):
     domain: int = -1
     open_boundary: int = -2
 
+@dataclass
+class _DimensionNames(_BaseConstantsClass):
+    # used to standardise output dimension names
+    time: str = 'time_dim'
+    particle: str  = 'particle_dim'
+    vector2D: str  = 'vector2D'
+    vector3D: str = 'vector3D'
+    triangle: str = 'triangle_dim'
 
 
 

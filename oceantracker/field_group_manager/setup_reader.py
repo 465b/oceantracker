@@ -48,7 +48,7 @@ def make_a_reader_from_params(reader_params, settings, crumbs=''):
     reader.add_hindcast_info() # any tweaks for specific reader
 
     # checks on hindcast info
-    #_check_time_consistency(reader)
+    _check_time_consistency(reader)
 
     # todo check all required fields are set
     if info['vert_grid_type'] is not None and info['vert_grid_type'] not in si.vertical_grid_types.possible_values():
@@ -118,6 +118,7 @@ def _detect_hydro_file_format(reader_params, dataset, crumbs=''):
                                      reader_params, check_for_unknown_keys=True,
                                      crumbs=crumbs + f'> loading given reader with class_name "{reader_params["class_name"]}"')
         reader.dataset = dataset
+        ml.progress_marker(f'Using given reader parameter class_name = "{reader.__class__.__module__}.{reader.__class__.__name__}"')
         return reader
 
     # lok for reader amongst known readers
@@ -140,7 +141,7 @@ def _detect_hydro_file_format(reader_params, dataset, crumbs=''):
         t = dict(velocity = fmap['water_velocity'][0] in  file_vars  # has normal or depth average velocity
                                  or fmap['water_velocity_depth_averaged'][0] in  file_vars)
         # check if other variables in the signature are present
-        for s in r.params['variable_signature'] + [gmap['time'],gmap['x']]:
+        for s in r.params['variable_signature'] + [gmap['time'], gmap['x']]:
             t[s] = s in ds_info['variables']
 
         tests[name] = t
@@ -188,7 +189,7 @@ def _time_sort_files(reader, crumbs):
             f['time'] = time
             f['time_attrs'] = ds[time_var].attrs
             f['start_date'] = time_util.seconds_to_isostr( f['start_time'])
-
+            f['end_date'] = time_util.seconds_to_isostr(f['end_time'])
 
     # sort variable fileIDs into time order
     for v_name, item in ds_info['variables'].items():
@@ -236,7 +237,7 @@ def _time_sort_files(reader, crumbs):
     ds_info['end_time'] = time[-1]
     ds_info['duration'] = time[-1] - time[0]
     ds_info['total_time_steps'] =  time.size
-    ds_info['time_step'] = ds_info['duration']/(time.size-1)
+    ds_info['time_step'] = np.median(np.diff(time)) # tim syep but try to aviod glitched is hindcast times due to missing files
 
     ds_info['start_date'] = time_util.seconds_to_isostr(ds_info['start_time'])
     ds_info['end_date'] = time_util.seconds_to_isostr(ds_info['end_time'])
@@ -333,15 +334,19 @@ def _check_input_dir(reader_params,crumbs=''):
 
 def _make_variable_time_step_to_fileID_map(reader):
 
-    # make time step to fileID map, accounting for each variable's file order
+    # make time step to fileID map and file offset map for every time step, accounting for each variable's file order
     info = reader.dataset.info
     for v_name, item in info['variables'].items():
         if item['time_varying']:
-            time_step_file_map = np.zeros((0,),dtype=np.int32)
+            time_step_fileID_map = np.zeros((0,),dtype=np.int32)
+            time_step_file_offset_map = np.zeros((0,), dtype=np.int32)
             for fileID in  item['fileIDs']: #IDs have aleady been time sorted
                 fi = info['files'][fileID]
-                time_step_file_map =  np.append(time_step_file_map,fi['ID']*np.ones(( fi['time_steps'] ,), dtype=np.int32))
-            item['time_step_to_fileID_map'] = np.asarray(time_step_file_map, dtype=np.int32)
+                time_step_fileID_map =  np.append(time_step_fileID_map,fi['ID']*np.ones(( fi['time_steps'] ,), dtype=np.int32))
+                time_step_file_offset_map = np.append(time_step_file_offset_map,  np.arange(fi['time_steps'], dtype=np.int32))
+
+            item['time_step_to_fileID_map'] = time_step_fileID_map
+            item['time_step_to_file_offset_map'] = time_step_file_offset_map
     pass
 
 
@@ -351,35 +356,38 @@ def _check_time_consistency(reader):
     info= reader.info
     ml = si.msg_logger
 
+    dt = np.abs( np.diff(reader.info['time_coord']))
 
-    starts = []
-    n_files=[]
-    ref_time = None
-    vars=[]
+    # look for repeated time steps, eg, from  data servive which repeats last step in next file as first in next file
+    sel = dt < 0.1 * reader.info['time_step']
+    if False and  np.any(sel):
+        for name, v in  info['variables'].items():
 
-    for v_name, item in info['variables'].items():
+            if v['time_varying']:
+                keep = np.flatnonzero(~sel)
+                v['time_step_to_fileID_map'] = v['time_step_to_fileID_map'][keep]
+                v['time_step_to_file_offset_map'] = v['time_step_to_file_offset_map'][keep]
+                pass
 
-        if item['time_varying']:
-            starts.append(item['global_time_step_check'][0])
-            n_files.append(len(item['fileIDs']))
-            vars.append(v_name)
+        sel = np.flatnonzero(sel)
+        t1 = reader.info['time_coord'][sel]
+        t2 = reader.info['time_coord'][sel + 1]
+        si.msg_logger.msg(f'Hindcasts has repeated time steps, space as les tha .8*time_step, ignoring repeats,  eg. at {time_util.seconds_to_isostr(t1[0])}',
+                          hint=' see hindcast_info.json for list of repeats. Used a hindcast download service?,\n it may repeat last time step in file as first tim step in next file  ',
+                          warning = True)
 
-    # checks on hindcasts with variables in different files
-    # check if difernt number of files for any variable
-    sel = np.flatnonzero( np.abs(np.diff(np.asarray(n_files)) ) > 0)
-    if sel.size>0:
-        ml.msg('File numbers differ for some variables for hindcast where variables are in separate n files',error=True,
-                         hint=f'look for missing file variables- {str([vars[x] for x in sel])}, {[vars[x+1] for x in sel]}')
-    # check if all variables start at the same times
-    starts = np.asarray(starts).astype(np.float64)
-    sel = np.flatnonzero( np.abs(np.diff(starts)))
-    if sel.size > 0:
-        ml.msg('Start times differ for some variables for hindcast where files are split between files',error=True,
-                        hint=f'look for missing file variables- {str([vars[x] for x in sel])}, {[vars[x+1] for x in sel]}')
+        reader.info['time_step_repeats'] = [[time_util.seconds_to_isostr(a), time_util.seconds_to_isostr(b)] for a, b in zip(t1, t2)]
 
-    # for all check missing time steps
-    t = info['ref_time'].astype('datetime64[s]').astype(np.float64)
-    sel = np.flatnonzero(np.abs(np.diff(t)) > 4*info['time_step'])
-    if sel.size > 0:
-        ml.msg('There are gaps in hindcast times larger than 4 time steps',warning=True,
-                        hint= f'there may be missing hindcast files, look at dates around {[ str(x) for x in cat["ref_time"][sel]]}')
+
+
+    sel = np.flatnonzero( dt > 3 * reader.info['time_step'])
+    if np.any(sel):
+        t1 = reader.info['time_coord'][sel]
+        t2 = reader.info['time_coord'][sel+1]
+
+        si.msg_logger.msg('Some hindcasts time steps are longer than 3 average time steps',
+                          hint = f'Hindcast may be missing files or othe time error, eg at {time_util. seconds_to_isostr(t1[0])} to {time_util. seconds_to_isostr(t2[0])}, see hindcast_info.json for full list of dates', warning=True)
+
+        reader.info['time_step_errors'] =[ [time_util. seconds_to_isostr(a),time_util. seconds_to_isostr(b) ] for a,b in zip(t1,t2) ]
+
+    return

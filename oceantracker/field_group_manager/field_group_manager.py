@@ -98,9 +98,9 @@ class FieldGroupManager(ParameterBaseClass):
         for name, i in self.reader.fields.items():
             if i.params['create_particle_property_with_same_name']:
                 si.add_class('particle_properties', class_name='FieldParticleProperty', name=name,
-                                            write=i.params['write_interp_particle_prop_to_tracks_file'],
-                                            vector_dim = i.get_number_components(),
-                                            time_varying=True, dtype='float64', initial_value=0.)
+                             write=i.params['write_interp_particle_prop_to_tracks_file'],
+                             vector_dim = i.get_number_components(),
+                             time_varying=True, dtype='float64', initial_value=0.)
         pass
 
 
@@ -247,7 +247,9 @@ class FieldGroupManager(ParameterBaseClass):
         info = self.info
         s = f':H{info["current_hydro_model_step"]:04d}b{info["current_buffer_steps"][0]:02d}-{info["current_buffer_steps"][1]:02d}'
         return s
-
+    def get_reader_info(self):
+        d= dict(reader=self.reader.info)
+        return d
     def are_points_inside_domain(self,x, include_dry_cells):
         # only primary/outer grid
         is_inside, part_data = self.reader.interpolator.are_points_inside_domain(x)

@@ -127,8 +127,6 @@ class _BaseReader(ParameterBaseClass):
         pass
 
 
-
-
     def build_fields(self):
         info = self.info
         # make grid
@@ -210,7 +208,8 @@ class _BaseReader(ParameterBaseClass):
         si.msg_logger.msg(f'time step = {dt}, number of time steps= {info["total_time_steps"]} ',
             tabs=5)
         si.msg_logger.msg('grid bounding box = ' + b, tabs=5)
-
+        si.msg_logger.msg(f"has:  A_Z profile={info['has_A_Z_profile']}  bottom stress={info['has_bottom_stress']}", tabs=5)
+        si.msg_logger.hori_line()
         # reader triangles
         self.read_triangles(grid)
         grid['quad_cells_to_split'],grid['triangles'] = self.find_and_split_quad_cells(grid['triangles'])
@@ -308,7 +307,7 @@ class _BaseReader(ParameterBaseClass):
         # allow vertical regridding to same sigma at all nodes
 
         if info['regrid_z_to_uniform_sigma_levels']:
-            grid = self.set_up_uniform_sigma(grid)  # add an estimated sigma to the grid
+            self.set_up_uniform_sigma(grid)  # add an estimated sigma to the grid
 
 
         # set up zlevels if needed
@@ -419,12 +418,21 @@ class _BaseReader(ParameterBaseClass):
     def update_water_velocity_field(self, buffer_index, nt):
         field = self.fields['water_velocity']
         data = self.read_field_data('water_velocity', field, nt)
+        info = self.info
 
         if field.is3D():
-            if self.info['regrid_z_to_uniform_sigma_levels']:
-                data = self._vertical_regrid_Slayer_field_to_uniform_sigma('water_velocity', data)
+            if info['regrid_z_to_uniform_sigma_levels']:
+                # applies to LSC and Slayer grids if requested (the default)
+                data = reader_util.ensure_velocity_at_bottom_is_zero_ragged_bottom(data, self.grid['bottom_cell_index']) # zero bottom before regrid
+                data = self._vertical_regrid_Slayer_or_LSC_grid_to_uniform_sigma('water_velocity', data)
+
             # ensure vel at bottom is zero
-            data = reader_util.patch_bottom_velocity_to_make_it_zero(data, self.grid['bottom_cell_index'])
+            if info['vert_grid_type'] in [si.vertical_grid_types.LSC, si.vertical_grid_types.Zfixed]:
+                # ragged bottom
+                data = reader_util.ensure_velocity_at_bottom_is_zero_ragged_bottom(data, self.grid['bottom_cell_index'])
+            else:
+                # First  cell is at the bottom , so set zero
+                data[:, :, 0, :] = 0.
 
         field.data[buffer_index, ...] = data
 
@@ -458,10 +466,10 @@ class _BaseReader(ParameterBaseClass):
         fractional_time_steps =  np.asarray([1.0 - s, s])
         fractional_time_steps[1] = s
 
-        if np.any(np.abs(fractional_time_steps)> 1.1):
-            si.msg_logger.msg(f'unexpected error in times, fractional time steps is grater than 1 = {str(fractional_time_steps)}',
+        if np.any(np.abs(fractional_time_steps) > 1.1):
+            si.msg_logger.msg(f'unexpected error in times, fractional time steps is greater than 1 = {str(fractional_time_steps)}',
                               hint='Error in  decoding hindcast time? hindcast files not properly sorted in time order? or code bug?',
-                              fatal_error=True, caller = self)
+                              warning=True, caller = self)
 
         return current_hydro_model_step, current_buffer_steps, fractional_time_steps
 
@@ -523,7 +531,7 @@ class _BaseReader(ParameterBaseClass):
             data =  self.read_field_data(name, field, nt_available)
 
             if field.is3D() and si.settings['regrid_z_to_uniform_sigma_levels']:
-                data = self._vertical_regrid_Slayer_field_to_uniform_sigma(name, data)
+                data = self._vertical_regrid_Slayer_or_LSC_grid_to_uniform_sigma(name, data)
 
             # insert data
             field.data[buffer_index, ...] = data
@@ -601,7 +609,6 @@ class _BaseReader(ParameterBaseClass):
         else:
             si.msg_logger(f'Unrecognised time unit = {unit}', hint="must be one of [seconds,minutes,hours,days]")
 
-
         t = t + d0
         return t
 
@@ -609,21 +616,31 @@ class _BaseReader(ParameterBaseClass):
         # get preloaded times at given time steps
         return  self.info['time_coord'][nt_hindcast]
 
-    def _vertical_regrid_Slayer_field_to_uniform_sigma(self,name, data):
+    def _vertical_regrid_Slayer_or_LSC_grid_to_uniform_sigma(self, name, data):
         grid = self.grid
         fields = self.fields
 
         s = list(np.asarray(data.shape, dtype=np.int32))
         s[2] = grid['sigma'].size
-        out = np.full(tuple(s), np.nan, dtype=np.float32)
-        data = hydromodel_grid_transforms.interp_4D_field_to_fixed_sigma_values(
-            grid['zlevel_fractions'], grid['bottom_cell_index'],
-            grid['sigma'],
-            fields['water_depth'].data, fields['tide'].data,
-            si.settings.z0, si.settings.minimum_total_water_depth,
-            data, out,
-            name == 'water_velocity')
-        return data
+        out = np.full(tuple(s), np.nan, dtype=np.float32) # move to interp_4D_field_to_fixed_sigma_values?
+
+        data_out = hydromodel_grid_transforms.interp_4D_field_to_fixed_sigma_values(
+                            grid['zlevel_fractions'], grid['bottom_cell_index'],
+                            grid['sigma'],
+                            fields['water_depth'].data, fields['tide'].data,
+                            si.settings.z0, si.settings.minimum_total_water_depth,
+                            data, out,
+                            name == 'water_velocity')
+        if False:
+            # check regridded profiles look reasonable
+            from matplotlib import  pyplot as plt
+            nt = 1
+            n = 75
+
+            plt.plot(grid['zlevel_fractions'][ n, :], data[nt, n, :, 0], c='g')
+            plt.plot(grid['sigma'],data_out[nt,n,:,0],c='r')
+            plt.show()
+        return data_out
 
     # convert, time etc to hindcast/ buffer index
     def time_to_hydro_model_index(self, time_sec):

@@ -1,20 +1,17 @@
 # To do List
 
 # Required for version 0.5
-1. DEFT3D FM
-   1. 3D sigma reader requires vertical regridder
-1. Stats
-    1. matab read polygon
+
+1. Stats unit test
+1. matlab read stats check
+2.  fix demo matalb plot axes 
+   
 1. add descriptions to particle properties to put in netcdf if written out
 
 2. centalize polygon list creation and param checking 
 4. ensure error log is written on caught error
-1. slow start up
-   1. after  - Starting time stepping:
-   1. after -  read  24 time steps in  9.2 sec
 1. better spell check suggestions when short or long module name not found
-1. with LSC grid and large fall vel, some particles are temporally up to .3m below bottom
-   but vertical cel finder is always has z above bottom 
+
 ##  Internal Structure
 
 
@@ -29,6 +26,8 @@
 1. List check makes default values of None into [], should be None? Look at merging list params, better to remove, or keep for building polygon lists ?
 1. cope with time dependent water depth in write to grid
 3.  reader grid transforms faster with pre-allocated buffers?
+4. unit test 01,  track diff. between LSC and sigma vertical regrid too large?
+5. vertical regrid using z fractions for each time step?
     
 ## Nice to haves
 1.   remove_tidally_stranded_particles option?

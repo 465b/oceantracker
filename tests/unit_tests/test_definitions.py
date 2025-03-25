@@ -26,15 +26,15 @@ def base_settings(fn,args,label=None):
 
 image_dir= 'output'
 reader_demo_schisim3D=   dict( # folder to search for hindcast files, sub-dirs will, by default, will also be searched
-                 input_dir= path.join(path.dirname(definitions.package_dir),'demos','demo_hindcast','schsim3D'),  # folder to search for hindcast files, sub-dirs will, by default, also be searched
+                 input_dir= path.join(path.dirname(definitions.package_dir),'tutorials_how_to','demo_hindcast','schsim3D'),  # folder to search for hindcast files, sub-dirs will, by default, also be searched
                 file_mask='demo_hindcast_schisim3D*.nc',
 )  # file mask to search for
 reader_demo_ROMS = deepcopy(reader_demo_schisim3D)
-reader_demo_ROMS.update(input_dir=path.join(path.dirname(definitions.package_dir), 'demos', 'demo_hindcast', 'ROMS'),
+reader_demo_ROMS.update(input_dir=path.join(path.dirname(definitions.package_dir), 'tutorials_how_to', 'demo_hindcast', 'ROMS'),
                     file_mask='ROMS3D_00*.nc')
 
 reader_demo_schisim2D=   dict( # folder to search for hindcast files, sub-dirs will, by default, will also be searched
-                 input_dir= path.join(path.dirname(definitions.package_dir),'demos','demo_hindcast','schsim2D'),  # folder to search for hindcast files, sub-dirs will, by default, also be searched
+                 input_dir= path.join(path.dirname(definitions.package_dir),'tutorials_how_to','demo_hindcast','schsim2D'),  # folder to search for hindcast files, sub-dirs will, by default, also be searched
                 file_mask='Random_order*.nc',)
 reader_double_gyre=  dict(class_name='oceantracker.reader.generic_stuctured_reader.dev_GenericStructuredReader',
              input_dir=r'E:\H_Local_drive\ParticleTracking\hindcast_formats_examples\generic2D_structured_DoubleGyre',  # folder to search for hindcast files, sub-dirs will, by default, also be searched
@@ -73,6 +73,13 @@ hydro_model = dict(demoSchism3D=dict(reader= reader_demo_schisim3D,
                    )
 hydro_model['demoSchism2D'] =deepcopy(hydro_model['demoSchism3D'])
 hydro_model['demoSchism2D']['reader'] = reader_demo_schisim2D
+
+rg_basic = dict( name='rg_basic',  # name used internal to refer to this release
+         class_name='PointRelease',  # class to use
+         points=[[1594000, 5484200, -2]  ],
+         # the below are optional settings/parameters
+         release_interval=1800,  # seconds between releasing particles
+         pulse_size=5)  # how many are released each interval
 
 rg_release_interval0 = dict( name='release_interval0',  # name used internal to refer to this release
          class_name='PointRelease',  # class to use
@@ -144,7 +151,7 @@ ps1 = dict(name='my_heatmap',
         grid_span = [10000,10000],
          release_group_centered_grids=True,  # center a grid around each release group
          update_interval=7200,  # time interval in sec, between doing particle statists counts
-         particle_property_list=['a_pollutant'],  # request a heat map for the decaying part. prop. added above
+         particle_property_list=['a_pollutant','water_depth'],  # request a heat map for the decaying part. prop. added above
          #status_list=[],  # only count the particles which are moving
 
          z_min=-10.,  # only count particles at locations above z=-2m
@@ -167,9 +174,12 @@ ax = [1591000, 1601500, 5478500, 5491000]
 
 
 
-def read_tracks(case_info_file):
+def read_tracks(case_info_file,fraction_to_read=None, ref_case=False):
     from read_oceantracker.python import load_output_files
-    return load_output_files.load_track_data(case_info_file)
+
+    fn = case_info_file if not ref_case else case_info_file.replace('unit_tests', 'unit_test_reference_cases')
+
+    return load_output_files.load_track_data(fn,fraction_to_read=fraction_to_read)
 
 def compare_reference_run(case_info_file, args):
     from read_oceantracker.python import load_output_files
@@ -182,7 +192,7 @@ def compare_reference_run(case_info_file, args):
         shutil.copytree(path.dirname(case_info_file), path.dirname(reference_case_info_file), dirs_exist_ok=True)
 
     tracks = read_tracks(case_info_file)
-    tracks_ref = read_tracks(reference_case_info_file)
+    tracks_ref = read_tracks(case_info_file, ref_case=True)
     dx = np.abs(tracks['x'] - tracks_ref['x'])
 
     # print('x diffs 3 max/ 3 mean ', np.concatenate((np.nanmax(dx, axis=1),np.nanmean(dx, axis=1)),axis=1))
@@ -221,8 +231,9 @@ def show_track_plot(case_info_file, args):
                            #colour_using_data=tracks['a_pollutant'],
                            movie_file=movie_file1)
 
-def plot_vert_section(case_info_file):
+def plot_vert_section(case_info_file, args,fraction_to_read):
+    if not args.plot: return
 
     from plot_oceantracker.plot_tracks import plot_path_in_vertical_section
-    tracks = read_tracks(case_info_file)
+    tracks = read_tracks(case_info_file,fraction_to_read=fraction_to_read)
     plot_path_in_vertical_section(tracks, particleID=np.arange(0,tracks['x'].shape[1],10))

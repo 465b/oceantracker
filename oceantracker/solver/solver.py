@@ -1,8 +1,8 @@
 from time import perf_counter
 import psutil
-
+from os import  path, mkdir
 import numpy as np
-from oceantracker.util import time_util
+from oceantracker.util import time_util, json_util, ncdf_util
 from datetime import datetime
 from oceantracker.particle_properties.util import particle_operations_util, particle_comparisons_util
 from oceantracker.util.parameter_base_class import ParameterBaseClass
@@ -35,7 +35,6 @@ class Solver(ParameterBaseClass):
 
     def check_requirements(self):
         self.check_class_required_fields_prop_etc( required_props_list=['x','status', 'x_last_good', 'v_temp'])
-
 
     #@profile
     def solve(self):
@@ -71,7 +70,15 @@ class Solver(ParameterBaseClass):
         ml.progress_marker(f'Starting time stepping: {time_util.seconds_to_isostr(si.run_info.start_date)} to {time_util.seconds_to_isostr(si.run_info.end_date)} '
                            + f', duration  {time_util.seconds_to_pretty_duration_string(si.run_info.duration)} ')
 
+
         si.msg_logger.set_screen_tag('S')
+        if si.settings.restart_interval is not None:
+            # schedle restart saves at given interval after start of run
+            self.add_scheduler('save_state',
+                               start=si.settings.restart_interval + si.run_info.start_time,
+                               interval=si.settings.restart_interval )
+        if si.settings.restart:
+            self._load_saved_state()
 
         for n_time_step  in range(model_times.size-1): # one less step as last step is initial condition for next block
 
@@ -90,7 +97,6 @@ class Solver(ParameterBaseClass):
             # count particles of each status and count number >= stationary status
             num_alive = pgm.status_counts_and_kill_old_particles(time_sec)
 
-
             if num_alive == 0:
                 #freewheel until more are released or end of run/hindcast
                 if not ri.free_wheeling:
@@ -107,6 +113,9 @@ class Solver(ParameterBaseClass):
 
             # do stats etc updates and write tracks
             self._pre_step_bookkeeping(n_time_step, time_sec, new_particleIDs)
+
+            if si.settings.restart_interval is not None and self.schedulers['save_state'].do_task(n_time_step):
+                self.save_state_for_restart(n_time_step, time_sec)
 
             # print progress to screen
             if n_time_step % nt_write_time_step_to_screen == 0:
@@ -174,7 +183,9 @@ class Solver(ParameterBaseClass):
 
         # trajectory modifiers,
         for name, i in si.class_roles.trajectory_modifiers.items():
+            i.start_update_timer()
             i.update(n_time_step, time_sec, alive)
+            i.stop_update_timer()
 
         # modify status, eg tidal stranding
         fgm.update_dry_cell_values()
@@ -190,12 +201,12 @@ class Solver(ParameterBaseClass):
         # resuspension is a core trajectory modifier
         if si.settings.use_resuspension and si.run_info.is3D_run:
             # friction_velocity property  is now updated, so do resupension
-            si.core_class_roles.resuspension.update(n_time_step, time_sec, alive)
+            i =si.core_class_roles.resuspension
+            i.start_update_timer()
+            i.update(n_time_step, time_sec, alive)
+            i.stop_update_timer()
 
         fgm.update_tidal_stranding_status(time_sec, alive)
-
-
-
 
         # update writable class lists and stats at current time step now props are up to date
         self._update_stats(n_time_step, time_sec)
@@ -343,8 +354,6 @@ class Solver(ParameterBaseClass):
         s += f' step time = { (perf_counter() - t0_step) * 1000:4.1f} ms'
         si.msg_logger.msg(s)
 
-
-
     def _update_stats(self,n_time_step, time_sec):
         # update and write stats
         t0 = perf_counter()
@@ -380,4 +389,63 @@ class Solver(ParameterBaseClass):
         pass
 
 
+    def save_state_for_restart(self, n_time_step, time_sec):
 
+        si.msg_logger.msg('save_state_for_restart: Restarting is under development and does not yet work!!!', warning=True)
+
+        # close time varying output files, eg tracks and stats files first!
+        if si.settings.write_tracks:
+            si.core_class_roles.tracks_writer._close_file()
+
+        state_dir = path.join(si.run_info.run_output_dir, 'saved_state')
+        state = dict(time=time_sec, date = time_util.seconds_to_isostr(time_sec),
+                     state_dir=state_dir,
+                     run_output_dir= si.run_info.run_output_dir,
+                     part_prop_file =path.join(state_dir, 'particle_properties.nc'),
+                     class_roles_info={},
+                     core_class_info={})
+        if not path.isdir(state_dir):
+            mkdir(state_dir)
+
+        # save particle properties
+        nc = ncdf_util.NetCDFhandler(state['part_prop_file'], mode='w')
+        nc.write_global_attribute('time', time_sec)
+        nc. add_dimension(si.dim_names.particle,si.particles_in_buffer)
+        for name, prop in si.class_roles.particle_properties.items():
+            dims=[si.dim_names.particle]
+            if prop.params['vector_dim'] == 2: dims +=[si.dim_names.vector2D]
+            if prop.params['vector_dim'] == 3: dims += [si.dim_names.vector3D]
+
+            if len(dims) == prop.data.ndim:
+                # in dev mode only write those that have al dimsenions
+                nc.write_a_new_variable(name,prop.data[:si.particles_in_buffer,...], dims)
+        nc.close()
+
+        # recorded all class info
+        for role, i in si.core_class_roles.items():
+            if hasattr(i,'info'):
+                state['core_class_info'][role] = i.info
+
+        for role, d in si.class_roles.items():
+            if role not in state['class_roles_info']:  state['class_roles_info'][role] = dict()
+            for name, i in d.items():
+                state['class_roles_info'][role][name] = i.info
+
+
+        # write info to json for restarting
+        json_util.write_JSON(path.join(state_dir, 'state_info.json'),state)
+
+    def _load_saved_state(self):
+        ri = si.restart_info
+
+        # load particle properties
+        nc = ncdf_util.NetCDFhandler(ri['part_prop_file'])
+        num_part=nc.var_shape('water_velocity')[0]
+
+        for name, i in si.class_roles.particle_properties.items():
+            i.data = nc.read_a_variable(name)  # rely on particle buffer expansion
+        si.particles_in_buffer = num_part
+        pass
+
+        if si.settings.write_tracks:
+            si.core_class_roles.tracks_writer.info = ri['core_class_info']['tracks_writer']

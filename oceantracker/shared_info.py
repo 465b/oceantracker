@@ -60,7 +60,7 @@ class _DefaultSettings(_SharedStruct):
     dev_debug_plots = PVC(False, bool,expert=True, doc_str='show any debug plot generated at give dbug_level, not for general use' )
     debug = PVC(False, bool, doc_str= 'more info on errors' )
     dev_debug_opt = PVC(0, int,expert=True,doc_str= 'does extra checks given by integer, not for general use' )
-    minimum_total_water_depth = PVC(0.25, float, min=0.0, units='m', doc_str='Min. water depth used to decide if stranded by tide and which are dry cells to block particles from entering' )
+    minimum_total_water_depth = PVC(0.25, float, min=0.0, units='m', doc_str='Min. water depth used to decide if cell is dry (only if no dry cell data in hindcast ) to decide if stranded  and to block particles from entering dry cells' )
                 #'write_output_files =     PVC(True,  bool, doc_str='Set to False if no output files are to be written, eg. for output sent to web' )
     write_dry_cell_flag = PVC(True, bool,
                 doc_str='Write dry cell flag to all cells when writing particle tracks, which can be used to show dry cells on plots,may create large grid file, currently cannot be used with nested grids ' )
@@ -88,7 +88,7 @@ class _DefaultSettings(_SharedStruct):
     use_geographic_coords = PVC(False, bool,
                           doc_str='Used geographic coordniated for inputs and outputs ( lon, lat_), normally auto detected based in hindcast coords (if True and hindcast already geographic coords, then reader must have EPGS code',
                                 expert=True)
-    use_A_Z_profile = PVC(True, bool,
+    use_A_Z_profile = PVC(False, bool,
                 doc_str='Use the hydro-model bottom_stress variable for friction velocity calculation , where it is needed for resuspension, if variable is in hindcast files')
     use_bottom_stress = PVC(True, bool,
                 doc_str='Use hydro models bottom_stress variable for friction velocity calculation, if mapped variable is in files. Friction velocity is used in resuspension')
@@ -97,7 +97,7 @@ class _DefaultSettings(_SharedStruct):
     use_resuspension = PVC(True, bool,
                 doc_str='Allow particles to resuspend')
     processors= PVC(None, int, min=1,
-                 doc_str='Maximum number of threads to use in parallelization, default is one less than the number of physical computer cores. Use a smaller value to reduce load to enable other prgrams to run better during particle tracking')
+                 doc_str='Maximum number of threads to use in parallelization, default = number of physical computer cores. Use a smaller value to reduce load to enable other prgrams to run better during particle tracking')
     NCDF_time_chunk = PVC(24, int, min=1,expert=True,
                  doc_str='Used when writing time series to netcdf output, is number of time steps per time chunk in the netcdf file')
 
@@ -111,7 +111,9 @@ class _DefaultSettings(_SharedStruct):
         # profiler = PVC('oceantracker', str, possible_values=available_profile_types,
         #                 doc_str='in development- Default oceantracker profiler, writes timings of decorated methods/functions to run/case_info file use of other profilers in development and requires additional installed modules ' )
         # 'debug_level =               PVC(0, int,min=0, max=10, doc_str='Gives  diferent levels of debug, in development' )
-
+    restart_interval = PVC(None, float,
+                           doc_str='Save the particle tracking state at the interval to allow restarting run', units='sec',  expert=True)
+    restart = PVC(False, bool, doc_str='Restart from a saved state, requires prior run setting restart_interval',  expert=True)
 
 # blocks that make up parts of shared info
 class _ClassRoles(_SharedStruct):
@@ -201,6 +203,7 @@ class _SharedInfoClass():
     class_importer = class_importer_util.ClassImporter(msg_logger)
     particles_in_buffer = 0
     info = _UseFullInfo
+    dim_names = definitions._DimensionNames()
 
     def __init__(self):
 

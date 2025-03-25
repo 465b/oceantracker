@@ -1,7 +1,6 @@
 NCDF_time_chunk: 1
 debug: true
 output_file_base: unit_test_05_in_depth_range_00
-particle_buffer_initial_size: 100
 particle_properties:
 - class_name: oceantracker.particle_properties.age_decay.AgeDecay
   decay_time_scale: 7200.0
@@ -22,13 +21,14 @@ particle_statistics:
   name: my_heatmap
   particle_property_list:
   - a_pollutant
+  - water_depth
   release_group_centered_grids: true
   start: '2017-01-01T02:30:00'
   update_interval: 7200
   z_min: -10.0
 reader:
   file_mask: demo_hindcast_schisim3D*.nc
-  input_dir: F:\H_Local_drive\ParticleTracking\oceantracker\demos\demo_hindcast\schsim3D
+  input_dir: F:\H_Local_drive\ParticleTracking\oceantracker\tutorials_how_to\demo_hindcast\schsim3D
 regrid_z_to_uniform_sigma_levels: false
 release_groups:
 - class_name: PolygonRelease

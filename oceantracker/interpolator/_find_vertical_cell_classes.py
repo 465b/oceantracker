@@ -70,6 +70,8 @@ class FindVerticalCellSigmaGrid(object):
         tide2 = tide[current_buffer_steps[1], :, 0, 0]
         frac0, frac1 = fractional_time_steps[0], fractional_time_steps[1]
 
+
+
         for nn in nb.prange(active.size):  # loop over active particles
             n = active[nn]
             nodes = triangles[n_cell[n], :]  # nodes for the particle's cell
@@ -108,7 +110,11 @@ class FindVerticalCellSigmaGrid(object):
 
             # correction
             # sigma_map_nz rounds down, so correct if zf is above sigma[nz]  by subtracting 1, as nz  is 1 below approx nz
-            nz -= zf > sigma[nz]  # faster branch-less add one
+            nz -= sigma[nz] > zf # faster branch-less add one
+
+            # check results
+            #  sigma_map_zf = np.arange(sigma_map_nz.size)*sigma_map_dz
+            #  [(q, nz, zf,ns, sigma[ sigma_map_nz[q]], sigma_map_nz[q],sigma_map_zf[q]) for q in range(sigma_map_nz.size) ]
 
             # get fraction within the sigma layer
             z_fraction[n] = (zf - sigma[nz]) / (sigma[nz + 1] - sigma[nz])
@@ -119,6 +125,7 @@ class FindVerticalCellSigmaGrid(object):
 
             # extra work if in bottom cell
             z_fraction_water_velocity[n] = z_fraction[n]
+            pass
             if nz == 0:
                 z0f = z0 / twd  # z0 as fraction of water depth
                 # set status if on the bottom set status
@@ -390,9 +397,11 @@ class FindVerticalCellZfixed(object):
         pass
 
 def make_search_map(z):
-    dz_map = 0.66 * np.min(abs(np.diff(z)))
+    dz_map = 0.66 * np.min(abs(np.diff(z))) # ensure map has smaller steps than smales z diffrence
     z_range = z[-1] - z[0]
     nz = int(np.ceil(z_range/ dz_map))  # number of levels in evenly map > number layers in z
+
+    z_map = np.arange(nz) * dz_map
 
     # insert a 1 at map levels containing a the hydro models z value, except the last
     sel = np.floor((z - z[0]) / dz_map).astype(np.int32)
@@ -401,4 +410,6 @@ def make_search_map(z):
     nz_map[sel[1:-1]] = 1  # dont include top and bottom in map
     nz_map = nz_map.cumsum()  # get layer offset from bottom at dz intervals
 
+    # check map
+    #  [(q, z[nz_map[q]],  nz_map[q],z_map[q]) for q in range(nz_map.size) ]
     return nz_map, dz_map

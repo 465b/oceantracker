@@ -22,6 +22,9 @@ class GriddedStats3D_timeBased(GriddedStats2D_timeBased):
             'vertical_range': PCC([0.0, 100.0], single_cord=True, is3D=True,
                                   doc_str='Vertical extent of the statistics grid as (min, max). Depth is positive down e.g. 0 is surface and 100 is 100m below surface', 
                                   units='meters'),
+            'vertical_range_measured_relative_to': PVC('surface', str,
+                                                       doc_str='Vertical range is measured relative to the geoid i.e. normal-null, the surface of the water, or the sea bed. Options are "geoid", "surface", "bottom". Default is "surface".',
+                                                         possible_values=['geoid', 'surface', 'bottom']),
             'role_output_file_tag': PVC('stats_gridded_time_3D', str),
         })
 
@@ -110,9 +113,10 @@ class GriddedStats3D_timeBased(GriddedStats2D_timeBased):
                 si.msg_logger.msg('Part Prop "' + p + '" not a particle property, ignored and no stats calculated',
                                 warning=True)
 
+    
     @staticmethod
     @njitOT
-    def do_counts_and_summing_numba(group_ID, x, x_edges, y_edges, z_edges, count, 
+    def do_counts_and_summing_numba_geoid(group_ID, x, x_edges, y_edges, z_edges, count, 
                                    count_all_particles, prop_list, sum_prop_list, sel):
         # Zero counts for this time slice
         count[:] = 0
@@ -144,6 +148,76 @@ class GriddedStats3D_timeBased(GriddedStats2D_timeBased):
                 for m in range(len(prop_list)):
                     sum_prop_list[m][ng, k, r, c] += prop_list[m][n]
 
+    
+    @staticmethod
+    @njitOT
+    def do_counts_and_summing_numba_surface(group_ID, x, depth, x_edges, y_edges, z_edges, count, 
+                                   count_all_particles, prop_list, sum_prop_list, sel):
+        # Zero counts for this time slice
+        count[:] = 0
+        count_all_particles[:] = 0
+        for m in range(len(prop_list)):
+            sum_prop_list[m][:] = 0.
+
+        for n in sel:
+            ng = group_ID[n]
+            count_all_particles[ng] += 1
+
+            # Get grid spacings
+            dx = x_edges[ng, 1] - x_edges[ng, 0]
+            dy = y_edges[ng, 1] - y_edges[ng, 0]
+            dz = z_edges[ng, 1] - z_edges[ng, 0]
+
+            # Calculate grid indices
+            r = int(np.floor((x[n, 1] - y_edges[ng,0]) / dy))  # row is y
+            c = int(np.floor((x[n, 0] - x_edges[ng,0]) / dx))  # column is x
+            k = int(np.floor((depth[n] - z_edges[ng,0]) / dz))    # k is z
+
+            # Check if particle is inside grid bounds
+            if (0 <= r < y_edges.shape[1] - 1 and 
+                0 <= c < x_edges.shape[1] - 1 and
+                0 <= k < z_edges.shape[1] - 1):
+                
+                count[ng, k, r, c] += 1
+                # Sum particle properties
+                for m in range(len(prop_list)):
+                    sum_prop_list[m][ng, k, r, c] += prop_list[m][n]
+    
+    @staticmethod
+    @njitOT
+    def do_counts_and_summing_numba_bottom(group_ID, x, depth, x_edges, y_edges, z_edges, count, 
+                                   count_all_particles, prop_list, sum_prop_list, sel):
+        # Zero counts for this time slice
+        count[:] = 0
+        count_all_particles[:] = 0
+        for m in range(len(prop_list)):
+            sum_prop_list[m][:] = 0.
+
+        for n in sel:
+            ng = group_ID[n]
+            count_all_particles[ng] += 1
+
+            # Get grid spacings
+            dx = x_edges[ng, 1] - x_edges[ng, 0]
+            dy = y_edges[ng, 1] - y_edges[ng, 0]
+            dz = z_edges[ng, 1] - z_edges[ng, 0]
+
+            # Calculate grid indices
+            r = int(np.floor((x[n, 1] - y_edges[ng,0]) / dy))  # row is y
+            c = int(np.floor((x[n, 0] - x_edges[ng,0]) / dx))  # column is x
+            k = int(np.floor((depth[n] - z_edges[ng,0]) / dz))    # k is z
+
+            # Check if particle is inside grid bounds
+            if (0 <= r < y_edges.shape[1] - 1 and 
+                0 <= c < x_edges.shape[1] - 1 and
+                0 <= k < z_edges.shape[1] - 1):
+                
+                count[ng, k, r, c] += 1
+                # Sum particle properties
+                for m in range(len(prop_list)):
+                    sum_prop_list[m][ng, k, r, c] += prop_list[m][n]
+
+
     def do_counts(self, n_time_step, time_sec, sel):
         part_prop = si.class_roles.particle_properties
         stats_grid = self.grid
@@ -152,12 +226,39 @@ class GriddedStats3D_timeBased(GriddedStats2D_timeBased):
         p_groupID = part_prop['IDrelease_group'].used_buffer()
         p_x = part_prop['x'].used_buffer()
 
-        self.do_counts_and_summing_numba(p_groupID, p_x, 
-                                      stats_grid['x_bin_edges'],
-                                      stats_grid['y_bin_edges'],
-                                      stats_grid['z_bin_edges'],
-                                      self.count_time_slice,
-                                      self.count_all_particles_time_slice,
-                                      self.prop_data_list,
-                                      self.sum_prop_data_list,
-                                      sel)
+        if self.params['vertical_range_measured_relative_to'] == 'geoid':
+            self.do_counts_and_summing_numba_geoid(p_groupID, p_x, 
+                                        stats_grid['x_bin_edges'],
+                                        stats_grid['y_bin_edges'],
+                                        stats_grid['z_bin_edges'],
+                                        self.count_time_slice,
+                                        self.count_all_particles_time_slice,
+                                        self.prop_data_list,
+                                        self.sum_prop_data_list,
+                                        sel)
+
+        elif self.params['vertical_range_measured_relative_to'] == 'surface':
+            p_depth = part_prop['tide'].used_buffer() - part_prop['x'].used_buffer()[:, 2] 
+            self.do_counts_and_summing_numba_surface(p_groupID, p_x, p_depth,
+                                        stats_grid['x_bin_edges'],
+                                        stats_grid['y_bin_edges'],
+                                        stats_grid['z_bin_edges'],
+                                        self.count_time_slice,
+                                        self.count_all_particles_time_slice,
+                                        self.prop_data_list,
+                                        self.sum_prop_data_list,
+                                        sel)
+
+        elif self.params['vertical_range_measured_relative_to'] == 'bottom':
+            p_depth = part_prop['water_depth'].used_buffer() 
+            self.do_counts_and_summing_numba_bottom(p_groupID, p_x, p_depth,
+                                        stats_grid['x_bin_edges'],
+                                        stats_grid['y_bin_edges'],
+                                        stats_grid['z_bin_edges'],
+                                        self.count_time_slice,
+                                        self.count_all_particles_time_slice,
+                                        self.prop_data_list,
+                                        self.sum_prop_data_list,
+                                        sel)
+        else:
+            raise ValueError('vertical_range_measured_relative_to must be "geoid" or "surface"')

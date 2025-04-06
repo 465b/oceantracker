@@ -215,7 +215,7 @@ class _BaseParticleLocationStats(ParameterBaseClass):
         if x.shape[1] == 3:
             # 3D selection
             for n in range(num_in_buffer):
-                if statuses_to_count_map[status[n]-status_unknown] and z_range[0] <= x[n, 2] <= z_range[1] and water_depth_range[0] <= water_depth[n] <= water_depth_range[1]:
+                if statuses_to_count_map[status[n]-status_unknown]:
                     out[n_found] = n
                     n_found += 1
         else:

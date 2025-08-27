@@ -15,7 +15,7 @@ GriddedStats2D_timeBased
 
 
 
-**Inheritance:** > ParameterBaseClass> _BaseParticleLocationStats> GriddedStats2D_timeBased
+**Inheritance:** > ParameterBaseClass> _OptionalStatsMethods> _BaseParticleLocationStats> GriddedStats2D_timeBased
 
 
 Parameters:

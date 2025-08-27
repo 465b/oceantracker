@@ -100,14 +100,4 @@ Parameters:
 Expert Parameters:
 *******************
 
-	* ``release_group_parameters``:  *<optional>*
-		Description: - In development: release group specific particle prop params
-
-		- a list containing type:  ``[]``
-		- default list : ``None``
-		- data_type: ``<class 'str'>``
-		- possible_types: ``[]``
-		- make_list_unique: ``False``
-		- min_len: ``0``
-
 

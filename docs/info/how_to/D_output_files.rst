@@ -4,9 +4,11 @@ Output files
 [This note-book is in oceantracker/tutorials_how_to/]
 
 After running OceanTacker, output files are in the files are the folder
-given by parameters ./“root_output_dir”/“output_file_base”.
+given by parameters ./“root_output_dir”/“output_file_base”. Note that
+the type of slashes is platform dependant (Linux & Mac: “/”, Windows:
+"").
 
-hint: FireFox will display json files in expandable strcture, other
+Hint: Firefox will display json files in expandable strcture, other
 programs also can do this
 
 The main files are:
@@ -57,22 +59,30 @@ Below list the files after running the minimal example.
 .. code:: ipython3
 
     # show a list of output files after running  minimal_example
+    
+    # Note:
+    # To make this tutorial run on all operating system we us the 'os' package to handle file paths
+    # If you don't care for that you can just use path/to/your/files as usual
+    
+    import os
     import glob
-    for f in glob.glob('output/minimal_example/*'):
-        print(f) 
     
-    
+    output_dir = os.path.join('output', 'minimal_example')
+    for f in glob.glob(os.path.join(output_dir, '*')):
+        print(f)
 
 
 .. parsed-literal::
 
-    output/minimal_example\minimal_example_caseInfo.json
-    output/minimal_example\minimal_example_caseLog.txt
-    output/minimal_example\minimal_example_grid000.nc
-    output/minimal_example\minimal_example_hindcast_info.json
-    output/minimal_example\minimal_example_raw_user_params.json
-    output/minimal_example\minimal_example_release_groups.nc
-    output/minimal_example\minimal_example_tracks_compact_000.nc
+    output/minimal_example/completion_state.json
+    output/minimal_example/minimal_example.txt
+    output/minimal_example/minimal_example_caseInfo.json
+    output/minimal_example/minimal_example_grid000.nc
+    output/minimal_example/minimal_example_hindcast_info.json
+    output/minimal_example/minimal_example_raw_user_params.json
+    output/minimal_example/minimal_example_release_groups.nc
+    output/minimal_example/minimal_example_tracks_compact_000.nc
+    output/minimal_example/minimal_example_tracks_rectangular_000.nc
     
 
 Reading particle tracks
@@ -124,21 +134,28 @@ The below also shows how read the hydrodynamic grid.
     # example of reading tracks file
     
     # read netcdf into dictionary
-    from  oceantracker.read_output.python import read_ncdf_output_files
+    from oceantracker.read_output.python import read_ncdf_output_files
+    import os
     
-    tracks =read_ncdf_output_files.read_particle_tracks_file('output/minimal_example\minimal_example_tracks_compact.nc')
+    output_dir = os.path.join('output', 'minimal_example')
+    
+    tracks_file = os.path.join(output_dir, 'minimal_example_tracks_compact_000.nc')
+    tracks = read_ncdf_output_files.read_tracks_file(tracks_file)
     print('Track data', tracks.keys())
     
     # read the hydro-dynamic grid file, useful in plotting
-    grid =read_ncdf_output_files.read_grid_file('output/minimal_example\minimal_example_grid.nc')
-    print('Grid data',grid.keys())
-    
+    grid_file = os.path.join(output_dir, 'minimal_example_tracks_rectangular_000.nc')
+    grid = read_ncdf_output_files.read_grid_file(grid_file)
+    print('Grid data', grid.keys())
 
 
 .. parsed-literal::
 
-    Track data dict_keys(['status_unknown', 'status_bad_cord', 'status_cell_search_failed', 'status_notReleased', 'status_dead', 'status_outside_open_boundary', 'status_stationary', 'status_stranded_by_tide', 'status_on_bottom', 'status_moving', 'file_created', 'total_num_particles_released', 'time_steps_written', 'dimensions', 'status', 'age', 'user_release_groupID', 'hydro_model_gridID', 'particle_ID', 'ID', 'tide', 'particles_written_per_time_step', 'water_depth', 'IDrelease_group', 'num_part_released_so_far', 'A_Z_profile', 'x', 'IDpulse', 'time_released', 'dry_cell_index', 'time_step_range', 'x0', 'time', 'z'])
-    Grid data dict_keys(['x', 'triangles', 'triangle_area', 'adjacency', 'node_type', 'is_boundary_triangle', 'water_depth', 'domain_outline_nodes', 'domain_outline_x', 'domain_masking_polygon', 'island_outline_nodes', 'island_outline_nodes_packed_ranges', 'grid_outline'])
+    loading oceantracker read files
+    prelim:     Starting package set up
+    Reading compact track file minimal_example_tracks_compact_000.nc
+    Track data dict_keys(['dimensions', 'status', 'IDpulse', 'dry_cell_index', 'x0', 'ID', 'water_depth', 'time', 'IDrelease_group', 'hydro_model_gridID', 'status_last_good', 'particle_ID', 'user_release_groupID', 'num_part_released_so_far', 'tide', 'particles_written_per_time_step', 'time_step_range', 'time_released', 'x', 'age', 'z', 'date'])
+    Grid data dict_keys(['file_created', 'first_ID_in_file', 'total_num_particles_released', 'time_steps_written', 'status_unknown', 'status_notReleased', 'status_dead', 'status_outside_domain', 'status_outside_open_boundary', 'status_stationary', 'status_stranded_by_tide', 'status_on_bottom', 'status_moving', 'particles_written_per_time_step', 'time_step_range', 'time', 'num_part_released_so_far', 'x', 'x0', 'status', 'status_last_good', 'age', 'ID', 'IDrelease_group', 'user_release_groupID', 'IDpulse', 'hydro_model_gridID', 'time_released', 'water_depth', 'tide', 'dry_cell_index'])
     
 
 Load data method
@@ -153,16 +170,19 @@ associated with the case run.
 
     # load netcdf with grid and other useful info for plotting
     from oceantracker.read_output.python import load_output_files
+    import os
     
-    tracks_plot =load_output_files.load_track_data('output/minimal_example\minimal_example_caseInfo.json')
+    case_info_file = os.path.join('output', 'minimal_example', 'minimal_example_caseInfo.json')
+    tracks_plot = load_output_files.load_track_data(case_info_file)
     
     print('tracks_plot data', tracks_plot.keys())
-    
 
 
 .. parsed-literal::
 
-    tracks_plot data dict_keys(['status_unknown', 'status_bad_cord', 'status_cell_search_failed', 'status_notReleased', 'status_dead', 'status_outside_open_boundary', 'status_stationary', 'status_stranded_by_tide', 'status_on_bottom', 'status_moving', 'file_created', 'total_num_particles_released', 'time_steps_written', 'dimensions', 'status', 'age', 'user_release_groupID', 'hydro_model_gridID', 'particle_ID', 'ID', 'tide', 'particles_written_per_time_step', 'water_depth', 'IDrelease_group', 'num_part_released_so_far', 'A_Z_profile', 'x', 'IDpulse', 'time_released', 'dry_cell_index', 'time_step_range', 'x0', 'time', 'z', 'grid', 'particle_status_flags', 'particle_release_groups', 'axis_lim'])
+    Merging rectangular track files
+    	 Reading rectangular track file "minimal_example_tracks_rectangular_000.nc"
+    tracks_plot data dict_keys(['particles_written_per_time_step', 'time_step_range', 'time', 'num_part_released_so_far', 'x', 'x0', 'status', 'status_last_good', 'age', 'ID', 'IDrelease_group', 'user_release_groupID', 'IDpulse', 'hydro_model_gridID', 'time_released', 'water_depth', 'tide', 'dry_cell_index', 'grid', 'particle_status_flags', 'particle_release_groups', 'axis_lim'])
     
 
 

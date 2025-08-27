@@ -1,18 +1,16 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>GriddedStats3D_timeBased &#8212; OceanTracker Beta 0.5 documentation</title>
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=a66d8bb5" />
+    <script src="../../_static/documentation_options.js?v=7b06c30a"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="PolygonStats2D_ageBased" href="PolygonStats2D_ageBased.html" />
@@ -20,17 +18,20 @@
    
   <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
   
+
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+  
 
   </head><body>
   <div class="document">
     
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper">
 <p class="logo">
   <a href="../../index.html">
-    <img class="logo" src="../../_static/ocean_tracker.png" alt="Logo"/>
+    <img class="logo" src="../../_static/ocean_tracker.png" alt="Logo" />
+    
+    <h1 class="logo logo-name">Beta 0.5</h1>
     
   </a>
 </p>
@@ -50,7 +51,7 @@
 
 
 <h3>Navigation</h3>
-<p><span class="caption-text">Contents:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../about.html">About</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../features.html">Features</a></li>
@@ -82,16 +83,16 @@
   </ul></li>
 </ul>
 </div>
-<div id="searchbox" style="display: none" role="search">
+<search id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
-</div>
-<script>$('#searchbox').show(0);</script>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="documentwrapper">
@@ -101,17 +102,17 @@
           <div class="body" role="main">
             
   <section id="griddedstats3d-timebased">
-<h1>GriddedStats3D_timeBased<a class="headerlink" href="#griddedstats3d-timebased" title="Permalink to this headline">¶</a></h1>
-<p><strong>Doc:</strong></p>
+<h1>GriddedStats3D_timeBased<a class="headerlink" href="#griddedstats3d-timebased" title="Link to this heading">¶</a></h1>
+<p><strong>Doc:</strong>     Counts particles into 3D regular grid at given interval. Extends 2D grid version.</p>
 <p><strong>short class_name:</strong> GriddedStats3D_timeBased</p>
 <p><strong>full class_name :</strong> oceantracker.particle_statistics.gridded_statistics3D.GriddedStats3D_timeBased</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>Class is under development may not yet work in all cases, if errors contact developer</p>
-</aside>
-<p><strong>Inheritance:</strong> &gt; ParameterBaseClass&gt; _BaseParticleLocationStats&gt; GriddedStats2D_timeBased&gt; GriddedStats3D_timeBased</p>
+</div>
+<p><strong>Inheritance:</strong> &gt; ParameterBaseClass&gt; _OptionalStatsMethods&gt; _BaseParticleLocationStats&gt; GriddedStats2D_timeBased&gt; GriddedStats3D_timeBased</p>
 <section id="parameters">
-<h2>Parameters:<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h2>
+<h2>Parameters:<a class="headerlink" href="#parameters" title="Link to this heading">¶</a></h2>
 <blockquote>
 <div><ul>
 <li><dl>
@@ -188,28 +189,6 @@
 </dd>
 </dl>
 </li>
-<li><dl>
-<dt><code class="docutils literal notranslate"><span class="pre">near_seabed</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'float'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><p>Description: Count only those particles within this distance of bottom</p>
-<ul class="simple">
-<li><p>default: <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
-<li><p>data_type: <code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'float'&gt;</span></code></p></li>
-<li><p>units: <code class="docutils literal notranslate"><span class="pre">meters</span> <span class="pre">above</span> <span class="pre">seabed</span></code></p></li>
-<li><p>min: <code class="docutils literal notranslate"><span class="pre">0.001</span></code></p></li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl>
-<dt><code class="docutils literal notranslate"><span class="pre">near_seasurface</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'float'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><p>Description: Count only those particles within this distance of tidal sea surface</p>
-<ul class="simple">
-<li><p>default: <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
-<li><p>data_type: <code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'float'&gt;</span></code></p></li>
-<li><p>units: <code class="docutils literal notranslate"><span class="pre">meters</span> <span class="pre">below</span> <span class="pre">sea</span> <span class="pre">surface</span></code></p></li>
-<li><p>min: <code class="docutils literal notranslate"><span class="pre">0.001</span></code></p></li>
-</ul>
-</dd>
-</dl>
-</li>
 <li><dl class="simple">
 <dt><code class="docutils literal notranslate"><span class="pre">particle_property_list</span></code>:  <em>&lt;optional&gt;</em></dt><dd><p>Description: - Create statistics for these named particle properties, list = [“water_depth”], for average of water depth at particle locations inside the counted regions</p>
 <ul class="simple">
@@ -235,7 +214,7 @@
 </li>
 <li><dl>
 <dt><code class="docutils literal notranslate"><span class="pre">role_output_file_tag</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><ul class="simple">
-<li><p>default: <code class="docutils literal notranslate"><span class="pre">stats_gridded_time_3D</span></code></p></li>
+<li><p>default: <code class="docutils literal notranslate"><span class="pre">stats_gridded_time3D</span></code></p></li>
 <li><p>data_type: <code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;</span></code></p></li>
 </ul>
 </dd>
@@ -294,11 +273,6 @@
 </dd>
 </dl>
 </li>
-</ul>
-</div></blockquote>
-<p>vertical_range: still working on display  of default params of  type &lt;class ‘oceantracker.util.parameter_checking.ParameterCoordsChecker’&gt;</p>
-<blockquote>
-<div><ul>
 <li><dl>
 <dt><code class="docutils literal notranslate"><span class="pre">water_depth_max</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'float'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><p>Description: Count only those particles in water depths less than this value</p>
 <ul class="simple">
@@ -330,21 +304,21 @@
 </dl>
 </li>
 <li><dl>
-<dt><code class="docutils literal notranslate"><span class="pre">z_max</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'float'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><p>Description: Count only those particles with vertical position &lt;= to this value</p>
+<dt><code class="docutils literal notranslate"><span class="pre">z_max</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'float'&gt;</span></code> <strong>&lt;isrequired&gt;</strong></span></dt><dd><p>Description: Top of 3D counting grid</p>
 <ul class="simple">
 <li><p>default: <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
 <li><p>data_type: <code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'float'&gt;</span></code></p></li>
-<li><p>units: <code class="docutils literal notranslate"><span class="pre">meters</span> <span class="pre">above</span> <span class="pre">mean</span> <span class="pre">water</span> <span class="pre">level,</span> <span class="pre">so</span> <span class="pre">is</span> <span class="pre">&lt;</span> <span class="pre">0</span> <span class="pre">at</span> <span class="pre">depth</span></code></p></li>
+<li><p>units: <code class="docutils literal notranslate"><span class="pre">meters</span> <span class="pre">above</span> <span class="pre">mean</span> <span class="pre">water</span> <span class="pre">level</span> <span class="pre">at</span> <span class="pre">z=0</span> <span class="pre">,</span> <span class="pre">so</span> <span class="pre">is</span> <span class="pre">&lt;</span> <span class="pre">0</span> <span class="pre">at</span> <span class="pre">depth</span></code></p></li>
 </ul>
 </dd>
 </dl>
 </li>
 <li><dl>
-<dt><code class="docutils literal notranslate"><span class="pre">z_min</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'float'&gt;</span></code>   <em>&lt;optional&gt;</em></span></dt><dd><p>Description: Count only those particles with vertical position &gt;=  to this value</p>
+<dt><code class="docutils literal notranslate"><span class="pre">z_min</span></code><span class="classifier"><code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'float'&gt;</span></code> <strong>&lt;isrequired&gt;</strong></span></dt><dd><p>Description: Bottom of 3D counting grid</p>
 <ul class="simple">
 <li><p>default: <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
 <li><p>data_type: <code class="docutils literal notranslate"><span class="pre">&lt;class</span> <span class="pre">'float'&gt;</span></code></p></li>
-<li><p>units: <code class="docutils literal notranslate"><span class="pre">meters</span> <span class="pre">above</span> <span class="pre">mean</span> <span class="pre">water</span> <span class="pre">level,</span> <span class="pre">so</span> <span class="pre">is</span> <span class="pre">&lt;</span> <span class="pre">0</span> <span class="pre">at</span> <span class="pre">depth</span></code></p></li>
+<li><p>units: <code class="docutils literal notranslate"><span class="pre">meters</span> <span class="pre">above</span> <span class="pre">mean</span> <span class="pre">water</span> <span class="pre">at</span>&#160; <span class="pre">z=0,</span> <span class="pre">so</span> <span class="pre">is</span> <span class="pre">&lt;</span> <span class="pre">0</span> <span class="pre">at</span> <span class="pre">depth</span></code></p></li>
 </ul>
 </dd>
 </dl>
@@ -353,7 +327,7 @@
 </div></blockquote>
 </section>
 <section id="expert-parameters">
-<h2>Expert Parameters:<a class="headerlink" href="#expert-parameters" title="Permalink to this headline">¶</a></h2>
+<h2>Expert Parameters:<a class="headerlink" href="#expert-parameters" title="Link to this heading">¶</a></h2>
 </section>
 </section>
 
@@ -380,11 +354,11 @@
     <div class="clearer"></div>
   </div>
     <div class="footer">
-      &copy;2024, R. Vennell.
+      &#169;2024, R. Vennell.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
       
       |
       <a href="../../_sources/info/parameter_ref/GriddedStats3D_timeBased.rst.txt"

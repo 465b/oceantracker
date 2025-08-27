@@ -65,7 +65,7 @@ Parameters:
 	* ``max_run_duration`` :   ``<class 'float'>``   *<optional>*
 		Description: Useful in testing setup with shorter runs, as normally run duration is determined from release groups. This  limits the maximum duration in seconds of model runs.
 
-		- default: ``31536000000``
+		- default: ``1e+32``
 		- data_type: ``<class 'float'>``
 		- units: ``sec``
 		- min: ``1e-05``
@@ -209,26 +209,12 @@ Expert Parameters:
 *******************
 
 	* ``NCDF_compression_level`` :   ``<class 'int'>``   *<optional>*
-		Description: Netcdf compression of output variables, reduces output file sixe, but slows code
+		Description: Netcdf compression of output variables, reduces output file size, but slows code
 
 		- default: ``0``
 		- data_type: ``<class 'int'>``
 		- min: ``0``
 		- max: ``9``
-
-	* ``NCDF_particle_chunk`` :   ``<class 'int'>``   *<optional>*
-		Description: Chunk size for particle variable Net CDF output files, default is estimated max. particles alive
-
-		- default: ``None``
-		- data_type: ``<class 'int'>``
-		- min: ``1``
-
-	* ``NCDF_time_chunk`` :   ``<class 'int'>``   *<optional>*
-		Description: Used when writing time series to netcdf output, is number of time steps per time chunk in the netcdf file
-
-		- default: ``24``
-		- data_type: ``<class 'int'>``
-		- min: ``1``
 
 	* ``NUMBA_cache_code`` :   ``<class 'bool'>``   *<optional>*
 		Description: Speeds start-up by caching complied Numba code on disk in root output dir. Can ignore warning/bug from numba "UserWarning: Inspection disabled for cached code..."
@@ -290,6 +276,13 @@ Expert Parameters:
 		- default: ``None``
 		- data_type: ``<class 'float'>``
 		- units: ``sec``
+
+	* ``throw_debug_error`` :   ``<class 'int'>``   *<optional>*
+		Description: Throw desigated error, eg =1 is mid run error to test restart
+
+		- default: ``0``
+		- data_type: ``<class 'int'>``
+		- min: ``0``
 
 	* ``time_buffer_size`` :   ``<class 'int'>``   *<optional>*
 		Description: Number of time steps held in hindcast memory buffers

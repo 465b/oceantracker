@@ -1,18 +1,16 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>Trajectory modifiers &#8212; OceanTracker Beta 0.5 documentation</title>
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=a66d8bb5" />
+    <script src="../../_static/documentation_options.js?v=7b06c30a"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Particle Statistics" href="particle_statistics.html" />
@@ -20,17 +18,20 @@
    
   <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
   
+
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+  
 
   </head><body>
   <div class="document">
     
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper">
 <p class="logo">
   <a href="../../index.html">
-    <img class="logo" src="../../_static/ocean_tracker.png" alt="Logo"/>
+    <img class="logo" src="../../_static/ocean_tracker.png" alt="Logo" />
+    
+    <h1 class="logo logo-name">Beta 0.5</h1>
     
   </a>
 </p>
@@ -50,7 +51,7 @@
 
 
 <h3>Navigation</h3>
-<p><span class="caption-text">Contents:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../about.html">About</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../features.html">Features</a></li>
@@ -80,16 +81,16 @@
   </ul></li>
 </ul>
 </div>
-<div id="searchbox" style="display: none" role="search">
+<search id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
-</div>
-<script>$('#searchbox').show(0);</script>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="documentwrapper">
@@ -99,10 +100,10 @@
           <div class="body" role="main">
             
   <section id="trajectory-modifiers">
-<h1>Trajectory modifiers<a class="headerlink" href="#trajectory-modifiers" title="Permalink to this headline">¶</a></h1>
+<h1>Trajectory modifiers<a class="headerlink" href="#trajectory-modifiers" title="Link to this heading">¶</a></h1>
 <p>Trajectory modifiers classes change the path of particles, examples from standard trajectory_modifiers classes below.</p>
 <section id="particle-behaviour">
-<h2>Particle behaviour<a class="headerlink" href="#particle-behaviour" title="Permalink to this headline">¶</a></h2>
+<h2>Particle behaviour<a class="headerlink" href="#particle-behaviour" title="Link to this heading">¶</a></h2>
 <center>
   <video width="95%" controls autoplay loop src="../../_static/demos/demo06_reefstranding.mp4">
  </video>
@@ -114,7 +115,7 @@
 <summary> json parameters </summary></details><details>
 <summary> yaml parameters </summary></details></section>
 <section id="resuspension">
-<h2>Resuspension<a class="headerlink" href="#resuspension" title="Permalink to this headline">¶</a></h2>
+<h2>Resuspension<a class="headerlink" href="#resuspension" title="Link to this heading">¶</a></h2>
 <center>
   <video width="95%" controls autoplay loop src="../../_static/demos/demo56_SCHISM_3D_resupend_crtitical_friction_vel_status.mp4">
  </video>
@@ -122,13 +123,14 @@
 <ul class="simple">
 <li><p>class  <code class="docutils literal notranslate"><span class="pre">trajectory_modifiers.resuspension.BasicResuspension</span></code></p></li>
 </ul>
-<a class="reference internal image-reference" href="../../_images/demo59_crit_shear_resupension_section.jpeg"><img alt="../../_images/demo59_crit_shear_resupension_section.jpeg" src="../../_images/demo59_crit_shear_resupension_section.jpeg" style="width: 95%;" /></a>
+<a class="reference internal image-reference" href="../../_images/demo59_crit_shear_resupension_section.jpeg"><img alt="../../_images/demo59_crit_shear_resupension_section.jpeg" src="../../_images/demo59_crit_shear_resupension_section.jpeg" style="width: 95%;" />
+</a>
 <p>Vertical slice showing one example of a falling particle and resuspension, with particle on bottom during low flows around low and high tides. Blue line is particle status, 10= moving, 6 = on the bottom.</p>
 <details>
 <summary> json parameters </summary></details><details>
 <summary> yaml parameters </summary></details></section>
 <section id="splitting-particles">
-<h2>Splitting particles<a class="headerlink" href="#splitting-particles" title="Permalink to this headline">¶</a></h2>
+<h2>Splitting particles<a class="headerlink" href="#splitting-particles" title="Link to this heading">¶</a></h2>
 <center>
   <video width="95%" controls autoplay loop src="../../_static/demos/demo08_particle_splitting.mp4">
  </video>
@@ -165,11 +167,11 @@
     <div class="clearer"></div>
   </div>
     <div class="footer">
-      &copy;2024, R. Vennell.
+      &#169;2024, R. Vennell.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
       
       |
       <a href="../../_sources/info/gallery/trajectory_modifiers.rst.txt"

@@ -73,6 +73,7 @@ grid_span: still working on display  of default params of  type <class 'oceantra
 
 		- default: ``None``
 		- data_type: ``<class 'float'>``
+		- units: ``sec``
 		- min: ``1.0``
 
 	* ``max_cycles_to_find_release_points`` :   ``<class 'int'>``   *<optional>*

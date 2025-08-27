@@ -15,7 +15,7 @@ _BaseParticleLocationStats
 
 
 
-**Inheritance:** > ParameterBaseClass> _BaseParticleLocationStats
+**Inheritance:** > ParameterBaseClass> _OptionalStatsMethods> _BaseParticleLocationStats
 
 
 Parameters:

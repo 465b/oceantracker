@@ -2,7 +2,7 @@
 GriddedStats3D_timeBased
 #########################
 
-**Doc:** 
+**Doc:**     Counts particles into 3D regular grid at given interval. Extends 2D grid version.    
 
 **short class_name:** GriddedStats3D_timeBased
 
@@ -15,7 +15,7 @@ GriddedStats3D_timeBased
 
 
 
-**Inheritance:** > ParameterBaseClass> _BaseParticleLocationStats> GriddedStats2D_timeBased> GriddedStats3D_timeBased
+**Inheritance:** > ParameterBaseClass> _OptionalStatsMethods> _BaseParticleLocationStats> GriddedStats2D_timeBased> GriddedStats3D_timeBased
 
 
 Parameters:
@@ -75,22 +75,6 @@ grid_center: still working on display  of default params of  type <class 'oceant
 		- default: ``None``
 		- data_type: ``<class 'str'>``
 
-	* ``near_seabed`` :   ``<class 'float'>``   *<optional>*
-		Description: Count only those particles within this distance of bottom
-
-		- default: ``None``
-		- data_type: ``<class 'float'>``
-		- units: ``meters above seabed``
-		- min: ``0.001``
-
-	* ``near_seasurface`` :   ``<class 'float'>``   *<optional>*
-		Description: Count only those particles within this distance of tidal sea surface
-
-		- default: ``None``
-		- data_type: ``<class 'float'>``
-		- units: ``meters below sea surface``
-		- min: ``0.001``
-
 	* ``particle_property_list``:  *<optional>*
 		Description: - Create statistics for these named particle properties, list = ["water_depth"], for average of water depth at particle locations inside the counted regions
 
@@ -109,7 +93,7 @@ grid_center: still working on display  of default params of  type <class 'oceant
 		- possible_values: ``[True, False]``
 
 	* ``role_output_file_tag`` :   ``<class 'str'>``   *<optional>*
-		- default: ``stats_gridded_time_3D``
+		- default: ``stats_gridded_time3D``
 		- data_type: ``<class 'str'>``
 
 	* ``start`` :   ``['str', 'float', 'datetime64', 'int', 'float64', 'float32']``   *<optional>*
@@ -149,9 +133,6 @@ grid_center: still working on display  of default params of  type <class 'oceant
 		- min: ``1``
 		- max: ``1000``
 
-
-vertical_range: still working on display  of default params of  type <class 'oceantracker.util.parameter_checking.ParameterCoordsChecker'>
-
 	* ``water_depth_max`` :   ``<class 'float'>``   *<optional>*
 		Description: Count only those particles in water depths less than this value
 
@@ -173,19 +154,19 @@ vertical_range: still working on display  of default params of  type <class 'oce
 		- data_type: ``<class 'bool'>``
 		- possible_values: ``[True, False]``
 
-	* ``z_max`` :   ``<class 'float'>``   *<optional>*
-		Description: Count only those particles with vertical position <= to this value
+	* ``z_max`` :   ``<class 'float'>`` **<isrequired>**
+		Description: Top of 3D counting grid
 
 		- default: ``None``
 		- data_type: ``<class 'float'>``
-		- units: ``meters above mean water level, so is < 0 at depth``
+		- units: ``meters above mean water level at z=0 , so is < 0 at depth``
 
-	* ``z_min`` :   ``<class 'float'>``   *<optional>*
-		Description: Count only those particles with vertical position >=  to this value
+	* ``z_min`` :   ``<class 'float'>`` **<isrequired>**
+		Description: Bottom of 3D counting grid
 
 		- default: ``None``
 		- data_type: ``<class 'float'>``
-		- units: ``meters above mean water level, so is < 0 at depth``
+		- units: ``meters above mean water at  z=0, so is < 0 at depth``
 
 
 

@@ -1,18 +1,16 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>Running using param. dict. &#8212; OceanTracker Beta 0.5 documentation</title>
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=a66d8bb5" />
+    <script src="../../_static/documentation_options.js?v=7b06c30a"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Tutorials" href="../how_to.html" />
@@ -20,17 +18,20 @@
    
   <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
   
+
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+  
 
   </head><body>
   <div class="document">
     
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper">
 <p class="logo">
   <a href="../../index.html">
-    <img class="logo" src="../../_static/ocean_tracker.png" alt="Logo"/>
+    <img class="logo" src="../../_static/ocean_tracker.png" alt="Logo" />
+    
+    <h1 class="logo logo-name">Beta 0.5</h1>
     
   </a>
 </p>
@@ -50,7 +51,7 @@
 
 
 <h3>Navigation</h3>
-<p><span class="caption-text">Contents:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../about.html">About</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../features.html">Features</a></li>
@@ -79,16 +80,16 @@
   </ul></li>
 </ul>
 </div>
-<div id="searchbox" style="display: none" role="search">
+<search id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
-</div>
-<script>$('#searchbox').show(0);</script>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="documentwrapper">
@@ -98,7 +99,7 @@
           <div class="body" role="main">
             
   <section id="running-using-param-dict">
-<h1>Running using param. dict.<a class="headerlink" href="#running-using-param-dict" title="Permalink to this headline">¶</a></h1>
+<h1>Running using param. dict.<a class="headerlink" href="#running-using-param-dict" title="Link to this heading">¶</a></h1>
 <p>[This note-book is in oceantracker/tutorials_how_to/]</p>
 <p>The earlier notebook showed how to set parameters and run using the
 helper class. Here we exploit the flexibility to run Oceantracker
@@ -106,7 +107,7 @@ directly using a parameter dictionary built in code or read from a file.
 The dictionary can be built using {‘pulse_size’:10} or dict(pulse=10)
 approaches.</p>
 <section id="build-param-dict-with-code">
-<h2>Build param. dict. with code<a class="headerlink" href="#build-param-dict-with-code" title="Permalink to this headline">¶</a></h2>
+<h2>Build param. dict. with code<a class="headerlink" href="#build-param-dict-with-code" title="Link to this heading">¶</a></h2>
 <p>The below extends the minimal_example, shows two ways to build a
 parameter dictionary and different ways to run OceanTracker, from code
 or command line.</p>
@@ -150,7 +151,7 @@ or command line.</p>
         <span class="p">}</span>
 
 <span class="c1"># write params to build on for later examples</span>
-<span class="kn">from</span> <span class="nn">oceantracker.util</span> <span class="kn">import</span> <span class="n">json_util</span><span class="p">,</span> <span class="n">yaml_util</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">oceantracker.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">json_util</span><span class="p">,</span> <span class="n">yaml_util</span>
 <span class="n">json_util</span><span class="o">.</span><span class="n">write_JSON</span><span class="p">(</span><span class="s1">&#39;./example_param_files/param_test1.json&#39;</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
 <span class="n">yaml_util</span><span class="o">.</span><span class="n">write_YAML</span><span class="p">(</span><span class="s1">&#39;./example_param_files/param_test1.yaml&#39;</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
 </pre></div>
@@ -159,7 +160,7 @@ or command line.</p>
 <p>yaml format has no brackets/braces and relies on tab indenting to nest
 items</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># show the params in yaml format</span>
-<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
 <span class="n">p</span> <span class="o">=</span> <span class="n">yaml_util</span><span class="o">.</span><span class="n">read_YAML</span><span class="p">(</span><span class="s1">&#39;./example_param_files/param_test1.yaml&#39;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span> <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
 </pre></div>
@@ -206,7 +207,7 @@ items</p>
 </div>
 </section>
 <section id="run-oceantracker-from-parameters">
-<h2>Run OceanTracker from parameters<a class="headerlink" href="#run-oceantracker-from-parameters" title="Permalink to this headline">¶</a></h2>
+<h2>Run OceanTracker from parameters<a class="headerlink" href="#run-oceantracker-from-parameters" title="Link to this heading">¶</a></h2>
 <p>There are several ways to run OceanTracker</p>
 <ol class="arabic simple">
 <li><p>By coding</p>
@@ -235,10 +236,10 @@ later “how to”.</p></li>
 </ul>
 </section>
 <section id="run-with-code-built-params">
-<h2>Run with code built params.<a class="headerlink" href="#run-with-code-built-params" title="Permalink to this headline">¶</a></h2>
+<h2>Run with code built params.<a class="headerlink" href="#run-with-code-built-params" title="Link to this heading">¶</a></h2>
 <p>Is line below!</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># run oceantracker using param dict built in cells above</span>
-<span class="kn">from</span> <span class="nn">oceantracker</span> <span class="kn">import</span> <span class="n">main</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">oceantracker</span><span class="w"> </span><span class="kn">import</span> <span class="n">main</span>
 
 <span class="n">case_info_file_name</span> <span class="o">=</span> <span class="n">main</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
 <span class="c1"># case_info file is the name of a json file useful in plotting results</span>
@@ -333,10 +334,10 @@ end:
 end: --- Finished Oceantracker run ----------------------------------------
 end:</pre>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot animation of results</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
-<span class="kn">from</span> <span class="nn">oceantracker.plot_output.plot_tracks</span> <span class="kn">import</span> <span class="n">animate_particles</span>
-<span class="kn">from</span> <span class="nn">oceantracker.read_output.python</span> <span class="kn">import</span>  <span class="n">load_output_files</span>
-<span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">HTML</span> <span class="c1"># show animation in note book</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">oceantracker.plot_output.plot_tracks</span><span class="w"> </span><span class="kn">import</span> <span class="n">animate_particles</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">oceantracker.read_output.python</span><span class="w"> </span><span class="kn">import</span>  <span class="n">load_output_files</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTML</span> <span class="c1"># show animation in note book</span>
 
 <span class="c1"># read particle track data into a dictionary using case_info_file_name</span>
 <span class="n">tracks</span> <span class="o">=</span> <span class="n">load_output_files</span><span class="o">.</span><span class="n">load_track_data</span><span class="p">(</span><span class="n">case_info_file_name</span><span class="p">)</span>
@@ -29928,10 +29929,10 @@ YXBwbAAAAAAAAAAAAAAAACxpbHN0AAAAJKl0b28AAAAcZGF0YQAAAAEAAAAATGF2ZjYxLjEuMTAw
 </video><img alt="info/how_to/E_run_using_parameter_dictionaries_files%5CE_run_using_parameter_dictionaries_6_1.png" src="info/how_to/E_run_using_parameter_dictionaries_files%5CE_run_using_parameter_dictionaries_6_1.png" />
 </section>
 <section id="run-by-reading-param-file">
-<h2>Run by reading param. file<a class="headerlink" href="#run-by-reading-param-file" title="Permalink to this headline">¶</a></h2>
+<h2>Run by reading param. file<a class="headerlink" href="#run-by-reading-param-file" title="Link to this heading">¶</a></h2>
 </section>
 <section id="run-from-command-line">
-<h2>Run from command line<a class="headerlink" href="#run-from-command-line" title="Permalink to this headline">¶</a></h2>
+<h2>Run from command line<a class="headerlink" href="#run-from-command-line" title="Link to this heading">¶</a></h2>
 <p>Run without coding from command lin bu using a parameter file pre-built
 in a text editor.</p>
 <p>From within an activated oceantracker conda environment, run command
@@ -29941,7 +29942,7 @@ activated environment.</p>
 <p>eg. run “run_oceantracker.py” script in the oceantracker/oceantracker
 directory with command</p>
 <p><code class="docutils literal notranslate"><span class="pre">python</span>&#160; <span class="pre">../oceantracker/run_oceantracker.py</span> <span class="pre">./example_param_files/param_test1.json</span></code></p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>python  ../oceantracker/run_ot_cmd_line.py ./example_param_files/param_test1.json
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>python<span class="w">  </span>../oceantracker/run_ot_cmd_line.py<span class="w"> </span>./example_param_files/param_test1.json
 </pre></div>
 </div>
 <pre class="literal-block">prelim:     Starting package set up
@@ -30033,7 +30034,7 @@ end:
 end: --- Finished Oceantracker run ----------------------------------------
 end:</pre>
 <section id="options-when-running-at-command-line">
-<h3>Options when running at command line<a class="headerlink" href="#options-when-running-at-command-line" title="Permalink to this headline">¶</a></h3>
+<h3>Options when running at command line<a class="headerlink" href="#options-when-running-at-command-line" title="Link to this heading">¶</a></h3>
 <p>These allow</p>
 <ul class="simple">
 <li><p>redefining the input and output dirs given within parameter file,
@@ -30042,7 +30043,7 @@ which may have been built for a different location</p></li>
 testing</p></li>
 </ul>
 <p>the full arguments are below</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>python ../oceantracker/run_ot_cmd_line.py -h
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>python<span class="w"> </span>../oceantracker/run_ot_cmd_line.py<span class="w"> </span>-h
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">prelim</span><span class="p">:</span>     <span class="n">Starting</span> <span class="n">package</span> <span class="nb">set</span> <span class="n">up</span>
@@ -30098,11 +30099,11 @@ testing</p></li>
     <div class="clearer"></div>
   </div>
     <div class="footer">
-      &copy;2024, R. Vennell.
+      &#169;2024, R. Vennell.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
       
       |
       <a href="../../_sources/info/how_to/E_run_using_parameter_dictionaries.rst.txt"

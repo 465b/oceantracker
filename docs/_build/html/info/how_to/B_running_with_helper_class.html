@@ -1,18 +1,16 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>Running with helper class &#8212; OceanTracker Beta 0.5 documentation</title>
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=a66d8bb5" />
+    <script src="../../_static/documentation_options.js?v=7b06c30a"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Release Groups" href="C_release_groups.html" />
@@ -20,17 +18,20 @@
    
   <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
   
+
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+  
 
   </head><body>
   <div class="document">
     
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper">
 <p class="logo">
   <a href="../../index.html">
-    <img class="logo" src="../../_static/ocean_tracker.png" alt="Logo"/>
+    <img class="logo" src="../../_static/ocean_tracker.png" alt="Logo" />
+    
+    <h1 class="logo logo-name">Beta 0.5</h1>
     
   </a>
 </p>
@@ -50,7 +51,7 @@
 
 
 <h3>Navigation</h3>
-<p><span class="caption-text">Contents:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../about.html">About</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../features.html">Features</a></li>
@@ -67,6 +68,7 @@
 <li class="toctree-l2"><a class="reference internal" href="F_plotting_tracks.html">plotting tracks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="G_onthefly_statistics.html">On-the-fly statistics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="G_onthefly_statistics.html#add-polygon-stats-example-with-plotting">add polygon stats example with plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="H_add_user_written_class.html">Add your own class</a></li>
 <li class="toctree-l2"><a class="reference internal" href="P_running_cases_in_parallel.html">Run in parallel</a></li>
 </ul>
 </li>
@@ -87,16 +89,16 @@
   </ul></li>
 </ul>
 </div>
-<div id="searchbox" style="display: none" role="search">
+<search id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
-</div>
-<script>$('#searchbox').show(0);</script>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="documentwrapper">
@@ -106,7 +108,7 @@
           <div class="body" role="main">
             
   <section id="running-with-helper-class">
-<h1>Running with helper class<a class="headerlink" href="#running-with-helper-class" title="Permalink to this headline">¶</a></h1>
+<h1>Running with helper class<a class="headerlink" href="#running-with-helper-class" title="Link to this heading">¶</a></h1>
 <p>[This note-book is in oceantracker/tutorials_how_to/]</p>
 <p>Oceantracker is designed so that both coders and non-coders can get
 almost the same level of adaptability to their specific needs. Also to
@@ -134,7 +136,7 @@ pipeline. The notebook E_run_using_parameter_dictionaries.ipynb, shows
 how run directly from parameter dictionaries, which are built in code or
 read from a json or yaml file.</p>
 <section id="parameters-using-helper">
-<h2>Parameters using helper<a class="headerlink" href="#parameters-using-helper" title="Permalink to this headline">¶</a></h2>
+<h2>Parameters using helper<a class="headerlink" href="#parameters-using-helper" title="Link to this heading">¶</a></h2>
 <p>There are two types of parameters:</p>
 <ol class="arabic simple">
 <li><p>Settings parameters</p></li>
@@ -179,7 +181,7 @@ each one.</p></li>
 <p>Add link here</p>
 </section>
 <section id="extend-the-minimal-example">
-<h2>Extend the minimal example<a class="headerlink" href="#extend-the-minimal-example" title="Permalink to this headline">¶</a></h2>
+<h2>Extend the minimal example<a class="headerlink" href="#extend-the-minimal-example" title="Link to this heading">¶</a></h2>
 <p>The below extends the minimal_example, it adds:</p>
 <ul class="simple">
 <li><p>release at random locations within a polygon, at random water depths
@@ -189,7 +191,7 @@ each one.</p></li>
 a critical value.</p></li>
 </ul>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># build parameters using helper class</span>
-<span class="kn">from</span> <span class="nn">oceantracker.main</span> <span class="kn">import</span> <span class="n">OceanTracker</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">oceantracker.main</span><span class="w"> </span><span class="kn">import</span> <span class="n">OceanTracker</span>
 
 <span class="n">ot</span> <span class="o">=</span> <span class="n">OceanTracker</span><span class="p">()</span> <span class="c1"># make an instance of the helper class</span>
 
@@ -355,7 +357,7 @@ end:
 case file name= f:H_Local_driveParticleTrackingoceantrackertutorials_how_tooutputparam_test1param_test1_caseInfo.json</pre>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># can  see the parameters used to build</span>
 <span class="c1"># using the helper class instance in ot.params</span>
-<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">ot</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -431,12 +433,12 @@ case file name= f:H_Local_driveParticleTrackingoceantrackertutorials_how_tooutpu
 </div>
 </section>
 <section id="basic-plots-of-tracks">
-<h2>Basic plots of tracks<a class="headerlink" href="#basic-plots-of-tracks" title="Permalink to this headline">¶</a></h2>
+<h2>Basic plots of tracks<a class="headerlink" href="#basic-plots-of-tracks" title="Link to this heading">¶</a></h2>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># plot animation of results</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
-<span class="kn">from</span> <span class="nn">oceantracker.plot_output</span> <span class="kn">import</span>  <span class="n">plot_tracks</span>
-<span class="kn">from</span> <span class="nn">oceantracker.read_output.python</span> <span class="kn">import</span>  <span class="n">load_output_files</span>
-<span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">HTML</span> <span class="c1"># show animation in note book</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">oceantracker.plot_output</span><span class="w"> </span><span class="kn">import</span>  <span class="n">plot_tracks</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">oceantracker.read_output.python</span><span class="w"> </span><span class="kn">import</span>  <span class="n">load_output_files</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTML</span> <span class="c1"># show animation in note book</span>
 
 <span class="c1"># read particle track data into a dictionary using case_info_file_name</span>
 <span class="n">tracks</span> <span class="o">=</span> <span class="n">load_output_files</span><span class="o">.</span><span class="n">load_track_data</span><span class="p">(</span><span class="n">case_info_file_name</span><span class="p">)</span>
@@ -37108,11 +37110,11 @@ AAAAACxpbHN0AAAAJKl0b28AAAAcZGF0YQAAAAEAAAAATGF2ZjYxLjEuMTAw
     <div class="clearer"></div>
   </div>
     <div class="footer">
-      &copy;2024, R. Vennell.
+      &#169;2024, R. Vennell.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
       
       |
       <a href="../../_sources/info/how_to/B_running_with_helper_class.rst.txt"

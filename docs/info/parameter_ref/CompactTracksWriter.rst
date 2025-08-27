@@ -84,8 +84,22 @@ Parameters:
 Expert Parameters:
 *******************
 
+	* ``convert`` :   ``<class 'bool'>``   *<optional>*
+		Description: Convert compact tracks to rectangular form at end of run, for easier reading
+
+		- default: ``True``
+		- data_type: ``<class 'bool'>``
+		- possible_values: ``[True, False]``
+
 	* ``role_output_file_tag`` :   ``<class 'str'>``   *<optional>*
 		- default: ``tracks_compact``
 		- data_type: ``<class 'str'>``
+
+	* ``time_particle_chunk`` :   ``<class 'int'>``   *<optional>*
+		Description: Chunk size for time dependent particle props, compacted into time_particle dim, default is as estimated max. particles alive
+
+		- default: ``None``
+		- data_type: ``<class 'int'>``
+		- min: ``1``
 
 

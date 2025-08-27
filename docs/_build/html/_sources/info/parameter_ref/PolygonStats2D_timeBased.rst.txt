@@ -15,7 +15,7 @@ PolygonStats2D_timeBased
 
 
 
-**Inheritance:** > ParameterBaseClass> _BaseParticleLocationStats> GriddedStats2D_timeBased> _CorePolygonMethods> PolygonStats2D_timeBased
+**Inheritance:** > ParameterBaseClass> _OptionalStatsMethods> _BaseParticleLocationStats> PolygonStats2D_timeBased
 
 
 Parameters:
@@ -41,19 +41,6 @@ Parameters:
 		- default: ``None``
 		- possible_types: ``[<class 'str'>, <class 'float'>, <class 'numpy.datetime64'>, <class 'int'>, <class 'numpy.float64'>, <class 'numpy.float32'>]``
 		- units: ``ISO8601  date as string eg. "2017-01-01T00:30:00",np.datetime64, or float of seconds since 1/1/1970``
-
-	* ``grid_size``:  *<optional>*
-		Description: - number of (rows, columns) in grid, where rows is y size, cols x size, values should be odd, so will be rounded up to next
-
-		- a list containing type:  ``[]``
-		- default list : ``[100, 99]``
-		- data_type: ``<class 'int'>``
-		- min: ``1``
-		- max: ``100000``
-		- possible_types: ``[]``
-		- make_list_unique: ``False``
-		- fixed_len: ``2``
-		- min_len: ``0``
 
 	* ``name`` :   ``<class 'str'>``   *<optional>*
 		Description: Name used to refer to class in code and output, = None for core claseses

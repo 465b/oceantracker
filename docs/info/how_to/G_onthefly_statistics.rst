@@ -146,11 +146,12 @@ add
 
     prelim:     Starting package set up
     helper: ----------------------------------------------------------------------
-    helper: Starting OceanTrackerhelper class,  version 0.50.0041-2025-03-10 
-    helper:      Python version: 3.10.9 | packaged by conda-forge | (main, Jan 11 2023, 15:15:40) [MSC v.1916 64 bit (AMD64)]
+    helper: Starting OceanTracker helper class,  version 0.50.03.0100-2025-08-13 
+    helper:      Python version: 3.11.10 | packaged by conda-forge | (main, Oct 16 2024, 01:17:14) [MSC v.1941 64 bit (AMD64)]
+    helper: >>> Warning: Oceantracker is compatible with Python 3.11,  however not all external imported packages have been updated to be compatible with 3.11
+    helper:     hint: Down grade to python 3.10 if unexplained issues in external packages
     helper: ----------------------------------------------------------------------
-    helper: OceanTracker version 0.50.0041-2025-03-10  starting setup helper "main.py":
-    helper: >>> Warning: Deleted contents of existing output dir
+    helper: OceanTracker version 0.50.03.0100-2025-08-13  starting setup helper "main.py":
     helper: Output is in dir "f:\H_Local_drive\ParticleTracking\oceantracker\tutorials_how_to\output\heat_map_example"
     helper:     hint: see for copies of screen output and user supplied parameters, plus all other output
     helper:     >>> Note: to help with debugging, parameters as given by user  are in "heat_map_example_raw_user_params.json"
@@ -158,12 +159,13 @@ add
     helper: Numba setup: applied settings, max threads = 32, physical cores = 32
     helper:     hint:  cache code = False, fastmath= False
     helper: ----------------------------------------------------------------------
-    helper:       - Built OceanTracker package tree,	  0.877 sec
+    loading oceantracker read files
+    helper:       - Built OceanTracker package tree,	  1.234 sec
     helper:       - Built OceanTracker sort name map,	  0.000 sec
-    helper:   - Done package set up to setup ClassImporter,	  0.877 sec
+    helper:   - Done package set up to setup ClassImporter,	  1.234 sec
     setup: ----------------------------------------------------------------------
-    setup:  OceanTracker version 0.50.0041-2025-03-10 
-    setup:     Starting user param. runner: "heat_map_example" at  2025-03-10T13:14:59.222688
+    setup:  OceanTracker version 0.50.03.0100-2025-08-13 
+    setup:     Starting user param. runner: "heat_map_example" at  2025-08-26T14:10:48.164809
     setup: ----------------------------------------------------------------------
     setup:   - Start  field group manager and readers setup
     setup:   - Found input dir "./demo_hindcast/schsim3D"
@@ -174,61 +176,78 @@ add
     setup:         Hindcast start: 2017-01-01T00:30:00  end:  2017-01-01T23:30:00
     setup:           time step = 0 days 1 hrs 0 min 0 sec, number of time steps= 24 
     setup:           grid bounding box = [1589789.000 5479437.000] to [1603398.000 5501640.000]
+    setup:           has:  A_Z profile=True  bottom stress=False
+    setup: ----------------------------------------------------------------------
     setup:       - Starting grid setup
-    setup:       - built node to triangles map,	  0.609 sec
-    setup:       - built triangle adjacency matrix,	  0.153 sec
+    setup:       - built node to triangles map,	  1.067 sec
+    setup:       - built triangle adjacency matrix,	  0.194 sec
     setup:       - found boundary triangles,	  0.000 sec
-    setup:       - built domain and island outlines,	  0.946 sec
+    setup:       - built domain and island outlines,	  1.150 sec
     setup:       - calculated triangle areas,	  0.000 sec
     setup:       - Finished grid setup
-    setup:       - built barycentric-transform matrix,	  0.381 sec
-    setup:   - Finished field group manager and readers setup,	  2.873 sec
-    setup:   - Added release groups and found run start and end times,	  0.001 sec
-    setup:   - Done initial setup of all classes,	  0.315 sec
+    setup:       - built barycentric-transform matrix,	  0.274 sec
+    setup:   - Loading reader fields ['water_velocity', 'water_depth', 'tide']
+    setup:   - Finished field group manager and readers setup,	  4.949 sec
     setup: ----------------------------------------------------------------------
-    setup:   - Starting" heat_map_example,  duration: 0 days 23 hrs 0 min 0 sec
+    setup:   - Added 1 release group(s) and found run start and end times,	  1.887 sec
+    setup:   - Done initial setup of all classes,	  0.364 sec
+    setup: ----------------------------------------------------------------------
+    setup:   - Starting "heat_map_example",  duration: 0 days 23 hrs 0 min 0 sec
     setup:       From 2017-01-01T00:30:00 to  2017-01-01T23:30:00
-    setup:   -  Reading 24 time steps,  for hindcast time steps 00:23 into ring buffer offsets 000:023 
-    setup:       -  read  24 time steps in  1.3 sec, from ./demo_hindcast/schsim3D
+    setup:       Time step 600.0 sec
+    setup:         using: A_Z_profile = False bottom_stress = False
     setup: ----------------------------------------------------------------------
-    setup:   - Starting time stepping: 2017-01-01T00:30:00 to 2017-01-01T23:30:00 , duration  0 days 23 hrs 0 min 0 sec 
-    S: 0000: 00%:H0000b00-01 Day +00 00:00 2017-01-01 00:30:00: Rel:1,000: Active:1,000  Move:1,000  Bottom:   0 Strand:0      Dead:   0 Out:   0 Buffer: 1%  step time = 10249.9 ms
-    S: 0006: 04%:H0001b01-02 Day +00 01:00 2017-01-01 01:30:00: Rel:4,000: Active:4,000  Move:4,000  Bottom:   0 Strand:0      Dead:   0 Out:   0 Buffer: 5%  step time =  2.1 ms
-    S: 0012: 09%:H0002b02-03 Day +00 02:00 2017-01-01 02:30:00: Rel:7,000: Active:7,000  Move:7,000  Bottom:   0 Strand:0      Dead:   0 Out:   0 Buffer:10%  step time =  2.2 ms
-    S: 0018: 13%:H0003b03-04 Day +00 03:00 2017-01-01 03:30:00: Rel:10,000: Active:10,000 Move:10,000 Bottom:   0 Strand:0      Dead:   0 Out:   0 Buffer:14%  step time =  2.4 ms
-    S: 0024: 17%:H0004b04-05 Day +00 04:00 2017-01-01 04:30:00: Rel:13,000: Active:13,000 Move:12,999 Bottom:   1 Strand:0      Dead:   0 Out:   0 Buffer:18%  step time =  2.4 ms
-    S: 0030: 22%:H0005b05-06 Day +00 05:00 2017-01-01 05:30:00: Rel:16,000: Active:16,000 Move:16,000 Bottom:   0 Strand:0      Dead:   0 Out:   0 Buffer:22%  step time =  2.3 ms
-    S: 0036: 26%:H0006b06-07 Day +00 06:00 2017-01-01 06:30:00: Rel:19,000: Active:19,000 Move:18,998 Bottom:   2 Strand:0      Dead:   0 Out:   0 Buffer:27%  step time =  2.4 ms
-    S: 0042: 30%:H0007b07-08 Day +00 07:00 2017-01-01 07:30:00: Rel:22,000: Active:22,000 Move:21,992 Bottom:   8 Strand:0      Dead:   0 Out:   0 Buffer:31%  step time =  2.4 ms
-    S: 0048: 35%:H0008b08-09 Day +00 08:00 2017-01-01 08:30:00: Rel:25,000: Active:25,000 Move:24,982 Bottom:  18 Strand:0      Dead:   0 Out:   0 Buffer:35%  step time =  2.4 ms
-    S: 0054: 39%:H0009b09-10 Day +00 09:00 2017-01-01 09:30:00: Rel:28,000: Active:28,000 Move:27,971 Bottom:  29 Strand:0      Dead:   0 Out:   0 Buffer:40%  step time =  2.6 ms
-    S: 0060: 43%:H0010b10-11 Day +00 10:00 2017-01-01 10:30:00: Rel:31,000: Active:31,000 Move:30,975 Bottom:  25 Strand:0      Dead:   0 Out:   0 Buffer:44%  step time =  2.6 ms
-    S: 0066: 48%:H0011b11-12 Day +00 11:00 2017-01-01 11:30:00: Rel:34,000: Active:34,000 Move:33,971 Bottom:  29 Strand:0      Dead:   0 Out:   0 Buffer:48%  step time =  2.7 ms
-    S: 0072: 52%:H0012b12-13 Day +00 12:00 2017-01-01 12:30:00: Rel:37,000: Active:37,000 Move:36,984 Bottom:  16 Strand:0      Dead:   0 Out:   0 Buffer:52%  step time =  2.8 ms
-    S: 0078: 57%:H0012b12-13 Day +00 13:00 2017-01-01 13:30:00: Rel:40,000: Active:40,000 Move:39,994 Bottom:   6 Strand:0      Dead:   0 Out:   0 Buffer:57%  step time =  4.3 ms
-    S: 0084: 61%:H0014b14-15 Day +00 14:00 2017-01-01 14:30:00: Rel:43,000: Active:43,000 Move:42,992 Bottom:   8 Strand:0      Dead:   0 Out:   0 Buffer:61%  step time =  3.1 ms
-    S: 0090: 65%:H0015b15-16 Day +00 15:00 2017-01-01 15:30:00: Rel:46,000: Active:46,000 Move:45,968 Bottom:  11 Strand:21     Dead:   0 Out:   0 Buffer:65%  step time =  2.8 ms
-    S: 0096: 70%:H0016b16-17 Day +00 16:00 2017-01-01 16:30:00: Rel:49,000: Active:49,000 Move:48,974 Bottom:   5 Strand:21     Dead:   0 Out:   0 Buffer:70%  step time =  3.0 ms
-    S: 0102: 74%:H0017b17-18 Day +00 17:00 2017-01-01 17:30:00: Rel:52,000: Active:52,000 Move:51,977 Bottom:   2 Strand:21     Dead:   0 Out:   0 Buffer:74%  step time =  3.0 ms
-    S: 0108: 78%:H0018b18-19 Day +00 18:00 2017-01-01 18:30:00: Rel:55,000: Active:55,000 Move:54,977 Bottom:   2 Strand:21     Dead:   0 Out:   0 Buffer:78%  step time =  2.9 ms
-    S: 0114: 83%:H0019b19-20 Day +00 19:00 2017-01-01 19:30:00: Rel:58,000: Active:58,000 Move:57,975 Bottom:   4 Strand:21     Dead:   0 Out:   0 Buffer:82%  step time =  3.0 ms
-    S: 0120: 87%:H0020b20-21 Day +00 20:00 2017-01-01 20:30:00: Rel:61,000: Active:61,000 Move:60,970 Bottom:   9 Strand:21     Dead:   0 Out:   0 Buffer:87%  step time =  3.2 ms
-    S: 0126: 91%:H0021b21-22 Day +00 21:00 2017-01-01 21:30:00: Rel:64,000: Active:64,000 Move:63,980 Bottom:  20 Strand:0      Dead:   0 Out:   0 Buffer:91%  step time =  3.3 ms
-    S: 0132: 96%:H0022b22-23 Day +00 22:00 2017-01-01 22:30:00: Rel:67,000: Active:67,000 Move:66,991 Bottom:   9 Strand:0      Dead:   0 Out:   0 Buffer:95%  step time =  3.4 ms
-    S: 0138: 100%:H0023b23-00 Day +00 23:00 2017-01-01 23:30:00: Rel:69,000: Active:69,000 Move:68,992 Bottom:   8 Strand:0      Dead:   0 Out:   0 Buffer:98%  step time =  5.5 ms
+    setup:   -  Reading 24 time steps,  for hindcast time steps 00:23 into ring buffer offsets 000:023 ,  for run "heat_map_example"
+    setup:       -  read  24 time steps in  2.9 sec, from ./demo_hindcast/schsim3D 
+    setup:   - Starting time stepping: 2017-01-01T00:30:00 to 2017-01-01T23:30:00
+    setup:     duration  0 days 23 hrs 0 min 0 sec, time step=  0 days 0 hrs 10 min 0 sec 
+    S: 0000: 00%:H0000b00-01 Day +00 00:00 2017-01-01 00:30:00: Rel:1,000: Active:1,000  Move:1,000  Bottom:0     Strand:0      Dead:0     Out:   0 Buffer: 1%  step time = 13321.8 ms
+    S: 0001: 01%:H0000b00-01 Day +00 00:10 2017-01-01 00:40:00: Rel:1,000: Active:1,000  Move:1,000  Bottom:0     Strand:0      Dead:0     Out:   0 Buffer: 1%  step time = 5304.7 ms
+    S: 0007: 05%:H0001b01-02 Day +00 01:10 2017-01-01 01:40:00: Rel:4,000: Active:4,000  Move:4,000  Bottom:0     Strand:0      Dead:0     Out:   0 Buffer: 5%  step time =  3.7 ms
+    S: 0013: 09%:H0002b02-03 Day +00 02:10 2017-01-01 02:40:00: Rel:7,000: Active:7,000  Move:7,000  Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:10%  step time =  4.4 ms
+    S: 0019: 14%:H0003b03-04 Day +00 03:10 2017-01-01 03:40:00: Rel:10,000: Active:10,000 Move:10,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:14%  step time =  4.6 ms
+    S: 0025: 18%:H0004b04-05 Day +00 04:10 2017-01-01 04:40:00: Rel:13,000: Active:13,000 Move:13,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:18%  step time =  5.0 ms
+    S: 0031: 22%:H0005b05-06 Day +00 05:10 2017-01-01 05:40:00: Rel:16,000: Active:16,000 Move:16,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:22%  step time =  6.2 ms
+    S: 0037: 27%:H0006b06-07 Day +00 06:10 2017-01-01 06:40:00: Rel:19,000: Active:19,000 Move:19,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:27%  step time =  6.3 ms
+    S: 0043: 31%:H0007b07-08 Day +00 07:10 2017-01-01 07:40:00: Rel:22,000: Active:22,000 Move:22,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:31%  step time =  6.4 ms
+    S: 0049: 36%:H0008b08-09 Day +00 08:10 2017-01-01 08:40:00: Rel:25,000: Active:25,000 Move:25,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:35%  step time =  6.7 ms
+    S: 0055: 40%:H0009b09-10 Day +00 09:10 2017-01-01 09:40:00: Rel:28,000: Active:28,000 Move:28,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:40%  step time =  7.1 ms
+    S: 0061: 44%:H0010b10-11 Day +00 10:10 2017-01-01 10:40:00: Rel:31,000: Active:31,000 Move:31,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:44%  step time =  6.8 ms
+    S: 0067: 49%:H0011b11-12 Day +00 11:10 2017-01-01 11:40:00: Rel:34,000: Active:34,000 Move:34,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:48%  step time =  7.4 ms
+    S: 0073: 53%:H0012b12-13 Day +00 12:10 2017-01-01 12:40:00: Rel:37,000: Active:37,000 Move:37,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:52%  step time =  6.9 ms
+    S: 0079: 57%:H0013b13-14 Day +00 13:10 2017-01-01 13:40:00: Rel:40,000: Active:40,000 Move:40,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:57%  step time =  7.6 ms
+    S: 0085: 62%:H0014b14-15 Day +00 14:10 2017-01-01 14:40:00: Rel:43,000: Active:43,000 Move:42,972 Bottom:0     Strand:28     Dead:0     Out:   0 Buffer:61%  step time =  7.6 ms
+    S: 0091: 66%:H0015b15-16 Day +00 15:10 2017-01-01 15:40:00: Rel:46,000: Active:46,000 Move:45,827 Bottom:0     Strand:173    Dead:0     Out:   0 Buffer:65%  step time =  8.5 ms
+    S: 0097: 70%:H0016b16-17 Day +00 16:10 2017-01-01 16:40:00: Rel:49,000: Active:49,000 Move:48,827 Bottom:0     Strand:173    Dead:0     Out:   0 Buffer:70%  step time =  7.6 ms
+    S: 0103: 75%:H0017b17-18 Day +00 17:10 2017-01-01 17:40:00: Rel:52,000: Active:52,000 Move:51,827 Bottom:0     Strand:173    Dead:0     Out:   0 Buffer:74%  step time =  8.3 ms
+    S: 0109: 79%:H0018b18-19 Day +00 18:10 2017-01-01 18:40:00: Rel:55,000: Active:55,000 Move:54,827 Bottom:0     Strand:173    Dead:0     Out:   0 Buffer:78%  step time =  8.3 ms
+    S: 0115: 83%:H0019b19-20 Day +00 19:10 2017-01-01 19:40:00: Rel:58,000: Active:58,000 Move:57,827 Bottom:0     Strand:173    Dead:0     Out:   0 Buffer:82%  step time =  8.4 ms
+    S: 0121: 88%:H0020b20-21 Day +00 20:10 2017-01-01 20:40:00: Rel:61,000: Active:61,000 Move:60,827 Bottom:0     Strand:173    Dead:0     Out:   0 Buffer:87%  step time =  9.0 ms
+    S: 0127: 92%:H0021b21-22 Day +00 21:10 2017-01-01 21:40:00: Rel:64,000: Active:64,000 Move:63,982 Bottom:0     Strand:18     Dead:0     Out:   0 Buffer:91%  step time =  8.4 ms
+    S: 0133: 96%:H0022b22-23 Day +00 22:10 2017-01-01 22:40:00: Rel:67,000: Active:67,000 Move:67,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:95%  step time =  8.6 ms
+    S: --- Closing all classes ----------------------------------------------
     end: ----------------------------------------------------------------------
-    end: >>> Warning: Deleted contents of existing output dir
-    end: 
-    end: ----------------------------------------------------------------------
-    end:       Error counts -   0 errors,   1 warnings,   1 notes, check above
-    end: 
-    end:   - Finished "heat_map_example" started: 22029.1726121, ended: 2025-03-10 13:15:18.786605
-    end:       Computational time =0:00:20.696315
-    end:   Output in f:\H_Local_drive\ParticleTracking\oceantracker\tutorials_how_to\output\heat_map_example
-    end: 
-    end: --- Finished Oceantracker run ----------------------------------------
-    end: 
+    end: Finished "heat_map_example",  started: 2025-08-26 14:10:46.647960, ended: 2025-08-26 14:11:23.064098
+    end:       Computational time =0:00:36.416138
+    end:     Timings: total =  36.4 sec
+    end:         Setup                        1.51 s	  4.2%
+    end:         Reading hindcast             2.93 s	  8.0%
+    end:         Initial cell guess           1.54 s	  4.2%
+    end:         RK integration               2.37 s	  6.5%
+    end:         Find horizontal cell         1.63 s	  4.5%
+    end:         Find vertical cell           1.10 s	  3.0%
+    end:         Interpolate fields           1.56 s	  4.3%
+    end:         Update statistics            0.96 s	  2.6%
+    end:         Update custom particle prop. 0.28 s	  0.8%
+    end:         resuspension                 0.36 s	  1.0%
+    end:         dispersion                   0.48 s	  1.3%
+    end:     0 errors,   1 warnings,   1 notes
+    end: --- Finished: output in "f:\H_Local_drive\ParticleTracking\oceantracker\tutorials_how_to\output\heat_map_example" 
     
+
+
+.. image:: G_onthefly_statistics_files%5CG_onthefly_statistics_2_1.png
+
 
 Read and plot heat maps
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -265,12 +284,12 @@ etc for plotting
     
     # use stats_data variable to plot heat map at last time step, by default plots var= "count"
     ax= [1591000, 1601500, 5478500, 5491000] 
-    anim= plot_statistics.animate_heat_map(stats_data, release_group='my_release_point', axis_lims=ax,
+    anim= plot_statistics.animate_heat_map(stats_data, release_group_name='my_release_point', axis_lims=ax,
                         heading='Particle count heatmap built on the fly, no tracks recorded', fps=1)
     HTML(anim.to_html5_video())# this is slow to build!
     
     # animate the pollutant
-    anim= plot_statistics.animate_heat_map(stats_data, var='a_pollutant',release_group= 'my_release_point', axis_lims=ax,
+    anim= plot_statistics.animate_heat_map(stats_data, var='a_pollutant',release_group_name= 'my_release_point', axis_lims=ax,
                         heading='Decaying particle property , a_pollutant built on the fly, no tracks recorded', fps=1)
     
     # this line only used in note books, in python scripts use show = True above and set moive file name
@@ -279,13 +298,14 @@ etc for plotting
     
     
     # static heat map
-    plot_statistics.plot_heat_map(stats_data, var='a_pollutant',release_group= 'my_release_point', axis_lims=ax,  heading='a_pollutant at last time step  depth built on the fly, no tracks recorded')
+    plot_statistics.plot_heat_map(stats_data, var='a_pollutant',release_group_name= 'my_release_point', axis_lims=ax,  heading='a_pollutant at last time step  depth built on the fly, no tracks recorded')
 
 
 .. parsed-literal::
 
-    loading oceantracker read files
-    prelim:     Starting package set up
+    raw_stats dict_keys(['global_attributes', 'dimensions', 'limits', 'variable_attributes', 'grid_spacings', 'y', 'time', 'y_grid', 'num_released', 'cell_area', 'num_released_total', 'x', 'count_all_alive_particles', 'number_released_each_release_group', 'sum_a_pollutant', 'count', 'x_grid', 'time_var', 'date', 'stats_type', 'connectivity_matrix', 'a_pollutant'])
+    stats dict_keys(['global_attributes', 'dimensions', 'limits', 'variable_attributes', 'grid_spacings', 'y', 'time', 'y_grid', 'num_released', 'cell_area', 'num_released_total', 'x', 'count_all_alive_particles', 'number_released_each_release_group', 'sum_a_pollutant', 'count', 'x_grid', 'time_var', 'date', 'stats_type', 'connectivity_matrix', 'a_pollutant', 'particle_status_flags', 'particle_release_groups', 'grid'])
+    animate_heat_map> colour axis limits [np.int64(0), np.int64(1057)] [np.int64(0), np.int64(1057)]
     
 
 ::
@@ -293,17 +313,27 @@ etc for plotting
 
     ---------------------------------------------------------------------------
 
-    NameError                                 Traceback (most recent call last)
+    KeyError                                  Traceback (most recent call last)
 
-    Cell In[1], line 9
-          6 from oceantracker.util import json_util
-          8 # basic read of net cdf, first get file name from case_info.json
-    ----> 9 case_info = json_util.read_JSON(case_info_file_name)
-         10 stats_file = path.join(case_info['output_files']['run_output_dir'], case_info['output_files']['particle_statistics']['my_heatmap'])
-         11 raw_stats = read_ncdf_output_files.read_stats_file(stats_file)
+    Cell In[2], line 22
+         20 # use stats_data variable to plot heat map at last time step, by default plots var= "count"
+         21 ax= [1591000, 1601500, 5478500, 5491000] 
+    ---> 22 anim= plot_statistics.animate_heat_map(stats_data, release_group_name='my_release_point', axis_lims=ax,
+         23                     heading='Particle count heatmap built on the fly, no tracks recorded', fps=1)
+         24 HTML(anim.to_html5_video())# this is slow to build!
+         26 # animate the pollutant
     
 
-    NameError: name 'case_info_file_name' is not defined
+    File f:\h_local_drive\particletracking\oceantracker\oceantracker\plot_output\plot_statistics.py:49, in animate_heat_map(stats_data, release_group_name, var, axis_lims, credit, interval, heading, vmin, vmax, show_grid, title, logscale, caxis, cmap, movie_file, fps, dpi, back_ground_depth, back_ground_color_map)
+         44 plot_utilities.draw_base_map(stats_data['grid'], ax=ax, axis_lims=axis_lims, show_grid=show_grid, title=title, credit=credit,
+         45                              back_ground_depth=back_ground_depth, back_ground_color_map=back_ground_color_map)
+         47 plot_utilities.plot_release_points_and_polygons(stats_data, ax= ax, release_group_name=release_group_name)
+    ---> 49 plot_utilities.show_particleNumbers(stats_data['total_num_particles_released'])
+         50 plot_utilities.add_heading(heading)
+         52 time_text = plt.text(.05, .05, '', transform=ax.transAxes,c='k', zorder=5)
+    
+
+    KeyError: 'total_num_particles_released'
 
 
 
@@ -370,10 +400,12 @@ add polygon stats example with plotting
 .. parsed-literal::
 
     helper: ----------------------------------------------------------------------
-    helper: Starting OceanTrackerhelper class,  version 0.50.0050-2025-04-14 
-    helper:      Python version: 3.10.9 | packaged by conda-forge | (main, Jan 11 2023, 15:15:40) [MSC v.1916 64 bit (AMD64)]
+    helper: Starting OceanTracker helper class,  version 0.50.03.0100-2025-08-13 
+    helper:      Python version: 3.11.10 | packaged by conda-forge | (main, Oct 16 2024, 01:17:14) [MSC v.1941 64 bit (AMD64)]
+    helper: >>> Warning: Oceantracker is compatible with Python 3.11,  however not all external imported packages have been updated to be compatible with 3.11
+    helper:     hint: Down grade to python 3.10 if unexplained issues in external packages
     helper: ----------------------------------------------------------------------
-    helper: OceanTracker version 0.50.0050-2025-04-14  starting setup helper "main.py":
+    helper: OceanTracker version 0.50.03.0100-2025-08-13  starting setup helper "main.py":
     helper: Output is in dir "f:\H_Local_drive\ParticleTracking\oceantracker\tutorials_how_to\output\heat_map_example"
     helper:     hint: see for copies of screen output and user supplied parameters, plus all other output
     helper:     >>> Note: to help with debugging, parameters as given by user  are in "heat_map_example_raw_user_params.json"
@@ -383,12 +415,12 @@ add polygon stats example with plotting
     helper: Numba setup: applied settings, max threads = 32, physical cores = 32
     helper:     hint:  cache code = False, fastmath= False
     helper: ----------------------------------------------------------------------
-    helper:       - Built OceanTracker package tree,	  0.919 sec
+    helper:       - Built OceanTracker package tree,	  0.019 sec
     helper:       - Built OceanTracker sort name map,	  0.000 sec
-    helper:   - Done package set up to setup ClassImporter,	  0.920 sec
+    helper:   - Done package set up to setup ClassImporter,	  0.019 sec
     setup: ----------------------------------------------------------------------
-    setup:  OceanTracker version 0.50.0050-2025-04-14 
-    setup:     Starting user param. runner: "heat_map_example" at  2025-05-01T11:25:18.545663
+    setup:  OceanTracker version 0.50.03.0100-2025-08-13 
+    setup:     Starting user param. runner: "heat_map_example" at  2025-08-26T14:12:44.475145
     setup: ----------------------------------------------------------------------
     setup:   - Start  field group manager and readers setup
     setup:   - Found input dir "./demo_hindcast/schsim3D"
@@ -402,67 +434,71 @@ add polygon stats example with plotting
     setup:           has:  A_Z profile=True  bottom stress=False
     setup: ----------------------------------------------------------------------
     setup:       - Starting grid setup
-    setup:       - built node to triangles map,	  0.616 sec
-    setup:       - built triangle adjacency matrix,	  0.150 sec
+    setup:       - built node to triangles map,	  0.000 sec
+    setup:       - built triangle adjacency matrix,	  0.000 sec
     setup:       - found boundary triangles,	  0.000 sec
-    setup:       - built domain and island outlines,	  0.990 sec
+    setup:       - built domain and island outlines,	  0.733 sec
     setup:       - calculated triangle areas,	  0.000 sec
     setup:       - Finished grid setup
-    setup:       - built barycentric-transform matrix,	  0.261 sec
-    setup:   - Finished field group manager and readers setup,	  3.402 sec
-    setup:         using: A_Z_profile = False bottom_stress = False
+    setup:       - built barycentric-transform matrix,	  0.000 sec
+    setup:   - Loading reader fields ['water_velocity', 'water_depth', 'tide']
+    setup:   - Finished field group manager and readers setup,	  0.814 sec
     setup: ----------------------------------------------------------------------
     setup:   - Added 1 release group(s) and found run start and end times,	  0.001 sec
-    setup:   - Done initial setup of all classes,	  1.403 sec
+    setup:   - Done initial setup of all classes,	  1.229 sec
     setup: ----------------------------------------------------------------------
-    setup:   - Starting" heat_map_example,  duration: 0 days 23 hrs 0 min 0 sec
+    setup:   - Starting "heat_map_example",  duration: 0 days 23 hrs 0 min 0 sec
     setup:       From 2017-01-01T00:30:00 to  2017-01-01T23:30:00
-    setup:   -  Reading 24 time steps,  for hindcast time steps 00:23 into ring buffer offsets 000:023 
-    setup:       -  read  24 time steps in  1.0 sec, from ./demo_hindcast/schsim3D
+    setup:       Time step 600.0 sec
+    setup:         using: A_Z_profile = False bottom_stress = False
     setup: ----------------------------------------------------------------------
-    setup:   - Starting time stepping: 2017-01-01T00:30:00 to 2017-01-01T23:30:00 , duration  0 days 23 hrs 0 min 0 sec 
-    S: 0000: 00%:H0000b00-01 Day +00 00:00 2017-01-01 00:30:00: Rel:1,000: Active:1,000  Move:1,000  Bottom:0     Strand:0      Dead:0     Out:   0 Buffer: 1%  step time = 10207.7 ms
-    S: 0006: 04%:H0001b01-02 Day +00 01:00 2017-01-01 01:30:00: Rel:4,000: Active:4,000  Move:3,999  Bottom:1     Strand:0      Dead:0     Out:   0 Buffer: 5%  step time =  2.0 ms
-    S: 0012: 09%:H0002b02-03 Day +00 02:00 2017-01-01 02:30:00: Rel:7,000: Active:7,000  Move:6,982  Bottom:18    Strand:0      Dead:0     Out:   0 Buffer:10%  step time =  2.6 ms
-    S: 0018: 13%:H0003b03-04 Day +00 03:00 2017-01-01 03:30:00: Rel:10,000: Active:10,000 Move:9,956  Bottom:44    Strand:0      Dead:0     Out:   0 Buffer:14%  step time =  2.0 ms
-    S: 0024: 17%:H0004b04-05 Day +00 04:00 2017-01-01 04:30:00: Rel:13,000: Active:13,000 Move:12,916 Bottom:84    Strand:0      Dead:0     Out:   0 Buffer:18%  step time =  2.1 ms
-    S: 0030: 22%:H0005b05-06 Day +00 05:00 2017-01-01 05:30:00: Rel:16,000: Active:16,000 Move:15,876 Bottom:124   Strand:0      Dead:0     Out:   0 Buffer:22%  step time =  2.4 ms
-    S: 0036: 26%:H0006b06-07 Day +00 06:00 2017-01-01 06:30:00: Rel:19,000: Active:19,000 Move:18,785 Bottom:215   Strand:0      Dead:0     Out:   0 Buffer:27%  step time =  2.1 ms
-    S: 0042: 30%:H0007b07-08 Day +00 07:00 2017-01-01 07:30:00: Rel:22,000: Active:22,000 Move:21,607 Bottom:393   Strand:0      Dead:0     Out:   0 Buffer:31%  step time =  2.2 ms
-    S: 0048: 35%:H0008b08-09 Day +00 08:00 2017-01-01 08:30:00: Rel:25,000: Active:25,000 Move:24,253 Bottom:747   Strand:0      Dead:0     Out:   0 Buffer:35%  step time =  3.3 ms
-    S: 0054: 39%:H0009b09-10 Day +00 09:00 2017-01-01 09:30:00: Rel:28,000: Active:28,000 Move:26,879 Bottom:1,121 Strand:0      Dead:0     Out:   0 Buffer:40%  step time =  3.1 ms
-    S: 0060: 43%:H0010b10-11 Day +00 10:00 2017-01-01 10:30:00: Rel:31,000: Active:31,000 Move:29,514 Bottom:1,486 Strand:0      Dead:0     Out:   0 Buffer:44%  step time =  2.6 ms
-    S: 0066: 48%:H0011b11-12 Day +00 11:00 2017-01-01 11:30:00: Rel:34,000: Active:34,000 Move:32,224 Bottom:1,776 Strand:0      Dead:0     Out:   0 Buffer:48%  step time =  2.6 ms
-    S: 0072: 52%:H0012b12-13 Day +00 12:00 2017-01-01 12:30:00: Rel:37,000: Active:37,000 Move:35,129 Bottom:1,871 Strand:0      Dead:0     Out:   0 Buffer:52%  step time =  2.7 ms
-    S: 0078: 57%:H0012b12-13 Day +00 13:00 2017-01-01 13:30:00: Rel:40,000: Active:40,000 Move:38,108 Bottom:1,892 Strand:0      Dead:0     Out:   0 Buffer:57%  step time =  2.7 ms
-    S: 0084: 61%:H0014b14-15 Day +00 14:00 2017-01-01 14:30:00: Rel:43,000: Active:43,000 Move:41,109 Bottom:1,873 Strand:18     Dead:0     Out:   0 Buffer:61%  step time =  2.9 ms
-    S: 0090: 65%:H0015b15-16 Day +00 15:00 2017-01-01 15:30:00: Rel:46,000: Active:46,000 Move:43,779 Bottom:2,053 Strand:168    Dead:0     Out:   0 Buffer:65%  step time =  3.2 ms
-    S: 0096: 70%:H0016b16-17 Day +00 16:00 2017-01-01 16:30:00: Rel:49,000: Active:49,000 Move:46,675 Bottom:2,157 Strand:168    Dead:0     Out:   0 Buffer:70%  step time =  2.9 ms
-    S: 0102: 74%:H0017b17-18 Day +00 17:00 2017-01-01 17:30:00: Rel:52,000: Active:52,000 Move:49,368 Bottom:2,464 Strand:168    Dead:0     Out:   0 Buffer:74%  step time =  2.9 ms
-    S: 0108: 78%:H0018b18-19 Day +00 18:00 2017-01-01 18:30:00: Rel:55,000: Active:55,000 Move:52,038 Bottom:2,794 Strand:168    Dead:0     Out:   0 Buffer:78%  step time =  2.8 ms
-    S: 0114: 83%:H0019b19-20 Day +00 19:00 2017-01-01 19:30:00: Rel:58,000: Active:58,000 Move:54,899 Bottom:2,933 Strand:168    Dead:0     Out:   0 Buffer:82%  step time =  3.0 ms
-    S: 0120: 87%:H0020b20-21 Day +00 20:00 2017-01-01 20:30:00: Rel:61,000: Active:61,000 Move:57,517 Bottom:3,315 Strand:168    Dead:0     Out:   0 Buffer:87%  step time =  3.2 ms
-    S: 0126: 91%:H0021b21-22 Day +00 21:00 2017-01-01 21:30:00: Rel:64,000: Active:64,000 Move:59,935 Bottom:4,050 Strand:15     Dead:0     Out:   0 Buffer:91%  step time =  3.1 ms
-    S: 0132: 96%:H0022b22-23 Day +00 22:00 2017-01-01 22:30:00: Rel:67,000: Active:67,000 Move:62,227 Bottom:4,773 Strand:0      Dead:0     Out:   0 Buffer:95%  step time =  3.2 ms
-    S: 0138: 100%:H0023b23-00 Day +00 23:00 2017-01-01 23:30:00: Rel:69,000: Active:69,000 Move:63,529 Bottom:5,471 Strand:0      Dead:0     Out:   0 Buffer:98%  step time =  5.2 ms
+    setup:   -  Reading 24 time steps,  for hindcast time steps 00:23 into ring buffer offsets 000:023 ,  for run "heat_map_example"
+    setup:       -  read  24 time steps in  0.0 sec, from ./demo_hindcast/schsim3D 
+    setup:   - Starting time stepping: 2017-01-01T00:30:00 to 2017-01-01T23:30:00
+    setup:     duration  0 days 23 hrs 0 min 0 sec, time step=  0 days 0 hrs 10 min 0 sec 
+    S: 0000: 00%:H0000b00-01 Day +00 00:00 2017-01-01 00:30:00: Rel:1,000: Active:1,000  Move:1,000  Bottom:0     Strand:0      Dead:0     Out:   0 Buffer: 1%  step time = 4206.3 ms
+    S: 0001: 01%:H0000b00-01 Day +00 00:10 2017-01-01 00:40:00: Rel:1,000: Active:1,000  Move:1,000  Bottom:0     Strand:0      Dead:0     Out:   0 Buffer: 1%  step time =  2.6 ms
+    S: 0007: 05%:H0001b01-02 Day +00 01:10 2017-01-01 01:40:00: Rel:4,000: Active:4,000  Move:4,000  Bottom:0     Strand:0      Dead:0     Out:   0 Buffer: 5%  step time =  2.9 ms
+    S: 0013: 09%:H0002b02-03 Day +00 02:10 2017-01-01 02:40:00: Rel:7,000: Active:7,000  Move:7,000  Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:10%  step time =  4.0 ms
+    S: 0019: 14%:H0003b03-04 Day +00 03:10 2017-01-01 03:40:00: Rel:10,000: Active:10,000 Move:10,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:14%  step time =  4.8 ms
+    S: 0025: 18%:H0004b04-05 Day +00 04:10 2017-01-01 04:40:00: Rel:13,000: Active:13,000 Move:13,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:18%  step time =  5.4 ms
+    S: 0031: 22%:H0005b05-06 Day +00 05:10 2017-01-01 05:40:00: Rel:16,000: Active:16,000 Move:16,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:22%  step time =  6.1 ms
+    S: 0037: 27%:H0006b06-07 Day +00 06:10 2017-01-01 06:40:00: Rel:19,000: Active:19,000 Move:19,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:27%  step time =  6.0 ms
+    S: 0043: 31%:H0007b07-08 Day +00 07:10 2017-01-01 07:40:00: Rel:22,000: Active:22,000 Move:22,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:31%  step time =  6.4 ms
+    S: 0049: 36%:H0008b08-09 Day +00 08:10 2017-01-01 08:40:00: Rel:25,000: Active:25,000 Move:25,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:35%  step time =  6.2 ms
+    S: 0055: 40%:H0009b09-10 Day +00 09:10 2017-01-01 09:40:00: Rel:28,000: Active:28,000 Move:28,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:40%  step time =  6.4 ms
+    S: 0061: 44%:H0010b10-11 Day +00 10:10 2017-01-01 10:40:00: Rel:31,000: Active:31,000 Move:31,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:44%  step time =  6.5 ms
+    S: 0067: 49%:H0011b11-12 Day +00 11:10 2017-01-01 11:40:00: Rel:34,000: Active:34,000 Move:34,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:48%  step time =  6.5 ms
+    S: 0073: 53%:H0012b12-13 Day +00 12:10 2017-01-01 12:40:00: Rel:37,000: Active:37,000 Move:37,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:52%  step time =  7.0 ms
+    S: 0079: 57%:H0013b13-14 Day +00 13:10 2017-01-01 13:40:00: Rel:40,000: Active:40,000 Move:40,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:57%  step time =  6.9 ms
+    S: 0085: 62%:H0014b14-15 Day +00 14:10 2017-01-01 14:40:00: Rel:43,000: Active:43,000 Move:42,970 Bottom:0     Strand:30     Dead:0     Out:   0 Buffer:61%  step time =  7.4 ms
+    S: 0091: 66%:H0015b15-16 Day +00 15:10 2017-01-01 15:40:00: Rel:46,000: Active:46,000 Move:45,806 Bottom:0     Strand:194    Dead:0     Out:   0 Buffer:65%  step time =  7.5 ms
+    S: 0097: 70%:H0016b16-17 Day +00 16:10 2017-01-01 16:40:00: Rel:49,000: Active:49,000 Move:48,806 Bottom:0     Strand:194    Dead:0     Out:   0 Buffer:70%  step time =  7.6 ms
+    S: 0103: 75%:H0017b17-18 Day +00 17:10 2017-01-01 17:40:00: Rel:52,000: Active:52,000 Move:51,806 Bottom:0     Strand:194    Dead:0     Out:   0 Buffer:74%  step time =  7.5 ms
+    S: 0109: 79%:H0018b18-19 Day +00 18:10 2017-01-01 18:40:00: Rel:55,000: Active:55,000 Move:54,806 Bottom:0     Strand:194    Dead:0     Out:   0 Buffer:78%  step time =  7.6 ms
+    S: 0115: 83%:H0019b19-20 Day +00 19:10 2017-01-01 19:40:00: Rel:58,000: Active:58,000 Move:57,806 Bottom:0     Strand:194    Dead:0     Out:   0 Buffer:82%  step time =  8.3 ms
+    S: 0121: 88%:H0020b20-21 Day +00 20:10 2017-01-01 20:40:00: Rel:61,000: Active:61,000 Move:60,806 Bottom:0     Strand:194    Dead:0     Out:   0 Buffer:87%  step time =  8.4 ms
+    S: 0127: 92%:H0021b21-22 Day +00 21:10 2017-01-01 21:40:00: Rel:64,000: Active:64,000 Move:63,983 Bottom:0     Strand:17     Dead:0     Out:   0 Buffer:91%  step time =  7.9 ms
+    S: 0133: 96%:H0022b22-23 Day +00 22:10 2017-01-01 22:40:00: Rel:67,000: Active:67,000 Move:67,000 Bottom:0     Strand:0      Dead:0     Out:   0 Buffer:95%  step time =  8.0 ms
+    S: --- Closing all classes ----------------------------------------------
     end: ----------------------------------------------------------------------
-    end: >>> Warning: Numba has already been imported, some numba options may not be used (ignore SVML warning)
-    end:     hint: Ensure any code using Numba is imported after Oceantracker is run, eg Oceantrackers "load_output_files.py" and "read_ncdf_output_files.py"
-    end: 
-    end: ----------------------------------------------------------------------
-    end:       Error counts -   0 errors,   1 warnings,   1 notes, check above
-    end: 
-    end:   - heat_map_example" started: 18279.9476763, ended: 2025-05-01 11:25:39.211018
-    end:       Computational time =0:00:21.586388
-    end:   Output in f:\H_Local_drive\ParticleTracking\oceantracker\tutorials_how_to\output\heat_map_example
-    end: 
-    end: --- Finished Oceantracker run ----------------------------------------
-    end: 
+    end: Finished "heat_map_example",  started: 2025-08-26 14:12:44.431103, ended: 2025-08-26 14:12:56.533813
+    end:       Computational time =0:00:12.102710
+    end:     Timings: total =  12.1 sec
+    end:         Setup                        1.56 s	 12.9%
+    end:         Reading hindcast             2.96 s	 24.5%
+    end:         Initial cell guess           1.54 s	 12.7%
+    end:         RK integration               2.92 s	 24.1%
+    end:         Find horizontal cell         1.78 s	 14.7%
+    end:         Find vertical cell           1.22 s	 10.1%
+    end:         Interpolate fields           1.63 s	 13.5%
+    end:         Update statistics            5.20 s	 43.0%
+    end:         Update custom particle prop. 0.29 s	  2.4%
+    end:         resuspension                 0.02 s	  0.1%
+    end:         dispersion                   0.04 s	  0.3%
+    end:     0 errors,   2 warnings,   1 notes
+    end: --- Finished: output in "f:\H_Local_drive\ParticleTracking\oceantracker\tutorials_how_to\output\heat_map_example" 
     
-
-
-.. image:: G_onthefly_statistics_files%5CG_onthefly_statistics_6_1.png
-
 
 Read polygon/connectivity statistics
 ------------------------------------
@@ -484,7 +520,7 @@ Read polygon/connectivity statistics
 
 .. parsed-literal::
 
-    stats dict_keys(['total_num_particles_released', 'particle_status_values_counted', 'dimensions', 'limits', 'variable_attributes', 'num_released_total', 'count_all_particles', 'time', 'num_released', 'count', 'number_released_each_release_group', 'global_attributes', 'time_var', 'date', 'stats_type', 'polygon_list', 'connectivity_matrix', 'particle_status_flags', 'particle_release_groups', 'grid'])
+    stats dict_keys(['global_attributes', 'dimensions', 'limits', 'variable_attributes', 'time', 'num_released', 'count_all_alive_particles', 'num_released_total', 'number_released_each_release_group', 'count', 'time_var', 'date', 'stats_type', 'polygon_list', 'connectivity_matrix', 'particle_status_flags', 'particle_release_groups', 'grid'])
     
 
 

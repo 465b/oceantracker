@@ -1,18 +1,16 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>Minimal example &#8212; OceanTracker Beta 0.5 documentation</title>
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=a66d8bb5" />
+    <script src="../../_static/documentation_options.js?v=7b06c30a"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Running with helper class" href="B_running_with_helper_class.html" />
@@ -20,17 +18,20 @@
    
   <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
   
+
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+  
 
   </head><body>
   <div class="document">
     
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper">
 <p class="logo">
   <a href="../../index.html">
-    <img class="logo" src="../../_static/ocean_tracker.png" alt="Logo"/>
+    <img class="logo" src="../../_static/ocean_tracker.png" alt="Logo" />
+    
+    <h1 class="logo logo-name">Beta 0.5</h1>
     
   </a>
 </p>
@@ -50,7 +51,7 @@
 
 
 <h3>Navigation</h3>
-<p><span class="caption-text">Contents:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../about.html">About</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../features.html">Features</a></li>
@@ -67,6 +68,7 @@
 <li class="toctree-l2"><a class="reference internal" href="F_plotting_tracks.html">plotting tracks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="G_onthefly_statistics.html">On-the-fly statistics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="G_onthefly_statistics.html#add-polygon-stats-example-with-plotting">add polygon stats example with plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="H_add_user_written_class.html">Add your own class</a></li>
 <li class="toctree-l2"><a class="reference internal" href="P_running_cases_in_parallel.html">Run in parallel</a></li>
 </ul>
 </li>
@@ -87,16 +89,16 @@
   </ul></li>
 </ul>
 </div>
-<div id="searchbox" style="display: none" role="search">
+<search id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
-</div>
-<script>$('#searchbox').show(0);</script>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="documentwrapper">
@@ -106,7 +108,7 @@
           <div class="body" role="main">
             
   <section id="minimal-example">
-<h1>Minimal example<a class="headerlink" href="#minimal-example" title="Permalink to this headline">¶</a></h1>
+<h1>Minimal example<a class="headerlink" href="#minimal-example" title="Link to this heading">¶</a></h1>
 <p>[This note-book is in oceantracker/tutorials_how_to/]</p>
 <p>Main steps are</p>
 <ol class="arabic simple">
@@ -122,7 +124,7 @@ always re-suspend if the land on the bottom. Particles stranded by the
 falling tide in dry cells are frozen, until the cell becomes wet.</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># minimal_example.py using class helper method</span>
 <span class="c1">#------------------------------------------------</span>
-<span class="kn">from</span> <span class="nn">oceantracker.main</span> <span class="kn">import</span> <span class="n">OceanTracker</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">oceantracker.main</span><span class="w"> </span><span class="kn">import</span> <span class="n">OceanTracker</span>
 
 <span class="c1"># make instance of oceantracker to use to set parameters using code, then run</span>
 <span class="n">ot</span> <span class="o">=</span> <span class="n">OceanTracker</span><span class="p">()</span>
@@ -241,15 +243,15 @@ end:
 f:H_Local_driveParticleTrackingoceantrackertutorials_how_tooutputminimal_exampleminimal_example_caseInfo.json</pre>
 <img alt="info/how_to/A_minimal_example_files%5CA_minimal_example_1_1.png" src="info/how_to/A_minimal_example_files%5CA_minimal_example_1_1.png" />
 <section id="read-and-plot-output">
-<h2>Read and plot output<a class="headerlink" href="#read-and-plot-output" title="Permalink to this headline">¶</a></h2>
+<h2>Read and plot output<a class="headerlink" href="#read-and-plot-output" title="Link to this heading">¶</a></h2>
 <p>A first basic plot of particle tracks</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">oceantracker.read_output.python</span> <span class="kn">import</span> <span class="n">load_output_files</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">oceantracker.read_output.python</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_output_files</span>
 
 <span class="c1"># read particle track data into a dictionary using case_info_file_name</span>
 <span class="n">tracks</span> <span class="o">=</span> <span class="n">load_output_files</span><span class="o">.</span><span class="n">load_track_data</span><span class="p">(</span><span class="n">case_info_file_name</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">tracks</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="c1"># show what is in tracks dictionary holds</span>
 
-<span class="kn">from</span> <span class="nn">oceantracker.plot_output</span> <span class="kn">import</span> <span class="n">plot_tracks</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">oceantracker.plot_output</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_tracks</span>
 
 
 <span class="n">ax</span><span class="o">=</span> <span class="p">[</span><span class="mi">1591000</span><span class="p">,</span> <span class="mi">1601500</span><span class="p">,</span> <span class="mi">5479500</span><span class="p">,</span> <span class="mi">5491000</span><span class="p">]</span>  <span class="c1"># area to plot</span>
@@ -262,7 +264,7 @@ f:H_Local_driveParticleTrackingoceantrackertutorials_how_tooutputminimal_example
 <img alt="info/how_to/A_minimal_example_files%5CA_minimal_example_3_1.png" src="info/how_to/A_minimal_example_files%5CA_minimal_example_3_1.png" />
 </section>
 <section id="add-aminations">
-<h2>Add aminations<a class="headerlink" href="#add-aminations" title="Permalink to this headline">¶</a></h2>
+<h2>Add aminations<a class="headerlink" href="#add-aminations" title="Link to this heading">¶</a></h2>
 <p>play movie when done</p>
 <p>animations require additional install of ffpeg, after activating
 oceantracker conda environment run</p>
@@ -273,10 +275,10 @@ bed, from which they resupend in this example.</p>
 <p>By default particles are blocked from moving from a wet cell to a dry
 cell and will not be released if the release location lies within a dry
 cell.</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
-<span class="kn">from</span> <span class="nn">oceantracker.plot_output</span> <span class="kn">import</span> <span class="n">plot_tracks</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">oceantracker.plot_output</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_tracks</span>
 
-<span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">HTML</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTML</span>
 
 <span class="c1"># animate particles</span>
 <span class="n">anim</span> <span class="o">=</span> <span class="n">plot_tracks</span><span class="o">.</span><span class="n">animate_particles</span><span class="p">(</span><span class="n">tracks</span><span class="p">,</span> <span class="n">axis_lims</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span><span class="n">title</span><span class="o">=</span><span class="s1">&#39;Minimal OceanTracker example&#39;</span><span class="p">,</span>
@@ -29471,11 +29473,11 @@ qXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNTguNDUuMTAw
     <div class="clearer"></div>
   </div>
     <div class="footer">
-      &copy;2024, R. Vennell.
+      &#169;2024, R. Vennell.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.3</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
       
       |
       <a href="../../_sources/info/how_to/A_minimal_example.rst.txt"

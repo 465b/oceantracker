@@ -15,7 +15,7 @@ GriddedStats2D_ageBased
 
 
 
-**Inheritance:** > ParameterBaseClass> _BaseParticleLocationStats> GriddedStats2D_timeBased> GriddedStats2D_ageBased
+**Inheritance:** > ParameterBaseClass> _OptionalStatsMethods> _BaseParticleLocationStats> GriddedStats2D_ageBased
 
 
 Parameters:
